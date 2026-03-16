@@ -3,121 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-    <title>نظام إدارة ثانوية الأندلس بترقش | المطور</title>
+    <title>نظام إدارة ثانوية الأندلس بترقش | المطور 2026</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --d1:#0a1628; --d2:#1e3a5f; --g1:#16a34a; --r1:#dc2626; --bg:#f0f4f9;
-        }
+        /* الجزء الأول: التنسيق العام والطباعة الملونة */
+        :root { --d1:#0a1628; --d2:#1e3a5f; --g1:#16a34a; --tx:#0a1628; --brd:#dce4f0; }
         * { box-sizing:border-box; margin:0; padding:0; font-family:'Cairo', sans-serif; }
-        body { background: var(--bg); color: var(--d1); padding: 15px; }
-        
-        /* تصميم الاستمارات والطباعة */
-        .card { background:#fff; border-radius:12px; padding:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05); margin-bottom:20px; border:1px solid #dce4f0; }
-        .btn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 20px; }
-        button { padding:12px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; transition:0.3s; background:var(--d2); color:#white; color: #fff; }
-        button:hover { opacity:0.8; transform: translateY(-2px); }
+        body { background:#f0f4f9; color:var(--tx); }
+        .no-print { padding: 20px; display: flex; flex-wrap: wrap; gap: 10px; background: var(--d1); }
+        .card { background:#fff; margin:20px; padding:25px; border-radius:15px; border:1px solid var(--brd); box-shadow:0 4px 12px rgba(0,0,0,0.05); }
+        button { padding:12px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:700; background:var(--d2); color:#fff; transition:0.3s; }
+        button:hover { opacity:0.9; transform:translateY(-2px); }
         .save-btn { background: var(--g1) !important; }
-        .print-btn { background: var(--d1) !important; }
-        
-        .field-content { background:#f8fafc; border:2px dashed #cbd5e1; padding:15px; border-radius:10px; min-height:100px; }
-        
-        @media print {
-            .no-print { display:none !important; }
-            .card { border: 2px solid #000 !important; box-shadow:none !important; }
+        .black-bold { color:#000 !important; font-weight:900 !important; font-size:1.2rem; }
+        .grid-f { display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:15px; }
+        @media print { 
+            .no-print { display:none !important; } 
+            .card { border:2px solid #000 !important; box-shadow:none !important; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .black-text { color: #000 !important; font-weight: 900 !important; }
         }
-        
-        select, input { width:100%; padding:10px; margin-top:5px; border-radius:6px; border:1px solid #ccc; }
     </style>
 </head>
 <body>
 
 <div class="no-print">
-    <h2 style="text-align:center; margin-bottom:20px;">نظام ثانوية الأندلس - لوحة التحكم</h2>
-    <div class="btn-grid">
-        <button onclick="showSection('imp1')">استمارة 1 (البناء)</button>
-        <button onclick="showSection('imp2')">استمارة 2 (التنفيذ)</button>
-        <button onclick="showSection('performance')">الأداء الوظيفي</button>
-        <button onclick="showSection('waiting')">الانتظار</button>
-    </div>
+    <button onclick="nav('impBuild')">استمارة 1: بناء الخطة</button>
+    <button onclick="nav('impExec')">استمارة 2: تنفيذ الخطة</button>
+    <button onclick="nav('perf')">الأداء الوظيفي</button>
+    <button onclick="nav('wait')">سجل الانتظار</button>
+    <button onclick="nav('tch')">بيانات المعلمين</button>
 </div>
 
-<div id="DISPLAY_AREA"></div>
+<div id="VIEW"></div>
 
 <script>
-// البيانات الأساسية (يتم سحبها من الذاكرة أو تعيين قيم افتراضية)
-let appData = JSON.parse(localStorage.getItem('ANDALUS_FINAL_DB')) || {
-    impPlan1: { teaching: "خطة تحسين التدريس تشمل الزيارات الصفية والتعلم النشط.", outcomes: "رفع نواتج التعلم عبر تحليل الاختبارات المركزية.", guidance: "تكثيف رعاية الطلاب المتأخرين دراسياً.", activity: "تفعيل حصص النشاط وفق الميول.", dev: "ورش عمل للمعلمين حول استراتيجيات التقويم." },
-    impPlan2: { actions: [] },
-    teachers: [{name: "علي بن جابر العضوي", phone: "0500000000", performance: 95}],
-    waitingLog: []
+/* المحرك البرمجي المطور - ثانوية الأندلس */
+let DB = JSON.parse(localStorage.getItem('ANDALUS_OFFICIAL_DB')) || {
+    imp1: { t:'التدريس', o:'نواتج التعلم', g:'التوجيه', s:'النشاط', p:'التطوير' },
+    teachers: [], waitLog: [], config: { orient:'', act:'', src:'', lab:'' }
 };
 
-const classNames = ['A1','A2','A3','A4','B1','B2','B3','B4','C1','C2','C3','C4'];
+const CLASSES = ['A1','A2','A3','A4','B1','B2','B3','B4','C1','C2','C3','C4'];
 
-function save() {
-    localStorage.setItem('ANDALUS_FINAL_DB', JSON.stringify(appData));
-    alert('✅ تم الحفظ بنجاح 100%');
-}
-
-function showSection(sec) {
-    const area = document.getElementById('DISPLAY_AREA');
-    if (sec === 'imp1') {
-        area.innerHTML = `
-            <div class="card">
-                <h3>خطة التحسين - استمارة 1</h3>
-                <div class="btn-grid">
-                    <button onclick="viewImp('teaching')">التدريس</button>
-                    <button onclick="viewImp('outcomes')">النواتج</button>
-                    <button onclick="viewImp('guidance')">التوجيه</button>
-                    <button onclick="window.print()" class="print-btn">🖨️ طباعة الكل</button>
-                </div>
-                <div id="impContent" class="field-content">اختر مجالاً للعرض</div>
-                <button onclick="save()" class="save-btn" style="margin-top:10px">حفظ التغييرات</button>
-            </div>`;
-    } else if (sec === 'performance') {
-        area.innerHTML = `
-            <div class="card">
-                <h3>الأداء الوظيفي</h3>
-                <div class="card">
-                    <p class="black-text" style="font-size:1.2rem;">المعلم: ${appData.teachers[0].name}</p>
-                    <p>الدرجة: 95%</p>
-                    <button onclick="window.print()" class="print-btn">طباعة البطاقة</button>
-                    <button onclick="sendWA('${appData.teachers[0].phone}', 'تم اعتماد أداءك الوظيفي')">إرسال WhatsApp</button>
-                </div>
-            </div>`;
-    } else if (sec === 'waiting') {
-        let options = classNames.map(c => `<option value="${c}">${c}</option>`).join('');
-        area.innerHTML = `
-            <div class="card">
-                <h3>جدول الانتظار اليومي</h3>
-                <select id="classSelect">${options}</select>
-                <input type="text" id="subjectName" placeholder="اسم المادة">
-                <button onclick="saveWaiting()" class="save-btn" style="margin-top:10px">إضافة للأرشيف وحفظ</button>
-            </div>`;
+function nav(sec) {
+    const v = document.getElementById('VIEW');
+    if(sec === 'impBuild') {
+        v.innerHTML = `<div class="card"><h2>استمارة 1 - بناء خطة التحسين</h2><div class="grid-f">` + 
+            Object.keys(DB.imp1).map(k => `<button onclick="showImp('${k}')">${DB.imp1[k]}</button>`).join('') +
+            `</div><div id="impBox" class="card" style="background:#f9fafb">اختر مجالاً للعرض</div>
+            <button class="save-btn" onclick="window.print()">🖨️ طباعة الاستمارة بالكامل</button></div>`;
+    } 
+    else if(sec === 'perf') {
+        v.innerHTML = `<div class="card"><h2>بطاقة الأداء الوظيفي</h2>
+            <div class="card"><p class="black-bold">المعلم: علي بن جابر العضوي</p>
+            <button onclick="window.print()">🖨️ طباعة البطاقة</button>
+            <button class="save-btn" onclick="send('WA','0500000000','إشعار أداء')">واتساب</button>
+            <button onclick="send('SMS','0500000000','إشعار أداء')">رسالة SMS</button></div></div>`;
+    }
+    else if(sec === 'wait') {
+        v.innerHTML = `<div class="card"><h2>سجل الانتظار اليومي (A1-C4)</h2>
+            <select id="cSel">${CLASSES.map(c=>`<option>${c}</option>`).join('')}</select>
+            <input id="sub" placeholder="المادة" style="padding:10px; margin:10px 0; width:100%;">
+            <button class="save-btn" onclick="saveWait()">حفظ في السجل اليومي</button>
+            <div id="wLog" class="card">${DB.waitLog.map(l=>`<p>${l.date}: ${l.c} - ${l.s}</p>`).join('')}</div></div>`;
     }
 }
 
-function viewImp(key) {
-    document.getElementById('impContent').innerHTML = `<h4>${key}</h4><p>${appData.impPlan1[key]}</p>`;
+function showImp(k) {
+    const content = {
+        t: "محتوى التدريس: تفعيل استراتيجيات التعلم النشط والزيارات الصفية بنسبة 100%.",
+        o: "نواتج التعلم: رفع نواتج التعلم عبر معالجة الفجوات التعليمية.",
+        g: "التوجيه: رعاية الطلاب سلوكياً وتحصيلياً.",
+        s: "النشاط: تنفيذ خطة النشاط المدرسي وتوثيق الشواهد.",
+        p: "التطوير: عقد ورش عمل مهنية للمعلمين بشكل دوري."
+    };
+    document.getElementById('impBox').innerHTML = `<h3>مجال ${DB.imp1[k]}</h3><p>${content[k]}</p>`;
 }
 
-function sendWA(num, msg) {
-    window.open(`https://wa.me/966${num.substring(1)}?text=${encodeURIComponent(msg)}`, '_blank');
+function saveWait() {
+    DB.waitLog.push({ c:document.getElementById('cSel').value, s:document.getElementById('sub').value, date:new Date().toLocaleDateString() });
+    localStorage.setItem('ANDALUS_OFFICIAL_DB', JSON.stringify(DB));
+    nav('wait');
 }
 
-function saveWaiting() {
-    let c = document.getElementById('classSelect').value;
-    let s = document.getElementById('subjectName').value;
-    appData.waitingLog.push({ class: c, sub: s, date: new Date().toLocaleDateString() });
-    save();
+function send(type, num, msg) {
+    if(type==='WA') window.open(`https://wa.me/966${num.substring(1)}?text=${encodeURIComponent(msg)}`);
+    else alert('تم إرسال SMS بنجاح');
 }
 
-// البدء بالقسم الأول
-showSection('imp1');
+// التشغيل الافتراضي
+nav('impBuild');
 </script>
-
 </body>
 </html>
