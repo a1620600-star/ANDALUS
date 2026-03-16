@@ -3,117 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-    <title>نظام إدارة ثانوية الأندلس بترقش | المطور 2026</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <title>نظام إدارة ثانوية الأندلس بترقش | المطور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        /* الحفاظ على الهوية البصرية بنسبة 100% */
         :root {
-            --d1:#0a1628; --d2:#1e3a5f; --d3:#2d5a8e;
-            --g1:#065f46; --g2:#16a34a; --a1:#92400e; --a2:#d97706;
-            --r1:#991b1b; --r2:#dc2626; --s1:#0c4a6e; --s2:#0891b2;
-            --bg:#f0f4f9; --surf:#fff; --brd:#dce4f0; --tx1:#0a1628;
+            --d1:#0a1628; --d2:#1e3a5f; --g1:#16a34a; --r1:#dc2626; --bg:#f0f4f9;
         }
         * { box-sizing:border-box; margin:0; padding:0; font-family:'Cairo', sans-serif; }
-        body { background: var(--bg); color: var(--tx1); }
+        body { background: var(--bg); color: var(--d1); padding: 15px; }
         
-        /* تحسينات الطباعة الملونة */
+        /* تصميم الاستمارات والطباعة */
+        .card { background:#fff; border-radius:12px; padding:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05); margin-bottom:20px; border:1px solid #dce4f0; }
+        .btn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        button { padding:12px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; transition:0.3s; background:var(--d2); color:#white; color: #fff; }
+        button:hover { opacity:0.8; transform: translateY(-2px); }
+        .save-btn { background: var(--g1) !important; }
+        .print-btn { background: var(--d1) !important; }
+        
+        .field-content { background:#f8fafc; border:2px dashed #cbd5e1; padding:15px; border-radius:10px; min-height:100px; }
+        
         @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; }
-            .print-card { border: 2px solid var(--d1) !important; padding: 20px; margin: 10px; break-inside: avoid; }
+            .no-print { display:none !important; }
+            .card { border: 2px solid #000 !important; box-shadow:none !important; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .black-bold { color: #000 !important; font-weight: 900 !important; }
+            .black-text { color: #000 !important; font-weight: 900 !important; }
         }
-
-        /* تنسيقات إضافية للأزرار والمحتوى */
-        .btn-action { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; color: white; margin: 5px; }
-        .save-btn { background: var(--g1); }
-        .print-btn { background: var(--d2); }
-        .tab-btn { background: var(--s1); padding: 8px; font-size: 14px; }
-        .content-area { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--brd); margin-top: 15px; }
+        
+        select, input { width:100%; padding:10px; margin-top:5px; border-radius:6px; border:1px solid #ccc; }
     </style>
 </head>
 <body>
 
-<div id="MAIN_APP" style="padding: 20px;">
+<div class="no-print">
+    <h2 style="text-align:center; margin-bottom:20px;">نظام ثانوية الأندلس - لوحة التحكم</h2>
+    <div class="btn-grid">
+        <button onclick="showSection('imp1')">استمارة 1 (البناء)</button>
+        <button onclick="showSection('imp2')">استمارة 2 (التنفيذ)</button>
+        <button onclick="showSection('performance')">الأداء الوظيفي</button>
+        <button onclick="showSection('waiting')">الانتظار</button>
     </div>
+</div>
+
+<div id="DISPLAY_AREA"></div>
 
 <script>
-/* قاعدة البيانات المحلية لضمان عدم ضياع أي معلومة */
-let DB = JSON.parse(localStorage.getItem('ANDALUS_DATA')) || {
-    improvementPlan1: {},
-    improvementPlan2: {},
-    teachers: [],
-    logs: [],
-    principals: { orientation: '', activity: '', sources: '', labs: '' }
+// البيانات الأساسية (يتم سحبها من الذاكرة أو تعيين قيم افتراضية)
+let appData = JSON.parse(localStorage.getItem('ANDALUS_FINAL_DB')) || {
+    impPlan1: { teaching: "خطة تحسين التدريس تشمل الزيارات الصفية والتعلم النشط.", outcomes: "رفع نواتج التعلم عبر تحليل الاختبارات المركزية.", guidance: "تكثيف رعاية الطلاب المتأخرين دراسياً.", activity: "تفعيل حصص النشاط وفق الميول.", dev: "ورش عمل للمعلمين حول استراتيجيات التقويم." },
+    impPlan2: { actions: [] },
+    teachers: [{name: "علي بن جابر العضوي", phone: "0500000000", performance: 95}],
+    waitingLog: []
 };
 
-const classList = ['A1','A2','A3','A4','B1','B2','B3','B4','C1','C2','C3','C4'];
+const classNames = ['A1','A2','A3','A4','B1','B2','B3','B4','C1','C2','C3','C4'];
 
-/* وظيفة الحفظ الشاملة */
-function saveData() {
-    localStorage.setItem('ANDALUS_DATA', JSON.stringify(DB));
+function save() {
+    localStorage.setItem('ANDALUS_FINAL_DB', JSON.stringify(appData));
     alert('✅ تم الحفظ بنجاح 100%');
 }
 
-/* 1. خطة التحسين - استمارة 1 */
-function renderImprovement1() {
-    const domains = [
-        {id:'teaching', title:'التدريس', content:'محتوى مجال التدريس: تحسين الممارسات التعليمية...'},
-        {id:'outcomes', title:'نواتج التعلم', content:'محتوى نواتج التعلم: تحليل النتائج ورفع التحصيل...'},
-        {id:'guidance', title:'التوجيه الطلابي', content:'محتوى التوجيه: رعاية السلوك والتحصيل...'},
-        {id:'activity', title:'النشاط الطلابي', content:'محتوى النشاط: تفعيل البرامج اللاصفية...'},
-        {id:'dev', title:'التطوير المهني', content:'محتوى التطوير: برامج تدريبية ومجتمعات تعلم...'}
-    ];
-
-    let html = `<h2>استمارة 1 - بناء خطة التحسين</h2><div class="no-print">`;
-    domains.forEach(d => {
-        html += `<button class="btn-action tab-btn" onclick="showDomainContent('${d.id}')">${d.title}</button>`;
-        html += `<button class="btn-action print-btn" onclick="printReport('${d.id}')">🖨️ ${d.title}</button>`;
-    });
-    html += `</div><div id="domainDisplay" class="content-area">اضغط على مجال لعرض المحتوى</div>`;
-    
-    document.getElementById('MAIN_APP').innerHTML = html;
-
-    window.showDomainContent = function(id) {
-        const domain = domains.find(x => x.id === id);
-        document.getElementById('domainDisplay').innerHTML = `<h3>${domain.title}</h3><p>${domain.content}</p>`;
-    };
+function showSection(sec) {
+    const area = document.getElementById('DISPLAY_AREA');
+    if (sec === 'imp1') {
+        area.innerHTML = `
+            <div class="card">
+                <h3>خطة التحسين - استمارة 1</h3>
+                <div class="btn-grid">
+                    <button onclick="viewImp('teaching')">التدريس</button>
+                    <button onclick="viewImp('outcomes')">النواتج</button>
+                    <button onclick="viewImp('guidance')">التوجيه</button>
+                    <button onclick="window.print()" class="print-btn">🖨️ طباعة الكل</button>
+                </div>
+                <div id="impContent" class="field-content">اختر مجالاً للعرض</div>
+                <button onclick="save()" class="save-btn" style="margin-top:10px">حفظ التغييرات</button>
+            </div>`;
+    } else if (sec === 'performance') {
+        area.innerHTML = `
+            <div class="card">
+                <h3>الأداء الوظيفي</h3>
+                <div class="card">
+                    <p class="black-text" style="font-size:1.2rem;">المعلم: ${appData.teachers[0].name}</p>
+                    <p>الدرجة: 95%</p>
+                    <button onclick="window.print()" class="print-btn">طباعة البطاقة</button>
+                    <button onclick="sendWA('${appData.teachers[0].phone}', 'تم اعتماد أداءك الوظيفي')">إرسال WhatsApp</button>
+                </div>
+            </div>`;
+    } else if (sec === 'waiting') {
+        let options = classNames.map(c => `<option value="${c}">${c}</option>`).join('');
+        area.innerHTML = `
+            <div class="card">
+                <h3>جدول الانتظار اليومي</h3>
+                <select id="classSelect">${options}</select>
+                <input type="text" id="subjectName" placeholder="اسم المادة">
+                <button onclick="saveWaiting()" class="save-btn" style="margin-top:10px">إضافة للأرشيف وحفظ</button>
+            </div>`;
+    }
 }
 
-/* 2. الأداء الوظيفي - إصلاح الطباعة واللون */
-function renderPerformance() {
-    let html = `<h2>بطاقات الأداء الوظيفي</h2>`;
-    // مثال لمعلم
-    html += `
-    <div class="content-area">
-        <p class="black-bold">اسم المعلم: علي بن جابر العضوي</p>
-        <button class="btn-action print-btn" onclick="window.print()">طباعة البطاقة</button>
-        <button class="btn-action save-btn" onclick="sendToWA('05xxxxxxxx', 'اشعار اداء وظيفي')">إرسال واتساب</button>
-        <button class="btn-action tab-btn" onclick="sendSMS('05xxxxxxxx', 'اشعار اداء')">إرسال SMS</button>
-    </div>`;
-    document.getElementById('MAIN_APP').innerHTML = html;
+function viewImp(key) {
+    document.getElementById('impContent').innerHTML = `<h4>${key}</h4><p>${appData.impPlan1[key]}</p>`;
 }
 
-/* وظائف التواصل */
-function sendToWA(phone, msg) {
-    window.open(`https://wa.me/966${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-}
-function sendSMS(phone, msg) {
-    alert('سيتم إرسال رسالة نصية إلى: ' + phone);
+function sendWA(num, msg) {
+    window.open(`https://wa.me/966${num.substring(1)}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-/* طباعة التقارير الملونة */
-function printReport(id) {
-    window.print();
+function saveWaiting() {
+    let c = document.getElementById('classSelect').value;
+    let s = document.getElementById('subjectName').value;
+    appData.waitingLog.push({ class: c, sub: s, date: new Date().toLocaleDateString() });
+    save();
 }
 
-/* تهيئة عند التشغيل */
-document.addEventListener('DOMContentLoaded', () => {
-    // البدء بعرض واجهة معينة كمثال
-    renderImprovement1();
-});
-
+// البدء بالقسم الأول
+showSection('imp1');
 </script>
+
 </body>
 </html>
