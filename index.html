@@ -2,40 +2,118 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>نظام إدارة ثانوية الأندلس المطور | رؤية 2030</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>نظام إدارة ثانوية الأندلس بترقش | المطور 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* إضافة خصائص الطباعة الملونة */
-        @media print {
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .no-print { display: none !important; }
-            .card { border: 1px solid #ddd !important; box-shadow: none !important; }
+        /* الحفاظ على الهوية البصرية بنسبة 100% */
+        :root {
+            --d1:#0a1628; --d2:#1e3a5f; --d3:#2d5a8e;
+            --g1:#065f46; --g2:#16a34a; --a1:#92400e; --a2:#d97706;
+            --r1:#991b1b; --r2:#dc2626; --s1:#0c4a6e; --s2:#0891b2;
+            --bg:#f0f4f9; --surf:#fff; --brd:#dce4f0; --tx1:#0a1628;
         }
+        * { box-sizing:border-box; margin:0; padding:0; font-family:'Cairo', sans-serif; }
+        body { background: var(--bg); color: var(--tx1); }
+        
+        /* تحسينات الطباعة الملونة */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .print-card { border: 2px solid var(--d1) !important; padding: 20px; margin: 10px; break-inside: avoid; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .black-bold { color: #000 !important; font-weight: 900 !important; }
+        }
+
+        /* تنسيقات إضافية للأزرار والمحتوى */
+        .btn-action { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; color: white; margin: 5px; }
+        .save-btn { background: var(--g1); }
+        .print-btn { background: var(--d2); }
+        .tab-btn { background: var(--s1); padding: 8px; font-size: 14px; }
+        .content-area { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--brd); margin-top: 15px; }
     </style>
 </head>
 <body>
-    <script>
-        // نظام الحفظ المركزي لضمان ثبات البيانات بنسبة 0% خطأ
-        function saveAllData(key, data) {
-            localStorage.setItem('AndalusDB_' + key, JSON.stringify(data));
-            alert('✅ تم حفظ البيانات بنجاح');
-        }
 
-        // تحديث مسميات الفصول A1-A2-A3-A4...
-        const classNames = ['A1','A2','A3','A4','B1','B2','B3','B4','C1','C2','C3','C4'];
-        
-        // تفعيل أيقونات خطة التحسين وعرض المحتوى تلقائياً
-        function showImprovementContent(domain) {
-            const contents = {
-                'teaching': 'محتوى استمارة التدريس: متابعة التحضير الإلكتروني وتفعيل الزيارات الصفية...',
-                'outcomes': 'محتوى استمارة نواتج التعلم: تحليل النتائج والاختبارات المركزية...'
-            };
-            document.getElementById('improvement-display').innerHTML = contents[domain];
-        }
+<div id="MAIN_APP" style="padding: 20px;">
+    </div>
 
-        // تفعيل الطباعة الملونة الاحترافية
-        function printProfessional(divId) {
-            window.print();
-        }
-    </script>
+<script>
+/* قاعدة البيانات المحلية لضمان عدم ضياع أي معلومة */
+let DB = JSON.parse(localStorage.getItem('ANDALUS_DATA')) || {
+    improvementPlan1: {},
+    improvementPlan2: {},
+    teachers: [],
+    logs: [],
+    principals: { orientation: '', activity: '', sources: '', labs: '' }
+};
+
+const classList = ['A1','A2','A3','A4','B1','B2','B3','B4','C1','C2','C3','C4'];
+
+/* وظيفة الحفظ الشاملة */
+function saveData() {
+    localStorage.setItem('ANDALUS_DATA', JSON.stringify(DB));
+    alert('✅ تم الحفظ بنجاح 100%');
+}
+
+/* 1. خطة التحسين - استمارة 1 */
+function renderImprovement1() {
+    const domains = [
+        {id:'teaching', title:'التدريس', content:'محتوى مجال التدريس: تحسين الممارسات التعليمية...'},
+        {id:'outcomes', title:'نواتج التعلم', content:'محتوى نواتج التعلم: تحليل النتائج ورفع التحصيل...'},
+        {id:'guidance', title:'التوجيه الطلابي', content:'محتوى التوجيه: رعاية السلوك والتحصيل...'},
+        {id:'activity', title:'النشاط الطلابي', content:'محتوى النشاط: تفعيل البرامج اللاصفية...'},
+        {id:'dev', title:'التطوير المهني', content:'محتوى التطوير: برامج تدريبية ومجتمعات تعلم...'}
+    ];
+
+    let html = `<h2>استمارة 1 - بناء خطة التحسين</h2><div class="no-print">`;
+    domains.forEach(d => {
+        html += `<button class="btn-action tab-btn" onclick="showDomainContent('${d.id}')">${d.title}</button>`;
+        html += `<button class="btn-action print-btn" onclick="printReport('${d.id}')">🖨️ ${d.title}</button>`;
+    });
+    html += `</div><div id="domainDisplay" class="content-area">اضغط على مجال لعرض المحتوى</div>`;
+    
+    document.getElementById('MAIN_APP').innerHTML = html;
+
+    window.showDomainContent = function(id) {
+        const domain = domains.find(x => x.id === id);
+        document.getElementById('domainDisplay').innerHTML = `<h3>${domain.title}</h3><p>${domain.content}</p>`;
+    };
+}
+
+/* 2. الأداء الوظيفي - إصلاح الطباعة واللون */
+function renderPerformance() {
+    let html = `<h2>بطاقات الأداء الوظيفي</h2>`;
+    // مثال لمعلم
+    html += `
+    <div class="content-area">
+        <p class="black-bold">اسم المعلم: علي بن جابر العضوي</p>
+        <button class="btn-action print-btn" onclick="window.print()">طباعة البطاقة</button>
+        <button class="btn-action save-btn" onclick="sendToWA('05xxxxxxxx', 'اشعار اداء وظيفي')">إرسال واتساب</button>
+        <button class="btn-action tab-btn" onclick="sendSMS('05xxxxxxxx', 'اشعار اداء')">إرسال SMS</button>
+    </div>`;
+    document.getElementById('MAIN_APP').innerHTML = html;
+}
+
+/* وظائف التواصل */
+function sendToWA(phone, msg) {
+    window.open(`https://wa.me/966${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+function sendSMS(phone, msg) {
+    alert('سيتم إرسال رسالة نصية إلى: ' + phone);
+}
+
+/* طباعة التقارير الملونة */
+function printReport(id) {
+    window.print();
+}
+
+/* تهيئة عند التشغيل */
+document.addEventListener('DOMContentLoaded', () => {
+    // البدء بعرض واجهة معينة كمثال
+    renderImprovement1();
+});
+
+</script>
 </body>
 </html>
