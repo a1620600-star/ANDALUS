@@ -527,7 +527,19 @@ body{background:#fff!important}
 <div class="page" id="page-super">
 <div class="ph">
   <div class="ph-l"><h2><span class="phi" style="background:linear-gradient(135deg,var(--s1),var(--s2))"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>مجموعات الإشراف الأسبوعي</h2></div>
-  <div class="ph-r no-print"><button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button><button class="btn b-gh bsm" onclick="prtSuper()">طباعة الجدول</button></div>
+  <div class="ph-r no-print"><button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button><button class="btn b-s bsm" onclick="toggleSuperForm()">+ إضافة سجل</button><button class="btn b-gh bsm" onclick="prtSuper()">طباعة الجدول</button></div>
+</div>
+<!-- نموذج إضافة سجل إشراف -->
+<div id="SUPER-FORM" style="display:none" class="card" style="margin-bottom:12px">
+  <div class="ch"><span class="ct"><span class="ct-dot"></span>تسجيل زيارة إشرافية جديدة</span></div>
+  <div class="g2">
+    <div class="fg"><label class="fl">المعلم *</label><select id="super-teacher" class="fc fc-sm"><option value="">-- اختر المعلم --</option></select></div>
+    <div class="fg"><label class="fl">المادة</label><input type="text" id="super-subject" class="fc fc-sm" placeholder="مثال: رياضيات"></div>
+    <div class="fg"><label class="fl">الفصل</label><select id="super-cls" class="fc fc-sm"><option value="A1">A1</option><option value="A2">A2</option><option value="A3">A3</option><option value="A4">A4</option><option value="B1">B1</option><option value="B2">B2</option><option value="B3">B3</option><option value="B4">B4</option><option value="C1">C1</option><option value="C2">C2</option><option value="C3">C3</option><option value="C4">C4</option></select></div>
+    <div class="fg"><label class="fl">التاريخ</label><input type="date" id="super-date" class="fc fc-sm"></div>
+  </div>
+  <div class="fg"><label class="fl">الملاحظات</label><textarea id="super-notes" class="fc" rows="2" placeholder="ملاحظات الزيارة الإشرافية..."></textarea></div>
+  <button class="btn b-s" onclick="saveSuperRecord()">حفظ السجل</button>
 </div>
 <div class="archive-filter">
   <span>سجل الإشراف اليومي:</span>
@@ -2633,7 +2645,7 @@ try {
 
 function saveAllData() {
   try {
-    saveAllData();
+    localStorage.setItem('ANDALUS_V2', JSON.stringify(DB));
     toast('تم الحفظ بنجاح', true);
   } catch(e) { toast('خطأ في الحفظ', false); }
 }
@@ -2847,7 +2859,22 @@ function renderDash() {
   if (dmTasks) dmTasks.textContent = DB.tasks.length || 0;
   const dmComm = document.getElementById('dm-comm');
   if (dmComm) dmComm.textContent = DB.committees.length || 0;
+  // نسبة الأداء الوظيفي
+  const dmPerf = document.getElementById('dm-perf');
+  if (dmPerf) {
+    const total = DB.teachers.length;
+    const evaluated = DB.teachers.filter(t => (t.perf||0) > 0).length;
+    dmPerf.textContent = total ? Math.round(evaluated/total*100) + '%' : '0%';
+  }
+  // نسبة توقيع ميثاق المهنة
+  const dmCh = document.getElementById('dm-ch');
+  if (dmCh) {
+    const total = DB.teachers.length;
+    const signed = (DB.charter||[]).length;
+    dmCh.textContent = total ? Math.round(signed/total*100) + '%' : '0%';
+  }
   renderPerfBars();
+  renderDashCharts();
 }
 
 function renderPerfBars() {
@@ -2864,6 +2891,50 @@ function renderPerfBars() {
 function showGradesChartDetail() { gp('grades'); }
 function showPerfChartDetail() { gp('perf'); }
 function showPlansChartDetail() { gp('plan-op'); }
+
+function renderDashCharts() {
+  // بطاقة حالة أداء المعلمين
+  const dperf = document.getElementById('D-PERF');
+  if (dperf && DB.teachers.length) {
+    const p = DB.teachers.map(t => t.perf||0);
+    const exc  = p.filter(x=>x>=90).length;
+    const vg   = p.filter(x=>x>=80&&x<90).length;
+    const gd   = p.filter(x=>x>=70&&x<80).length;
+    const ok   = p.filter(x=>x>=60&&x<70).length;
+    const nd   = p.filter(x=>x<60).length;
+    const rows = [
+      ['ممتاز (90+)',    exc,  '#065f46'],
+      ['جيد جداً (80-89)',vg,  '#16a34a'],
+      ['جيد (70-79)',    gd,  '#d97706'],
+      ['مقبول (60-69)',  ok,  '#ea580c'],
+      ['يحتاج تطوير',   nd,  '#dc2626']
+    ];
+    dperf.innerHTML = rows.map(([label, cnt, color]) => {
+      const pct = DB.teachers.length ? Math.round(cnt/DB.teachers.length*100) : 0;
+      return `<div style="margin-bottom:7px"><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px"><span>${label}</span><span style="font-weight:700;color:${color}">${cnt} معلم</span></div><div style="background:var(--brd);border-radius:4px;height:6px"><div style="background:${color};width:${pct}%;height:6px;border-radius:4px"></div></div></div>`;
+    }).join('');
+  } else if (dperf) {
+    dperf.innerHTML = '<p style="font-size:11px;color:var(--tx3);text-align:center;padding:10px">لا يوجد معلمون مسجلون</p>';
+  }
+
+  // بطاقة نسبة إنجاز الخطط
+  const dplans = document.getElementById('D-PLANS');
+  if (dplans) {
+    const tp = DB.termPlan||[];
+    const wp = DB.weekPlan||[];
+    const ip = DB.impPlans||[];
+    const opDone = (DB.opPlan && DB.opPlan.approved) ? 100 : 45;
+    const plans = [
+      ['الخطة التشغيلية', opDone, 'var(--d2)'],
+      ['الخطة الفصلية',   tp.length ? Math.min(100, tp.length*10) : 0, 'var(--v2)'],
+      ['الخطة الأسبوعية', wp.length ? Math.min(100, Math.round(wp.filter(p=>p.status==='معتمد').length/Math.max(wp.length,1)*100)) : 0, 'var(--s2)'],
+      ['خطط التحسين',     ip.length ? Math.min(100, Math.round(ip.filter(p=>p.status==='مكتمل').length/Math.max(ip.length,1)*100)) : 0, 'var(--g2)']
+    ];
+    dplans.innerHTML = plans.map(([label, pct, color]) =>
+      `<div style="margin-bottom:7px"><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px"><span>${label}</span><span style="font-weight:700;color:${color}">${pct}%</span></div><div style="background:var(--brd);border-radius:4px;height:6px"><div style="background:${color};width:${pct}%;height:6px;border-radius:4px"></div></div></div>`
+    ).join('');
+  }
+}
 
 // ── سجل الانتظار ──
 function renderWait() {
@@ -2934,7 +3005,45 @@ function exportWaitArchive() {
 function prtWait() { window.print(); }
 
 // ── الإشراف ──
-function renderSuper() { filterSuperArchive(); }
+function renderSuper() {
+  // ملء قائمة المعلمين في نموذج الإشراف
+  const sel = document.getElementById('super-teacher');
+  if (sel && sel.options.length <= 1) {
+    DB.teachers.forEach(t => { const o = document.createElement('option'); o.value = t.name; o.textContent = t.name; sel.appendChild(o); });
+  }
+  // تاريخ اليوم
+  const dt = document.getElementById('super-date');
+  if (dt && !dt.value) dt.value = new Date().toISOString().slice(0,10);
+  filterSuperArchive();
+}
+
+function toggleSuperForm() {
+  const f = document.getElementById('SUPER-FORM');
+  if (!f) return;
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  if (f.style.display === 'block') {
+    const sel = document.getElementById('super-teacher');
+    if (sel && sel.options.length <= 1) {
+      DB.teachers.forEach(t => { const o = document.createElement('option'); o.value = t.name; o.textContent = t.name; sel.appendChild(o); });
+    }
+  }
+}
+
+function saveSuperRecord() {
+  const teacher = document.getElementById('super-teacher')?.value;
+  const subject = document.getElementById('super-subject')?.value.trim();
+  const cls     = document.getElementById('super-cls')?.value;
+  const date    = document.getElementById('super-date')?.value;
+  const notes   = document.getElementById('super-notes')?.value.trim();
+  if (!teacher) { toast('اختر المعلم', false); return; }
+  const t = DB.teachers.find(x => x.name === teacher);
+  DB.supervision.push({ id: Date.now(), date: date || new Date().toLocaleDateString('ar-SA'), teacher, subject: subject || (t?.subject||''), cls, notes });
+  document.getElementById('super-notes').value = '';
+  document.getElementById('SUPER-FORM').style.display = 'none';
+  saveAllData();
+  filterSuperArchive();
+  toast('تم حفظ سجل الإشراف', true);
+}
 
 function filterSuperArchive() {
   const wrap = document.getElementById('SUPD');
