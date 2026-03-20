@@ -2101,7 +2101,7 @@ body{background:#fff!important}
     <button class="btn bsm" onclick="showGuidanceLogin()" style="background:linear-gradient(135deg,#1e3a5f,#0369a1);color:#fff">🔑 دخول الموجه الطلابي</button>
     <button class="btn b-d bsm" onclick="addGuidanceReport()">+ إضافة تقرير</button>
     <button class="btn b-gh bsm" onclick="prtGuidanceReports()">🖨 طباعة</button>
-    <button class="btn bsm" onclick="exportGuidanceReports()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff">📄 تصدير PDF</button>
+    <button class="btn bsm" onclick="exportGuidanceReports()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff">📄 تصدير CSV</button>
     <button class="btn b-d bsm" onclick="saveAllData()">💾 حفظ</button>
   </div>
 </div>
@@ -2202,6 +2202,7 @@ body{background:#fff!important}
 <!-- REPORTS LIST -->
 <div class="card">
   <div class="ch"><span class="ct"><span class="ct-dot"></span>التقارير المُدخلة</span><span class="badge bb2" id="guidance-cnt-badge">0 تقرير</span></div>
+  <input type="search" class="fc fc-sm" id="guidance-search" placeholder="🔍 بحث في التقارير..." style="margin-bottom:10px" oninput="renderGuidancePage(this.value)">
   <div id="guidance-list"><p style="padding:14px;text-align:center;color:var(--tx3)">لا توجد تقارير — اضغط إضافة تقرير أو سجّل الدخول</p></div>
 </div>
 </div>
@@ -2214,7 +2215,7 @@ body{background:#fff!important}
     <button class="btn bsm" onclick="showActivityLogin()" style="background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff">🔑 دخول رائد النشاط</button>
     <button class="btn b-d bsm" onclick="addActivityReport()">+ إضافة تقرير</button>
     <button class="btn b-gh bsm" onclick="prtActivityReports()">🖨 طباعة</button>
-    <button class="btn bsm" onclick="exportActivityReports()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff">📄 تصدير PDF</button>
+    <button class="btn bsm" onclick="exportActivityReports()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff">📄 تصدير CSV</button>
     <button class="btn b-d bsm" onclick="saveAllData()">💾 حفظ</button>
   </div>
 </div>
@@ -2275,6 +2276,7 @@ body{background:#fff!important}
   </div>
 </div>
 <div class="card"><div class="ch"><span class="ct"><span class="ct-dot"></span>التقارير المُدخلة</span><span class="badge bb2" id="activity-cnt-badge">0 تقرير</span></div>
+  <input type="search" class="fc fc-sm" id="activity-search" placeholder="🔍 بحث في التقارير..." style="margin-bottom:10px" oninput="renderActivityPage(this.value)">
   <div id="activity-list"><p style="padding:14px;text-align:center;color:var(--tx3)">لا توجد تقارير — اضغط إضافة تقرير أو سجّل الدخول</p></div>
 </div>
 </div>
@@ -2287,7 +2289,7 @@ body{background:#fff!important}
     <button class="btn bsm" onclick="showLibraryLogin()" style="background:linear-gradient(135deg,#065f46,#16a34a);color:#fff">🔑 دخول أمين المصادر</button>
     <button class="btn b-d bsm" onclick="addLibraryReport()">+ إضافة تقرير</button>
     <button class="btn b-gh bsm" onclick="prtLibraryReports()">🖨 طباعة</button>
-    <button class="btn bsm" onclick="exportLibraryReports()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff">📄 تصدير PDF</button>
+    <button class="btn bsm" onclick="exportLibraryReports()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff">📄 تصدير CSV</button>
     <button class="btn b-d bsm" onclick="saveAllData()">💾 حفظ</button>
   </div>
 </div>
@@ -2348,6 +2350,7 @@ body{background:#fff!important}
   </div>
 </div>
 <div class="card"><div class="ch"><span class="ct"><span class="ct-dot"></span>التقارير المُدخلة</span><span class="badge bb2" id="library-cnt-badge">0 تقرير</span></div>
+  <input type="search" class="fc fc-sm" id="library-search" placeholder="🔍 بحث في التقارير..." style="margin-bottom:10px" oninput="renderLibraryPage(this.value)">
   <div id="library-list"><p style="padding:14px;text-align:center;color:var(--tx3)">لا توجد تقارير — اضغط إضافة تقرير أو سجّل الدخول</p></div>
 </div>
 </div>
@@ -2360,7 +2363,7 @@ body{background:#fff!important}
     <button class="btn bsm" onclick="showLabLogin()" style="background:linear-gradient(135deg,#92400e,#d97706);color:#fff">🔑 دخول محضر المختبر</button>
     <button class="btn b-d bsm" onclick="addLabReport()">+ إضافة تقرير</button>
     <button class="btn b-gh bsm" onclick="prtLabReports()">🖨 طباعة</button>
-    <button class="btn bsm" onclick="exportLabReports()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff">📄 تصدير PDF</button>
+    <button class="btn bsm" onclick="exportLabReports()" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff">📄 تصدير CSV</button>
     <button class="btn b-d bsm" onclick="saveAllData()">💾 حفظ</button>
   </div>
 </div>
@@ -2421,6 +2424,7 @@ body{background:#fff!important}
   </div>
 </div>
 <div class="card"><div class="ch"><span class="ct"><span class="ct-dot"></span>التقارير المُدخلة</span><span class="badge bb2" id="lab-cnt-badge">0 تقرير</span></div>
+  <input type="search" class="fc fc-sm" id="lab-search" placeholder="🔍 بحث في التقارير..." style="margin-bottom:10px" oninput="renderLabPage(this.value)">
   <div id="lab-list"><p style="padding:14px;text-align:center;color:var(--tx3)">لا توجد تقارير — اضغط إضافة تقرير أو سجّل الدخول</p></div>
 </div>
 </div>
@@ -5282,29 +5286,53 @@ function prtRemedial() { window.print(); }
 // ══════════════════════════════════════════
 // الإرشاد الطلابي
 // ══════════════════════════════════════════
-function renderGuidancePage() {
+function renderGuidancePage(q) {
   const wrap=document.getElementById('guidance-list');
   if (!wrap) return;
+  const lq=(q||document.getElementById('guidance-search')?.value||'').trim().toLowerCase();
+  let data=DB.guidance.slice().reverse();
+  if(lq) data=data.filter(r=>(r.title||'').toLowerCase().includes(lq)||(r.owner||'').toLowerCase().includes(lq)||(r.notes||'').toLowerCase().includes(lq));
   const cnt=document.getElementById('guidance-cnt'); if(cnt) cnt.textContent=DB.guidance.length;
   const badge=document.getElementById('guidance-cnt-badge'); if(badge) badge.textContent=DB.guidance.length+' تقرير';
   const approved=DB.guidance.filter(r=>r.status==='approved').length;
   const pending=DB.guidance.filter(r=>r.status==='pending').length;
   const aEl=document.getElementById('guidance-approved'); if(aEl) aEl.textContent=approved;
   const pEl=document.getElementById('guidance-pending'); if(pEl) pEl.textContent=pending;
-  if (!DB.guidance.length) { wrap.innerHTML='<p style="padding:18px;text-align:center;color:var(--tx3)">لا توجد تقارير — اضغط إضافة تقرير</p>'; return; }
-  wrap.innerHTML=DB.guidance.slice().reverse().map(r=>`
+  if (!data.length) { wrap.innerHTML='<p style="padding:18px;text-align:center;color:var(--tx3)">'+(lq?'لا توجد نتائج للبحث':'لا توجد تقارير — اضغط إضافة تقرير')+'</p>'; return; }
+  const sc=s=>s==='approved'?'var(--g1)':s==='pending'?'var(--a2)':'var(--tx3)';
+  const sl=s=>s==='approved'?'معتمدة':s==='pending'?'قيد الاعتماد':'مسودة';
+  wrap.innerHTML=data.map(r=>`
     <div style="background:var(--surf2);border:1.5px solid var(--brd);border-radius:10px;padding:12px;margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-weight:800;font-size:12px">${r.title||'—'}</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:9px;padding:2px 7px;border-radius:12px;font-weight:700;background:${r.status==='approved'?'var(--g1)':r.status==='pending'?'var(--a2)':'var(--tx3)'};color:#fff">${r.status==='approved'?'معتمدة':r.status==='pending'?'قيد الاعتماد':'مسودة'}</span>
-          <span style="font-size:10px;color:var(--tx3)">${r.date||''}</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:12px">${r.title||'—'}</div>
+          ${r.owner?`<div style="font-size:10px;color:var(--tx3);margin-top:3px">المسؤول: ${r.owner}</div>`:''}
+          <div style="font-size:11px;color:var(--tx2);margin-top:5px">${r.notes||''}</div>
+          ${r.attachment?`<div style="font-size:10px;color:var(--g1);margin-top:4px">📎 ${r.attachment}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:9px;padding:2px 7px;border-radius:12px;font-weight:700;background:${sc(r.status||'draft')};color:#fff">${sl(r.status||'draft')}</span>
+            <span style="font-size:10px;color:var(--tx3)">${r.date||''}</span>
+          </div>
+          <div style="display:flex;gap:4px">
+            ${r.status!=='approved'?`<button class="ab" style="background:rgba(22,163,74,.1);color:var(--g2);font-size:10px;padding:3px 8px" onclick="approveGuidance(${r.id})">✓ اعتماد</button>`:''}
+            <button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delGuidance(${r.id})">🗑</button>
+          </div>
         </div>
       </div>
-      ${r.owner?`<div style="font-size:10px;color:var(--tx3);margin-top:3px">المسؤول: ${r.owner}</div>`:''}
-      <div style="font-size:11px;color:var(--tx2);margin-top:5px">${r.notes||''}</div>
-      ${r.attachment?`<div style="font-size:10px;color:var(--g1);margin-top:4px">📎 ${r.attachment}</div>`:''}
     </div>`).join('');
+}
+function delGuidance(id)     { if(!confirm('حذف التقرير؟'))return; DB.guidance=DB.guidance.filter(r=>r.id!==id); saveAllData(); renderGuidancePage(); }
+function approveGuidance(id) { const r=DB.guidance.find(x=>x.id===id); if(r){r.status='approved';saveAllData();renderGuidancePage();toast('تم اعتماد التقرير',true);} }
+function exportGuidanceReports() {
+  if(!DB.guidance.length){toast('لا توجد تقارير للتصدير',false);return;}
+  const rows=[['م','العنوان','المسؤول','التاريخ','الحالة','الملاحظات']];
+  DB.guidance.forEach((r,i)=>rows.push([i+1,r.title||'',r.owner||'',r.date||'',r.status==='approved'?'معتمدة':r.status==='pending'?'قيد الاعتماد':'مسودة',(r.notes||'').replace(/,/g,'،')]));
+  const csv='\uFEFF'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='تقارير_التوجيه_'+new Date().toLocaleDateString('ar-SA').replace(/\//g,'-')+'.csv';
+  a.click();toast('تم تصدير تقارير التوجيه',true);
 }
 
 function addGuidanceReport() { const f=document.getElementById('guidance-form'); if(f) f.style.display=f.style.display==='none'?'block':'none'; }
@@ -5341,7 +5369,6 @@ function sendGuidanceForApproval() {
   window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
   toast('جاري فتح واتساب للإرسال', true);
 }
-function exportGuidanceReports()   { window.print(); }
 function prtGuidanceReports()      { window.print(); }
 function onGuidanceFileUp(el) {
   if (!el.files || !el.files[0]) return;
@@ -5358,27 +5385,51 @@ function addGuidance()             { addGuidanceReport(); }
 // ══════════════════════════════════════════
 // رائد النشاط
 // ══════════════════════════════════════════
-function renderActivityPage() {
+function renderActivityPage(q) {
   const wrap=document.getElementById('activity-list');
   if (!wrap) return;
+  const lq=(q||document.getElementById('activity-search')?.value||'').trim().toLowerCase();
+  let data=DB.activity.slice().reverse();
+  if(lq) data=data.filter(r=>(r.title||'').toLowerCase().includes(lq)||(r.notes||'').toLowerCase().includes(lq));
   const badge=document.getElementById('activity-cnt-badge'); if(badge) badge.textContent=DB.activity.length+' تقرير';
   const approved = DB.activity.filter(r=>r.status==='approved').length;
   const pending  = DB.activity.filter(r=>r.status==='pending').length;
   const el_cnt=document.getElementById('activity-cnt'); if(el_cnt) el_cnt.textContent=DB.activity.length;
   const el_appr=document.getElementById('activity-approved'); if(el_appr) el_appr.textContent=approved;
   const el_pend=document.getElementById('activity-pending'); if(el_pend) el_pend.textContent=pending;
-  if (!DB.activity.length) { wrap.innerHTML='<p style="padding:18px;text-align:center;color:var(--tx3)">لا توجد تقارير أنشطة بعد</p>'; return; }
-  wrap.innerHTML=DB.activity.slice().reverse().map(r=>`
+  if (!data.length) { wrap.innerHTML='<p style="padding:18px;text-align:center;color:var(--tx3)">'+(lq?'لا توجد نتائج':'لا توجد تقارير أنشطة بعد')+'</p>'; return; }
+  const sc=s=>s==='approved'?'var(--g1)':s==='pending'?'var(--a2)':'var(--tx3)';
+  const sl=s=>s==='approved'?'معتمدة':s==='pending'?'قيد الاعتماد':'مسودة';
+  wrap.innerHTML=data.map(r=>`
     <div style="background:var(--surf2);border:1.5px solid var(--brd);border-radius:10px;padding:12px;margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-weight:800;font-size:12px">${r.title||'—'}</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:9px;padding:2px 7px;border-radius:12px;font-weight:700;background:${r.status==='approved'?'var(--g1)':r.status==='pending'?'var(--a2)':'var(--tx3)'};color:#fff">${r.status==='approved'?'معتمدة':r.status==='pending'?'قيد الاعتماد':'مسودة'}</span>
-          <span style="font-size:10px;color:var(--tx3)">${r.date||''}</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:12px">${r.title||'—'}</div>
+          <div style="font-size:11px;color:var(--tx2);margin-top:5px">${r.notes||''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:9px;padding:2px 7px;border-radius:12px;font-weight:700;background:${sc(r.status||'draft')};color:#fff">${sl(r.status||'draft')}</span>
+            <span style="font-size:10px;color:var(--tx3)">${r.date||''}</span>
+          </div>
+          <div style="display:flex;gap:4px">
+            ${r.status!=='approved'?`<button class="ab" style="background:rgba(22,163,74,.1);color:var(--g2);font-size:10px;padding:3px 8px" onclick="approveActivity(${r.id})">✓ اعتماد</button>`:''}
+            <button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delActivity(${r.id})">🗑</button>
+          </div>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--tx2);margin-top:5px">${r.notes||''}</div>
     </div>`).join('');
+}
+function delActivity(id)     { if(!confirm('حذف التقرير؟'))return; DB.activity=DB.activity.filter(r=>r.id!==id); saveAllData(); renderActivityPage(); }
+function approveActivity(id) { const r=DB.activity.find(x=>x.id===id); if(r){r.status='approved';saveAllData();renderActivityPage();toast('تم اعتماد التقرير',true);} }
+function exportActivityReports() {
+  if(!DB.activity.length){toast('لا توجد تقارير للتصدير',false);return;}
+  const rows=[['م','العنوان','التاريخ','الحالة','الملاحظات']];
+  DB.activity.forEach((r,i)=>rows.push([i+1,r.title||'',r.date||'',r.status==='approved'?'معتمدة':r.status==='pending'?'قيد الاعتماد':'مسودة',(r.notes||'').replace(/,/g,'،')]));
+  const csv='\uFEFF'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='تقارير_النشاط_'+new Date().toLocaleDateString('ar-SA').replace(/\//g,'-')+'.csv';
+  a.click();toast('تم تصدير تقارير النشاط',true);
 }
 
 function addActivityReport() { const f=document.getElementById('activity-form'); if(f) f.style.display=f.style.display==='none'?'block':'none'; }
@@ -5404,34 +5455,57 @@ function showActivityLogin() {
   toast(`مرحباً ${t.name}`, true);
 }
 
-function exportActivityReports() { window.print(); }
 function prtActivityReports()    { window.print(); }
 function addActivity()           { addActivityReport(); }
 
 // ══════════════════════════════════════════
 // المكتبة ومصادر التعلم
 // ══════════════════════════════════════════
-function renderLibraryPage() {
+function renderLibraryPage(q) {
   const wrap=document.getElementById('library-list');
   if (!wrap) return;
+  const lq=(q||document.getElementById('library-search')?.value||'').trim().toLowerCase();
+  let data=DB.library.slice().reverse();
+  if(lq) data=data.filter(r=>(r.title||'').toLowerCase().includes(lq)||(r.notes||'').toLowerCase().includes(lq));
   const badge=document.getElementById('library-cnt-badge'); if(badge) badge.textContent=DB.library.length+' تقرير';
   const lib_appr = DB.library.filter(r=>r.status==='approved').length;
   const lib_pend  = DB.library.filter(r=>r.status==='pending').length;
   const lib_cnt=document.getElementById('library-cnt'); if(lib_cnt) lib_cnt.textContent=DB.library.length;
   const lib_a=document.getElementById('library-approved'); if(lib_a) lib_a.textContent=lib_appr;
   const lib_p=document.getElementById('library-pending'); if(lib_p) lib_p.textContent=lib_pend;
-  if (!DB.library.length) { wrap.innerHTML='<p style="padding:18px;text-align:center;color:var(--tx3)">لا توجد تقارير مكتبة بعد</p>'; return; }
-  wrap.innerHTML=DB.library.slice().reverse().map(r=>`
+  if (!data.length) { wrap.innerHTML='<p style="padding:18px;text-align:center;color:var(--tx3)">'+(lq?'لا توجد نتائج':'لا توجد تقارير مكتبة بعد')+'</p>'; return; }
+  const sc=s=>s==='approved'?'var(--g1)':s==='pending'?'var(--a2)':'var(--tx3)';
+  const sl=s=>s==='approved'?'معتمدة':s==='pending'?'قيد الاعتماد':'مسودة';
+  wrap.innerHTML=data.map(r=>`
     <div style="background:var(--surf2);border:1.5px solid var(--brd);border-radius:10px;padding:12px;margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-weight:800;font-size:12px">${r.title||'—'}</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:9px;padding:2px 7px;border-radius:12px;font-weight:700;background:${r.status==='approved'?'var(--g1)':r.status==='pending'?'var(--a2)':'var(--tx3)'};color:#fff">${r.status==='approved'?'معتمدة':r.status==='pending'?'قيد الاعتماد':'مسودة'}</span>
-          <span style="font-size:10px;color:var(--tx3)">${r.date||''}</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:12px">${r.title||'—'}</div>
+          <div style="font-size:11px;color:var(--tx2);margin-top:5px">${r.notes||''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:9px;padding:2px 7px;border-radius:12px;font-weight:700;background:${sc(r.status||'draft')};color:#fff">${sl(r.status||'draft')}</span>
+            <span style="font-size:10px;color:var(--tx3)">${r.date||''}</span>
+          </div>
+          <div style="display:flex;gap:4px">
+            ${r.status!=='approved'?`<button class="ab" style="background:rgba(22,163,74,.1);color:var(--g2);font-size:10px;padding:3px 8px" onclick="approveLibrary(${r.id})">✓ اعتماد</button>`:''}
+            <button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delLibrary(${r.id})">🗑</button>
+          </div>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--tx2);margin-top:5px">${r.notes||''}</div>
     </div>`).join('');
+}
+function delLibrary(id)     { if(!confirm('حذف التقرير؟'))return; DB.library=DB.library.filter(r=>r.id!==id); saveAllData(); renderLibraryPage(); }
+function approveLibrary(id) { const r=DB.library.find(x=>x.id===id); if(r){r.status='approved';saveAllData();renderLibraryPage();toast('تم اعتماد التقرير',true);} }
+function exportLibraryReports() {
+  if(!DB.library.length){toast('لا توجد تقارير للتصدير',false);return;}
+  const rows=[['م','العنوان','التاريخ','الحالة','الملاحظات']];
+  DB.library.forEach((r,i)=>rows.push([i+1,r.title||'',r.date||'',r.status==='approved'?'معتمدة':r.status==='pending'?'قيد الاعتماد':'مسودة',(r.notes||'').replace(/,/g,'،')]));
+  const csv='\uFEFF'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='تقارير_المكتبة_'+new Date().toLocaleDateString('ar-SA').replace(/\//g,'-')+'.csv';
+  a.click();toast('تم تصدير تقارير المكتبة',true);
 }
 
 function addLibraryReport() { const f=document.getElementById('library-form'); if(f) f.style.display=f.style.display==='none'?'block':'none'; }
@@ -5457,34 +5531,57 @@ function showLibraryLogin() {
   toast(`مرحباً ${t.name}`, true);
 }
 
-function exportLibraryReports() { window.print(); }
 function prtLibraryReports()    { window.print(); }
 function addLibrary()           { addLibraryReport(); }
 
 // ══════════════════════════════════════════
 // المختبر العلمي
 // ══════════════════════════════════════════
-function renderLabPage() {
+function renderLabPage(q) {
   const wrap=document.getElementById('lab-list');
   if (!wrap) return;
+  const lq=(q||document.getElementById('lab-search')?.value||'').trim().toLowerCase();
+  let data=DB.lab.slice().reverse();
+  if(lq) data=data.filter(r=>(r.title||'').toLowerCase().includes(lq)||(r.notes||'').toLowerCase().includes(lq));
   const badge=document.getElementById('lab-cnt-badge'); if(badge) badge.textContent=DB.lab.length+' تقرير';
   const lab_appr = DB.lab.filter(r=>r.status==='approved').length;
   const lab_pend  = DB.lab.filter(r=>r.status==='pending').length;
   const lab_c=document.getElementById('lab-cnt'); if(lab_c) lab_c.textContent=DB.lab.length;
   const lab_a=document.getElementById('lab-approved'); if(lab_a) lab_a.textContent=lab_appr;
   const lab_p=document.getElementById('lab-pending'); if(lab_p) lab_p.textContent=lab_pend;
-  if (!DB.lab.length) { wrap.innerHTML='<p style="padding:18px;text-align:center;color:var(--tx3)">لا توجد تقارير مختبر بعد</p>'; return; }
-  wrap.innerHTML=DB.lab.slice().reverse().map(r=>`
+  if (!data.length) { wrap.innerHTML='<p style="padding:18px;text-align:center;color:var(--tx3)">'+(lq?'لا توجد نتائج':'لا توجد تقارير مختبر بعد')+'</p>'; return; }
+  const sc=s=>s==='approved'?'var(--g1)':s==='pending'?'var(--a2)':'var(--tx3)';
+  const sl=s=>s==='approved'?'معتمدة':s==='pending'?'قيد الاعتماد':'مسودة';
+  wrap.innerHTML=data.map(r=>`
     <div style="background:var(--surf2);border:1.5px solid var(--brd);border-radius:10px;padding:12px;margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-weight:800;font-size:12px">${r.title||'—'}</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:9px;padding:2px 7px;border-radius:12px;font-weight:700;background:${r.status==='approved'?'var(--g1)':r.status==='pending'?'var(--a2)':'var(--tx3)'};color:#fff">${r.status==='approved'?'معتمدة':r.status==='pending'?'قيد الاعتماد':'مسودة'}</span>
-          <span style="font-size:10px;color:var(--tx3)">${r.date||''}</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:12px">${r.title||'—'}</div>
+          <div style="font-size:11px;color:var(--tx2);margin-top:5px">${r.notes||''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:9px;padding:2px 7px;border-radius:12px;font-weight:700;background:${sc(r.status||'draft')};color:#fff">${sl(r.status||'draft')}</span>
+            <span style="font-size:10px;color:var(--tx3)">${r.date||''}</span>
+          </div>
+          <div style="display:flex;gap:4px">
+            ${r.status!=='approved'?`<button class="ab" style="background:rgba(22,163,74,.1);color:var(--g2);font-size:10px;padding:3px 8px" onclick="approveLab(${r.id})">✓ اعتماد</button>`:''}
+            <button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delLab(${r.id})">🗑</button>
+          </div>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--tx2);margin-top:5px">${r.notes||''}</div>
     </div>`).join('');
+}
+function delLab(id)     { if(!confirm('حذف التقرير؟'))return; DB.lab=DB.lab.filter(r=>r.id!==id); saveAllData(); renderLabPage(); }
+function approveLab(id) { const r=DB.lab.find(x=>x.id===id); if(r){r.status='approved';saveAllData();renderLabPage();toast('تم اعتماد التقرير',true);} }
+function exportLabReports() {
+  if(!DB.lab.length){toast('لا توجد تقارير للتصدير',false);return;}
+  const rows=[['م','العنوان','التاريخ','الحالة','الملاحظات']];
+  DB.lab.forEach((r,i)=>rows.push([i+1,r.title||'',r.date||'',r.status==='approved'?'معتمدة':r.status==='pending'?'قيد الاعتماد':'مسودة',(r.notes||'').replace(/,/g,'،')]));
+  const csv='\uFEFF'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='تقارير_المختبر_'+new Date().toLocaleDateString('ar-SA').replace(/\//g,'-')+'.csv';
+  a.click();toast('تم تصدير تقارير المختبر',true);
 }
 
 function addLabReport() { const f=document.getElementById('lab-form'); if(f) f.style.display=f.style.display==='none'?'block':'none'; }
@@ -5510,7 +5607,6 @@ function showLabLogin() {
   toast(`مرحباً ${t.name}`, true);
 }
 
-function exportLabReports() { window.print(); }
 function prtLabReports()    { window.print(); }
 function addLab()           { addLabReport(); }
 
