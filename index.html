@@ -2494,8 +2494,9 @@ function doLogout() {
 // ── التهيئة ──
 function initApp() {
   setDate();
-  gp('dash');
+  populateTeacherSelects();
   renderNotifs();
+  gp('dash');
 }
 
 function setDate() {
@@ -2529,6 +2530,11 @@ function gp(id) {
   if (id === 'plan-term') renderTermPlan();
   if (id === 'plan-week') renderWeekPlan();
   if (id === 'schedule') renderSchedule();
+  if (id === 'guidance') renderGuidancePage();
+  if (id === 'activity') renderActivityPage();
+  if (id === 'library') renderLibraryPage();
+  if (id === 'lab') renderLabPage();
+  if (id === 'remedial') renderRemedial();
 }
 
 // ── الشريط الجانبي ──
@@ -4350,26 +4356,6 @@ function chgPin() {
 // ══════════════════════════════════════════
 // تهيئة التطبيق بعد تسجيل الدخول
 // ══════════════════════════════════════════
-function initApp() {
-  updateDate();
-  populateTeacherSelects();
-  renderDash();
-  renderCharter();
-  renderComm();
-  renderMessages();
-  renderImp();
-  renderSchedule();
-  renderGuidancePage();
-  renderActivityPage();
-  renderLibraryPage();
-  renderLabPage();
-  renderTermPlanRows();
-  renderWeekPlanList();
-  renderRemedial();
-  renderTasks();
-  renderTeachers();
-}
-
 function populateTeacherSelects() {
   const opts='<option value="">-- اختر المعلم --</option>'+DB.teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   ['MR','tk-tch','wp-teacher','sch-teacher','mt-single-teacher'].forEach(id=>{
