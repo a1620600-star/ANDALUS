@@ -504,7 +504,8 @@ body{background:#fff!important}
   <div class="ph-r no-print"><button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button><button class="btn b-gh bsm" onclick="prtWait()">طباعة</button><button class="btn b-a bsm" onclick="addWR()">+ إضافة سجل</button></div>
 </div>
 <div class="archive-filter">
-  <span>تصفية حسب اليوم:</span>
+  <input type="text" class="fc fc-sm" id="wait-search" placeholder="🔍 بحث..." style="width:130px" oninput="filterWaitArchive()">
+  <span>اليوم:</span>
   <select id="wait-filter-day" class="fc fc-sm" style="width:auto" onchange="filterWaitArchive()">
     <option value="">الكل</option>
     <option value="الأحد">الأحد</option>
@@ -513,12 +514,12 @@ body{background:#fff!important}
     <option value="الأربعاء">الأربعاء</option>
     <option value="الخميس">الخميس</option>
   </select>
-  <button class="btn b-gh bsm" onclick="exportWaitArchive()">📄 تصدير السجل</button>
+  <button class="btn b-gh bsm" onclick="exportWaitArchive()">📄 تصدير</button>
 </div>
 <div class="card"><div class="ch"><span class="ct"><span class="ct-dot"></span>نموذج الإدخال السريع</span></div><div id="WROWS"></div></div>
 <div class="card">
   <div class="ch"><span class="ct"><span class="ct-dot"></span>السجلات المحفوظة</span><span class="badge bb2" id="WCNT">0 سجل</span></div>
-  <div class="tw"><table><thead><tr><th>#</th><th>الصف</th><th>المعلم</th><th>المادة</th><th>الحصة</th><th>التاريخ</th><th>إرسال واتساب</th><th>حذف</th></tr></thead><tbody id="WTB"><tr><td colspan="8" style="padding:18px;color:var(--tx3)">لا توجد سجلات</td></tr></tbody></table></div>
+  <div class="tw"><table><thead><tr><th>#</th><th>الصف</th><th>المعلم</th><th>المادة</th><th>الوقت</th><th>التاريخ</th><th>واتساب</th><th>حذف</th></tr></thead><tbody id="WTB"><tr><td colspan="8" style="padding:18px;color:var(--tx3)">لا توجد سجلات</td></tr></tbody></table></div>
 </div>
 </div>
 
@@ -1611,6 +1612,7 @@ body{background:#fff!important}
   </div>
   <div class="ph-r no-print">
     <button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button>
+    <button class="btn b-gh bsm" onclick="exportTeachersCSV()">📄 تصدير CSV</button>
     <button class="btn b-gh bsm" onclick="prtTchs()">🖨 تقرير</button>
     <button class="btn b-d bsm" onclick="showTF()">+ إضافة معلم</button>
   </div>
@@ -1789,6 +1791,10 @@ body{background:#fff!important}
       <button class="btn b-gh bsm" onclick="document.getElementById('TASK-FORM').style.display='none'">إلغاء</button>
     </div>
   </div>
+</div>
+<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+  <input type="text" class="fc fc-sm" id="task-search" placeholder="🔍 بحث بالاسم أو التكليف..." style="flex:1;min-width:180px" oninput="filterTasks(this.value)">
+  <button class="btn b-gh bsm" onclick="exportTasksCSV()">📄 تصدير</button>
 </div>
 <div class="card">
   <div class="ch"><span class="ct"><span class="ct-dot"></span>سجل التكليفات</span><span class="badge bb2" id="TASK-CNT">0</span></div>
@@ -2875,6 +2881,7 @@ function renderDash() {
   }
   renderPerfBars();
   renderDashCharts();
+  renderDashSubjectChart();
 }
 
 function renderPerfBars() {
@@ -2886,6 +2893,45 @@ function renderPerfBars() {
     return `<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span>${t.name}</span><span>${p}%</span></div>
     <div style="background:var(--brd);border-radius:4px;height:6px"><div style="background:var(--g1);width:${p}%;height:6px;border-radius:4px;transition:.3s"></div></div></div>`;
   }).join('');
+}
+
+function renderDashSubjectChart() {
+  const ctx = document.getElementById('SC');
+  if (!ctx) return;
+  // إذا توفرت درجات — رسم مخطط حسب المادة
+  if (DB.grades && DB.grades.length) {
+    const subMap = {};
+    DB.grades.forEach(g => {
+      if (!g.sub) return;
+      if (!subMap[g.sub]) subMap[g.sub] = {sum:0,cnt:0};
+      const pct = g.max > 0 ? g.score/g.max*100 : 0;
+      subMap[g.sub].sum += pct; subMap[g.sub].cnt++;
+    });
+    const labels = Object.keys(subMap);
+    const data   = labels.map(s => Math.round(subMap[s].sum/subMap[s].cnt));
+    const colors = labels.map((_,i) => ['#065f46','#1d4ed8','#d97706','#7c3aed','#dc2626','#0891b2'][i%6]);
+    const existing = Chart.getChart(ctx); if (existing) existing.destroy();
+    new Chart(ctx, { type:'bar', data:{labels, datasets:[{data, backgroundColor:colors, borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%',font:{size:9}}},x:{ticks:{font:{size:9}}}}}});
+    return;
+  }
+  // إذا لا توجد درجات — رسم مخطط الأداء الوظيفي للمعلمين
+  if (DB.teachers.length) {
+    const bySubj = {};
+    DB.teachers.forEach(t => {
+      if (!t.subject) return;
+      if (!bySubj[t.subject]) bySubj[t.subject] = {sum:0,cnt:0};
+      bySubj[t.subject].sum += (t.perf||0); bySubj[t.subject].cnt++;
+    });
+    const labels = Object.keys(bySubj).slice(0,8);
+    const data   = labels.map(s => Math.round(bySubj[s].sum/bySubj[s].cnt));
+    const colors = labels.map((_,i) => ['#065f46','#1d4ed8','#d97706','#7c3aed','#dc2626','#0891b2','#c2410c','#16a34a'][i%8]);
+    const existing = Chart.getChart(ctx); if (existing) existing.destroy();
+    new Chart(ctx, { type:'bar', data:{labels, datasets:[{label:'متوسط الأداء %',data, backgroundColor:colors, borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%',font:{size:9}}},x:{ticks:{font:{size:8}}}}}});
+  }
 }
 
 function showGradesChartDetail() { gp('grades'); }
@@ -2938,11 +2984,11 @@ function renderDashCharts() {
 
 // ── سجل الانتظار ──
 function renderWait() {
-  // بناء نموذج الإدخال السريع في WROWS
   const wrows = document.getElementById('WROWS');
   if (wrows && !document.getElementById('wait-cls')) {
+    const tOpts = '<option value="">-- المعلم (اختياري) --</option>' + DB.teachers.map(t=>`<option value="${t.name}">${t.name}</option>`).join('');
     wrows.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;flex-wrap:wrap">
         <div class="fg" style="margin:0"><label class="fl">الفصل</label>
           <select class="fc fc-sm" id="wait-cls">
             <option value="A1">A1</option><option value="A2">A2</option><option value="A3">A3</option><option value="A4">A4</option>
@@ -2953,6 +2999,9 @@ function renderWait() {
         <div class="fg" style="margin:0"><label class="fl">المادة / السبب *</label>
           <input type="text" class="fc fc-sm" id="wait-sub" placeholder="مثال: رياضيات — غياب معلم">
         </div>
+        <div class="fg" style="margin:0"><label class="fl">المعلم</label>
+          <select class="fc fc-sm" id="wait-teacher">${tOpts}</select>
+        </div>
         <button class="btn b-a" onclick="addWR()" style="height:36px">+ تسجيل</button>
       </div>`;
   }
@@ -2960,33 +3009,65 @@ function renderWait() {
 }
 
 function addWR() {
-  const cls = document.getElementById('wait-cls');
-  const sub = document.getElementById('wait-sub');
+  const cls     = document.getElementById('wait-cls');
+  const sub     = document.getElementById('wait-sub');
+  const teacher = document.getElementById('wait-teacher');
   if (!cls || !sub || !sub.value.trim()) { toast('أدخل اسم المادة', false); return; }
   const now = new Date();
   DB.waiting.push({
     id: Date.now(), date: now.toLocaleDateString('ar-SA'), day: now.toLocaleDateString('ar-SA',{weekday:'long'}),
-    cls: cls.value, sub: sub.value.trim(), time: now.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})
+    cls: cls.value, sub: sub.value.trim(), time: now.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'}),
+    teacher: teacher ? teacher.value : ''
   });
   sub.value = '';
+  if (teacher) teacher.value = '';
   saveAllData();
   filterWaitArchive();
+  toast('تم تسجيل حصة الانتظار', true);
+}
+
+function delWR(id) {
+  DB.waiting = DB.waiting.filter(r => r.id !== id);
+  saveAllData();
+  filterWaitArchive();
+  toast('تم الحذف', true);
+}
+
+function sendWaitWA(r) {
+  const rec = DB.waiting.find(x => x.id === r);
+  if (!rec) return;
+  const msg = `⏳ سجل انتظار\nثانوية الأندلس بترقش\n\nالفصل: ${rec.cls}\nالمادة: ${rec.sub}\n${rec.teacher?'المعلم: '+rec.teacher+'\n':''}التاريخ: ${rec.date} — ${rec.day||''}\nالوقت: ${rec.time||''}`;
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
 }
 
 function filterWaitArchive() {
   const tb = document.getElementById('WTB');
   if (!tb) return;
   const fDay = document.getElementById('wait-filter-day');
+  const fSrch = document.getElementById('wait-search');
   let data = [...DB.waiting];
   if (fDay && fDay.value) data = data.filter(r => r.day === fDay.value);
+  if (fSrch && fSrch.value.trim()) {
+    const q = fSrch.value.trim();
+    data = data.filter(r => (r.sub||'').includes(q) || (r.teacher||'').includes(q) || (r.cls||'').includes(q));
+  }
   const cnt = document.getElementById('WCNT');
   if (!data.length) {
-    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:14px;color:var(--tx3)">لا توجد سجلات</td></tr>';
+    tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:14px;color:var(--tx3)">لا توجد سجلات</td></tr>';
     if (cnt) cnt.textContent = '0 سجل';
     return;
   }
-  tb.innerHTML = data.map(r =>
-    `<tr><td>${r.date}</td><td>${r.day||''}</td><td>${r.cls}</td><td>${r.sub}</td><td>${r.time||''}</td></tr>`
+  tb.innerHTML = data.map((r, i) =>
+    `<tr>
+      <td style="text-align:center">${i+1}</td>
+      <td style="text-align:center;font-weight:700">${r.cls}</td>
+      <td>${r.teacher||'—'}</td>
+      <td>${r.sub}</td>
+      <td style="text-align:center">${r.time||'—'}</td>
+      <td style="text-align:center">${r.date} ${r.day?'('+r.day+')':''}</td>
+      <td style="text-align:center"><button class="ab" style="background:rgba(37,211,102,.1);color:#25d366" onclick="sendWaitWA(${r.id})">📱</button></td>
+      <td style="text-align:center"><button class="ab ad" onclick="delWR(${r.id})">🗑</button></td>
+    </tr>`
   ).join('');
   if (cnt) cnt.textContent = data.length + ' سجل';
 }
@@ -3565,6 +3646,21 @@ function msChg() {
 
 function prtTchs() { window.print(); }
 
+function exportTeachersCSV() {
+  if (!DB.teachers.length) { toast('لا يوجد معلمون للتصدير', false); return; }
+  const rows = [['م','الاسم الكامل','رقم الهوية','الجوال','المادة','الصفوف','نسبة الأداء']];
+  DB.teachers.forEach((t, i) => rows.push([
+    i+1, t.name||'', t.idNum||'', t.phone||'', t.subject||'',
+    (t.classes||[]).join(' - '), (t.perf||0)+'%'
+  ]));
+  const csv = '\uFEFF' + rows.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'بيانات_المعلمين.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast('تم تصدير بيانات المعلمين', true);
+}
+
 function waTeacher(phone) {
   if (!phone) { toast('لا يوجد رقم جوال لهذا المعلم', false); return; }
   const num = '966' + phone.replace(/^0/, '');
@@ -3658,6 +3754,47 @@ function delTask(id) {
 }
 
 function prtTasks() { window.print(); }
+
+function filterTasks(q) {
+  const tb = document.getElementById('TASK-TB');
+  if (!tb) return;
+  const lq = (q||'').trim().toLowerCase();
+  let data = DB.tasks;
+  if (lq) data = data.filter(t => (t.teacher||'').includes(lq) || (t.task||'').toLowerCase().includes(lq));
+  const cnt = document.getElementById('TASK-CNT');
+  if (cnt) cnt.textContent = data.length;
+  if (!data.length) { tb.innerHTML = '<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--tx3)">لا توجد نتائج</td></tr>'; return; }
+  const statColor = s => s==='منجز'?'var(--g1)':s==='جارٍ'?'var(--s2)':'var(--a2)';
+  tb.innerHTML = data.map((t,i) => `
+    <tr>
+      <td style="text-align:center">${i+1}</td>
+      <td><b>${t.teacher||'—'}</b></td>
+      <td>${t.task||'—'}</td>
+      <td style="text-align:center">${t.start||'—'}</td>
+      <td style="text-align:center">${t.dur||'—'}</td>
+      <td style="text-align:center"><span class="badge" style="background:${statColor(t.status||'منتظر')}22;color:${statColor(t.status||'منتظر')}">${t.status||'منتظر'}</span></td>
+      <td style="text-align:center">${t.approved?'<span style="color:var(--g1);font-weight:700">✓ معتمد</span>':'<span style="color:var(--a2)">بانتظار</span>'}</td>
+      <td style="text-align:center">
+        <div style="display:flex;gap:4px;justify-content:center">
+          <button class="ab ae" onclick="toggleTaskStatus(${t.id})">⟳</button>
+          <button class="ab ae" onclick="toggleTaskApprove(${t.id})">✓</button>
+          <button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delTask(${t.id})">🗑</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function exportTasksCSV() {
+  if (!DB.tasks.length) { toast('لا توجد تكليفات للتصدير', false); return; }
+  const rows = [['المعلم','التكليف','تاريخ البدء','المدة','الحالة','الاعتماد']];
+  DB.tasks.forEach(t => rows.push([t.teacher||'', t.task||'', t.start||'', t.dur||'', t.status||'', t.approved?'معتمد':'بانتظار']));
+  const csv = '\uFEFF' + rows.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'سجل_التكليفات.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast('تم التصدير', true);
+}
 
 // ══════════════════════════════════════════
 // ميثاق المهنة
