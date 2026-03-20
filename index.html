@@ -1341,8 +1341,14 @@ body{background:#fff!important}
       <div class="fg" style="margin:0"><label class="fl">التنفيذ والمسؤولية</label>
         <input type="text" class="fc fc-sm" id="IMP-RESP" placeholder="المسؤول...">
       </div>
-      <div class="fg" style="margin:0"><label class="fl">القيمة المستهدفة</label>
-        <input type="text" class="fc fc-sm" id="IMP-TARGET" placeholder="الهدف...">
+      <div class="fg" style="margin:0"><label class="fl">وصف الاحتياج</label>
+        <input type="text" class="fc fc-sm" id="IMP-TARGET" placeholder="وصف الاحتياج...">
+      </div>
+      <div class="fg" style="margin:0"><label class="fl">إجراءات التحسين</label>
+        <input type="text" class="fc fc-sm" id="IMP-ACTIONS" placeholder="الإجراءات المقترحة...">
+      </div>
+      <div class="fg" style="margin:0"><label class="fl">أساليب وطرق التحسين</label>
+        <input type="text" class="fc fc-sm" id="IMP-METHODS" placeholder="الأساليب والطرق...">
       </div>
       <div class="fg" style="margin:0"><label class="fl">مدة الإنجاز</label>
         <input type="date" class="fc fc-sm" id="IMP-DL">
@@ -1395,6 +1401,15 @@ body{background:#fff!important}
       <button class="btn b-gh bsm" onclick="document.getElementById('IMP-EXEC-OV').style.display='none'">✕ إغلاق</button>
     </div>
     <div class="g3" style="margin-bottom:8px">
+      <div class="fg" style="margin:0"><label class="fl">المجال</label>
+        <select class="fc fc-sm" id="IMP-EXEC-DOM">
+          <option value="">-- المجال --</option>
+          <option value="تعليمي">تعليمي</option>
+          <option value="إداري">إداري</option>
+          <option value="بيئي">بيئي</option>
+          <option value="مجتمعي">مجتمعي</option>
+        </select>
+      </div>
       <div class="fg" style="margin:0"><label class="fl">الإجراء المنفذ *</label>
         <input type="text" class="fc fc-sm" id="IMP-EXEC-TITLE" placeholder="عنوان الإجراء...">
       </div>
@@ -1409,9 +1424,15 @@ body{background:#fff!important}
           <option value="متأخر">متأخر</option>
         </select>
       </div>
+      <div class="fg" style="margin:0"><label class="fl">اللجان المدرسية</label>
+        <input type="text" class="fc fc-sm" id="IMP-EXEC-COMM" placeholder="اسم اللجنة...">
+      </div>
+      <div class="fg" style="margin:0"><label class="fl">مشرف دعم التميز</label>
+        <input type="text" class="fc fc-sm" id="IMP-EXEC-SUP" placeholder="اسم المشرف...">
+      </div>
     </div>
-    <div class="fg" style="margin-bottom:8px"><label class="fl">ملاحظات</label>
-      <textarea class="fc" id="IMP-EXEC-NOTES" rows="2" placeholder="ملاحظات التنفيذ..."></textarea>
+    <div class="fg" style="margin-bottom:8px"><label class="fl">الإجراءات المنفذة / ملاحظات</label>
+      <textarea class="fc" id="IMP-EXEC-NOTES" rows="2" placeholder="تفاصيل الإجراءات المنفذة..."></textarea>
     </div>
     <div style="display:flex;gap:6px">
       <button class="btn b-g" onclick="saveImpExecEntry()">حفظ السجل</button>
@@ -2612,7 +2633,7 @@ try {
 
 function saveAllData() {
   try {
-    localStorage.setItem('ANDALUS_V2', JSON.stringify(DB));
+    saveAllData();
     toast('تم الحفظ بنجاح', true);
   } catch(e) { toast('خطأ في الحفظ', false); }
 }
@@ -3206,7 +3227,7 @@ function swtab(el, grp, tab) {
 function addCustomSubject() {
   const inp = document.getElementById('gSubCustom');
   if (!inp || !inp.value.trim()) { toast('أدخل اسم المادة', false); return; }
-  const sel = document.getElementById('wait-sub');
+  const sel = document.getElementById('gSub');
   if (sel) {
     const opt = document.createElement('option');
     opt.value = inp.value.trim();
@@ -3215,7 +3236,7 @@ function addCustomSubject() {
     sel.value = inp.value.trim();
   }
   inp.value = '';
-  toast('تمت الإضافة', true);
+  toast('تمت إضافة المادة', true);
 }
 
 // ── الأداء الوظيفي ──
@@ -3418,7 +3439,7 @@ function addCustomSubj() {
   toast('تمت الإضافة', true);
 }
 
-function addCustomSubject() { addCustomSubj(); }
+// addCustomSubject for grades page defined above (reads gSubCustom → gSub)
 
 function toggleMS() {
   const dd = document.getElementById('ms-dd');
@@ -4096,7 +4117,7 @@ function delOpIssue(i) {
 
 function onOpStatusChange() {
   const sel = document.getElementById('op-status');
-  if (sel) { DB.opPlan.status = sel.value; localStorage.setItem('ANDALUS_V2', JSON.stringify(DB)); }
+  if (sel) { DB.opPlan.status = sel.value; saveAllData(); }
 }
 
 function renderOpPlan() {
@@ -4128,7 +4149,7 @@ function saveOpGoalMeta(n, field) {
   if (!DB.opPlan.goals) DB.opPlan.goals = {};
   if (!DB.opPlan.goals[n]) DB.opPlan.goals[n] = {};
   DB.opPlan.goals[n][field] = el.value;
-  localStorage.setItem('ANDALUS_V2', JSON.stringify(DB));
+  saveAllData();
 }
 
 function renderOpGoalRows(n) {
@@ -4164,7 +4185,7 @@ function updateOpRow(goalN, rowI, field, val) {
   if (!DB.opPlan.goalRows || !DB.opPlan.goalRows[goalN]) return;
   if (DB.opPlan.goalRows[goalN][rowI]) {
     DB.opPlan.goalRows[goalN][rowI][field] = val;
-    localStorage.setItem('ANDALUS_V2', JSON.stringify(DB));
+    saveAllData();
   }
 }
 
@@ -4206,7 +4227,7 @@ function addOpInitiative() {
 function updateOpInit(i, field, val) {
   if (!DB.opPlan.initiatives || !DB.opPlan.initiatives[i]) return;
   DB.opPlan.initiatives[i][field] = val;
-  localStorage.setItem('ANDALUS_V2', JSON.stringify(DB));
+  saveAllData();
 }
 
 function delOpInit(i) {
@@ -4228,15 +4249,16 @@ function renderImpBuildTable(data) {
   const statEl = document.getElementById('imp-stat-build'); if(statEl) statEl.textContent = DB.impPlans.length;
   if (!rows.length) { tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:18px;color:var(--tx3)">لا توجد مبادرات — اضغط "+ إضافة عملية" أو "البيانات الرسمية"</td></tr>'; return; }
   const dc = {'تعليمي':'var(--d2)','إداري':'var(--g1)','بيئي':'var(--a2)','مجتمعي':'var(--s1)'};
+  const evidCount = domain => (DB.impEvidence||[]).filter(e=>e.domain===domain).length;
   tb.innerHTML = rows.map((p,i) => `<tr>
     <td style="text-align:center;padding:7px"><span class="badge" style="background:${(dc[p.domain]||'var(--d2)')}22;color:${dc[p.domain]||'var(--d2)'};font-size:9px">${p.domain||'—'}</span></td>
     <td style="padding:7px"><b style="font-size:11px">${p.title||'—'}</b></td>
-    <td style="padding:7px;font-size:10px;color:var(--tx2)">—</td>
-    <td style="padding:7px;font-size:10px">—</td>
-    <td style="padding:7px;font-size:10px">—</td>
+    <td style="padding:7px;font-size:10px;color:var(--tx2)">${p.target||'—'}</td>
+    <td style="padding:7px;font-size:10px">${p.actions||'—'}</td>
+    <td style="padding:7px;font-size:10px">${p.methods||'—'}</td>
     <td style="padding:7px;font-size:10px">${p.deadline||'—'}</td>
     <td style="padding:7px;font-size:10px">${p.resp||'—'}</td>
-    <td style="text-align:center;padding:7px;font-size:10px">—</td>
+    <td style="text-align:center;padding:7px"><span style="font-size:11px;font-weight:700;color:var(--d1)">${evidCount(p.domain)||0}</span></td>
     <td style="text-align:center;padding:7px"><button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delImpPlan(${p.id})">🗑</button></td>
   </tr>`).join('');
 }
@@ -4247,12 +4269,13 @@ function renderImpExecTable() {
   const statEl = document.getElementById('imp-stat-exec'); if(statEl) statEl.textContent = DB.impExec.length;
   if (!DB.impExec.length) { tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:18px;color:var(--tx3)">لا توجد سجلات تنفيذ — اضغط "+ إضافة إجراء منفذ"</td></tr>'; return; }
   const sc = {'منجز':'var(--g1)','جارٍ':'var(--s2)','متأخر':'var(--r2)','لم يبدأ':'var(--a2)'};
+  const dc2 = {'تعليمي':'var(--d2)','إداري':'var(--g1)','بيئي':'var(--a2)','مجتمعي':'var(--s1)'};
   tb.innerHTML = DB.impExec.map((r,i) => `<tr>
-    <td style="text-align:center;padding:7px">—</td>
+    <td style="text-align:center;padding:7px">${r.domain?`<span class="badge" style="background:${(dc2[r.domain]||'var(--d2)')}22;color:${dc2[r.domain]||'var(--d2)'};font-size:9px">${r.domain}</span>`:'—'}</td>
     <td style="padding:7px;font-size:11px"><b>${r.title||'—'}</b></td>
     <td style="padding:7px;font-size:10px">${r.notes||'—'}</td>
-    <td style="padding:7px;font-size:10px">—</td>
-    <td style="padding:7px;font-size:10px">—</td>
+    <td style="padding:7px;font-size:10px">${r.committee||'—'}</td>
+    <td style="padding:7px;font-size:10px">${r.supervisor||'—'}</td>
     <td style="text-align:center;padding:7px">
       <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
         <span class="badge" style="background:${(sc[r.status]||'var(--a2)')}22;color:${sc[r.status]||'var(--a2)'}">${r.status||'—'}</span>
@@ -4274,9 +4297,11 @@ function saveImpEntry() {
   const resp     = document.getElementById('IMP-RESP')?.value.trim() || '';
   const target   = document.getElementById('IMP-TARGET')?.value.trim() || '';
   const deadline = document.getElementById('IMP-DL')?.value || '';
+  const actions  = document.getElementById('IMP-ACTIONS')?.value.trim() || '';
+  const methods  = document.getElementById('IMP-METHODS')?.value.trim() || '';
   if (!title) { toast('أدخل عنوان المبادرة', false); return; }
-  DB.impPlans.push({ id: Date.now(), domain, title, resp, target, deadline });
-  ['IMP-TITLE','IMP-RESP','IMP-TARGET','IMP-DL'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  DB.impPlans.push({ id: Date.now(), domain, title, resp, target, deadline, actions, methods });
+  ['IMP-TITLE','IMP-RESP','IMP-TARGET','IMP-DL','IMP-ACTIONS','IMP-METHODS'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const domSel = document.getElementById('IMP-DOM'); if(domSel) domSel.value='';
   const ov = document.getElementById('IMP-ADD-OV'); if(ov) ov.style.display='none';
   saveAllData(); renderImpBuildTable();
@@ -4297,9 +4322,12 @@ function saveImpExecEntry() {
   const date   = document.getElementById('IMP-EXEC-DATE')?.value || new Date().toISOString().slice(0,10);
   const status = document.getElementById('IMP-EXEC-STATUS')?.value || 'جارٍ';
   const notes  = document.getElementById('IMP-EXEC-NOTES')?.value.trim() || '';
+  const domain = document.getElementById('IMP-EXEC-DOM')?.value || '';
+  const committee = document.getElementById('IMP-EXEC-COMM')?.value.trim() || '';
+  const supervisor = document.getElementById('IMP-EXEC-SUP')?.value.trim() || '';
   if (!title) { toast('أدخل عنوان الإجراء', false); return; }
-  DB.impExec.push({ id: Date.now(), title, date, status, notes });
-  ['IMP-EXEC-TITLE','IMP-EXEC-NOTES'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  DB.impExec.push({ id: Date.now(), title, date, status, notes, domain, committee, supervisor });
+  ['IMP-EXEC-TITLE','IMP-EXEC-NOTES','IMP-EXEC-COMM','IMP-EXEC-SUP'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const ov = document.getElementById('IMP-EXEC-OV'); if(ov) ov.style.display='none';
   saveAllData(); renderImpExecTable();
   toast('تمت إضافة سجل التنفيذ', true);
@@ -4451,7 +4479,7 @@ function renderTermPlanRows() {
 
 function updateTermRow(id, field, val) {
   const p = (DB.termPlan||[]).find(x=>x.id===id);
-  if (p) { p[field]=val; localStorage.setItem('ANDALUS_V2', JSON.stringify(DB)); }
+  if (p) { p[field]=val; saveAllData(); }
 }
 
 function addPRow(tableId) {
@@ -4836,7 +4864,10 @@ function renderActivityPage() {
     <div style="background:var(--surf2);border:1.5px solid var(--brd);border-radius:10px;padding:12px;margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="font-weight:800;font-size:12px">${r.title||'—'}</div>
-        <span style="font-size:10px;color:var(--tx3)">${r.date||''}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:9px;padding:2px 7px;border-radius:12px;font-weight:700;background:${r.status==='approved'?'var(--g1)':r.status==='pending'?'var(--a2)':'var(--tx3)'};color:#fff">${r.status==='approved'?'معتمدة':r.status==='pending'?'قيد الاعتماد':'مسودة'}</span>
+          <span style="font-size:10px;color:var(--tx3)">${r.date||''}</span>
+        </div>
       </div>
       <div style="font-size:11px;color:var(--tx2);margin-top:5px">${r.notes||''}</div>
     </div>`).join('');
@@ -4848,8 +4879,9 @@ function saveActivityReport() {
   const title=document.getElementById('act-title')?.value.trim();
   const notes=document.getElementById('act-notes')?.value.trim();
   const date =document.getElementById('act-date')?.value||new Date().toISOString().slice(0,10);
+  const status=document.getElementById('act-status')?.value||'draft';
   if (!title) { toast('أدخل عنوان النشاط', false); return; }
-  DB.activity.push({id:Date.now(),title,notes,date});
+  DB.activity.push({id:Date.now(),title,notes,date,status});
   ['act-title','act-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const f=document.getElementById('activity-form'); if(f) f.style.display='none';
   saveAllData(); renderActivityPage();
@@ -4885,7 +4917,10 @@ function renderLibraryPage() {
     <div style="background:var(--surf2);border:1.5px solid var(--brd);border-radius:10px;padding:12px;margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="font-weight:800;font-size:12px">${r.title||'—'}</div>
-        <span style="font-size:10px;color:var(--tx3)">${r.date||''}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:9px;padding:2px 7px;border-radius:12px;font-weight:700;background:${r.status==='approved'?'var(--g1)':r.status==='pending'?'var(--a2)':'var(--tx3)'};color:#fff">${r.status==='approved'?'معتمدة':r.status==='pending'?'قيد الاعتماد':'مسودة'}</span>
+          <span style="font-size:10px;color:var(--tx3)">${r.date||''}</span>
+        </div>
       </div>
       <div style="font-size:11px;color:var(--tx2);margin-top:5px">${r.notes||''}</div>
     </div>`).join('');
@@ -4897,8 +4932,9 @@ function saveLibraryReport() {
   const title=document.getElementById('lib-title')?.value.trim();
   const notes=document.getElementById('lib-notes')?.value.trim();
   const date =document.getElementById('lib-date')?.value||new Date().toISOString().slice(0,10);
+  const lib_status=document.getElementById('lib-status')?.value||'draft';
   if (!title) { toast('أدخل عنوان التقرير', false); return; }
-  DB.library.push({id:Date.now(),title,notes,date});
+  DB.library.push({id:Date.now(),title,notes,date,status:lib_status});
   ['lib-title','lib-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const f=document.getElementById('library-form'); if(f) f.style.display='none';
   saveAllData(); renderLibraryPage();
@@ -4934,7 +4970,10 @@ function renderLabPage() {
     <div style="background:var(--surf2);border:1.5px solid var(--brd);border-radius:10px;padding:12px;margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="font-weight:800;font-size:12px">${r.title||'—'}</div>
-        <span style="font-size:10px;color:var(--tx3)">${r.date||''}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:9px;padding:2px 7px;border-radius:12px;font-weight:700;background:${r.status==='approved'?'var(--g1)':r.status==='pending'?'var(--a2)':'var(--tx3)'};color:#fff">${r.status==='approved'?'معتمدة':r.status==='pending'?'قيد الاعتماد':'مسودة'}</span>
+          <span style="font-size:10px;color:var(--tx3)">${r.date||''}</span>
+        </div>
       </div>
       <div style="font-size:11px;color:var(--tx2);margin-top:5px">${r.notes||''}</div>
     </div>`).join('');
@@ -4946,8 +4985,9 @@ function saveLabReport() {
   const title=document.getElementById('lab-title')?.value.trim();
   const notes=document.getElementById('lab-notes')?.value.trim();
   const date =document.getElementById('lab-date')?.value||new Date().toISOString().slice(0,10);
+  const lab_status=document.getElementById('lab-status')?.value||'draft';
   if (!title) { toast('أدخل عنوان التقرير', false); return; }
-  DB.lab.push({id:Date.now(),title,notes,date});
+  DB.lab.push({id:Date.now(),title,notes,date,status:lab_status});
   ['lab-title','lab-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const f=document.getElementById('lab-form'); if(f) f.style.display='none';
   saveAllData(); renderLabPage();
