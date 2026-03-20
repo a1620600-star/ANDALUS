@@ -484,7 +484,7 @@ body{background:#fff!important}
   <div class="mc" style="--mc-c:var(--v2);--mc-bg:rgba(124,58,237,.08)" onclick="gp('plan-imp')"><div class="mc-ic" style="color:var(--v2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><div class="mc-v" id="dm-imp">0</div><div class="mc-l">مبادرات التحسين</div><div class="mc-tg">عرض</div></div>
   <div class="mc" style="--mc-c:var(--s2);--mc-bg:rgba(8,145,178,.08)" onclick="gp('committees')"><div class="mc-ic" style="color:var(--s2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div><div class="mc-v" id="dm-comm">0</div><div class="mc-l">اللجان المدرسية</div><div class="mc-tg">عرض</div></div>
   <div class="mc" style="--mc-c:var(--o2);--mc-bg:rgba(234,88,12,.08)" onclick="gp('tasks')"><div class="mc-ic" style="color:var(--o2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div><div class="mc-v" id="dm-tasks">0</div><div class="mc-l">التكليفات</div><div class="mc-tg">عرض</div></div>
-  <div class="mc" style="--mc-c:var(--g1);--mc-bg:rgba(6,95,70,.08)" onclick="gp('plan-op')"><div class="mc-ic" style="color:var(--g1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg></div><div class="mc-v">45%</div><div class="mc-l">إنجاز الخطط</div><div class="mc-tg">عرض</div></div>
+  <div class="mc" style="--mc-c:var(--g1);--mc-bg:rgba(6,95,70,.08)" onclick="gp('plan-op')"><div class="mc-ic" style="color:var(--g1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg></div><div class="mc-v" id="dm-plans">—</div><div class="mc-l">إنجاز الخطط</div><div class="mc-tg">عرض</div></div>
 </div>
 <div class="g2" style="margin-bottom:12px">
   <div class="card"><div class="ch"><span class="ct"><span class="ct-dot"></span>التحصيل حسب المادة <button class="btn b-gh bsm" onclick="showGradesChartDetail()">عرض التفاصيل</button></span></div><div style="position:relative;height:160px"><canvas id="SC"></canvas></div></div>
@@ -1794,7 +1794,18 @@ body{background:#fff!important}
 </div>
 <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
   <input type="text" class="fc fc-sm" id="task-search" placeholder="🔍 بحث بالاسم أو التكليف..." style="flex:1;min-width:180px" oninput="filterTasks(this.value)">
+  <select class="fc fc-sm" id="task-filter-status" style="width:auto" onchange="filterTasks(document.getElementById('task-search').value)">
+    <option value="">كل الحالات</option>
+    <option value="منتظر">منتظر</option>
+    <option value="جارٍ">جارٍ</option>
+    <option value="منجز">منجز</option>
+  </select>
   <button class="btn b-gh bsm" onclick="exportTasksCSV()">📄 تصدير</button>
+</div>
+<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+  <span class="badge" style="background:rgba(217,119,6,.1);color:var(--a2)">منتظر: <b id="task-cnt-pend">0</b></span>
+  <span class="badge" style="background:rgba(8,145,178,.1);color:var(--s2)">جارٍ: <b id="task-cnt-prog">0</b></span>
+  <span class="badge" style="background:rgba(6,95,70,.1);color:var(--g1)">منجز: <b id="task-cnt-done">0</b></span>
 </div>
 <div class="card">
   <div class="ch"><span class="ct"><span class="ct-dot"></span>سجل التكليفات</span><span class="badge bb2" id="TASK-CNT">0</span></div>
@@ -1911,7 +1922,7 @@ body{background:#fff!important}
         </select>
       </div>
       <div class="fg"><label class="fl">المدعوون</label>
-        <select class="fc" id="mt-who">
+        <select class="fc" id="mt-who" onchange="document.getElementById('mt-single-wrap').style.display=this.value==='single'?'':'none'">
           <option value="all">جميع المعلمين</option>
           <option value="single">معلم محدد</option>
         </select>
@@ -1971,11 +1982,14 @@ body{background:#fff!important}
 <div class="tc" id="msg-m4">
   <div class="card">
     <div class="ch"><span class="ct"><span class="ct-dot"></span>أرشيف الرسائل والاجتماعات</span>
-      <div style="display:flex;gap:5px">
-        <button class="btn b-gh bsm" onclick="prtArchive()">🖨 طباعة الأرشيف</button>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn b-gh bsm" onclick="exportMsgArchiveCSV()">📄 تصدير CSV</button>
+        <button class="btn b-gh bsm" onclick="prtArchive()">🖨 طباعة</button>
         <button class="btn b-r bsm" onclick="clearArchive()">حذف الكل</button>
-        <button class="btn b-d bsm" onclick="saveAllData()">💾 حفظ</button>
       </div>
+    </div>
+    <div style="margin-bottom:10px">
+      <input type="text" class="fc fc-sm" id="msg-archive-search" placeholder="🔍 بحث في الأرشيف..." oninput="filterMsgArchive(this.value)">
     </div>
     <div id="MSG-ARCHIVE">
       <p style="padding:16px;text-align:center;color:var(--tx3)">لا توجد رسائل محفوظة بعد</p>
@@ -2862,7 +2876,13 @@ function renderDash() {
   const dmImp = document.getElementById('dm-imp');
   if (dmImp) dmImp.textContent = DB.impPlans.length || 0;
   const dmTasks = document.getElementById('dm-tasks');
-  if (dmTasks) dmTasks.textContent = DB.tasks.length || 0;
+  if (dmTasks) {
+    const pending = DB.tasks.filter(t => t.status !== 'منجز').length;
+    dmTasks.textContent = DB.tasks.length || 0;
+    // تلوين البطاقة حسب وجود تكليفات معلقة
+    const mc = dmTasks.closest('.mc');
+    if (mc) mc.style.setProperty('--mc-c', pending > 0 ? 'var(--o2)' : 'var(--g2)');
+  }
   const dmComm = document.getElementById('dm-comm');
   if (dmComm) dmComm.textContent = DB.committees.length || 0;
   // نسبة الأداء الوظيفي
@@ -2878,6 +2898,19 @@ function renderDash() {
     const total = DB.teachers.length;
     const signed = (DB.charter||[]).length;
     dmCh.textContent = total ? Math.round(signed/total*100) + '%' : '0%';
+  }
+  // نسبة إنجاز الخطط (متوسط الأربع خطط)
+  const dmPlans = document.getElementById('dm-plans');
+  if (dmPlans) {
+    const tp   = DB.termPlan||[];
+    const wp   = DB.weekPlan||[];
+    const ip   = DB.impPlans||[];
+    const opP  = (DB.opPlan && DB.opPlan.approved) ? 100 : (DB.opPlan && (DB.opPlan.goalRows || DB.opPlan.goals)) ? 55 : 10;
+    const tpP  = tp.length ? Math.min(100, tp.length * 10) : 0;
+    const wpP  = wp.length ? Math.round(wp.filter(p=>p.status==='معتمد').length / wp.length * 100) : 0;
+    const ipP  = ip.length ? Math.round(ip.filter(p=>p.status==='مكتمل').length / ip.length * 100) : 0;
+    const vals = [opP, tpP, wpP, ipP].filter(v => v > 0);
+    dmPlans.textContent = vals.length ? Math.round(vals.reduce((s,v)=>s+v,0)/vals.length) + '%' : '0%';
   }
   renderPerfBars();
   renderDashCharts();
@@ -3672,7 +3705,17 @@ function showTL() { gp('teachers'); }
 // ══════════════════════════════════════════
 // التكليفات
 // ══════════════════════════════════════════
+function _updateTaskStats() {
+  const pend = DB.tasks.filter(t => (t.status||'منتظر') === 'منتظر').length;
+  const prog = DB.tasks.filter(t => t.status === 'جارٍ').length;
+  const done = DB.tasks.filter(t => t.status === 'منجز').length;
+  const ep = document.getElementById('task-cnt-pend'); if (ep) ep.textContent = pend;
+  const eg = document.getElementById('task-cnt-prog'); if (eg) eg.textContent = prog;
+  const ed = document.getElementById('task-cnt-done'); if (ed) ed.textContent = done;
+}
+
 function renderTasks() {
+  _updateTaskStats();
   const tb = document.getElementById('TASK-TB');
   if (!tb) return;
   const cnt = document.getElementById('TASK-CNT');
@@ -3756,11 +3799,14 @@ function delTask(id) {
 function prtTasks() { window.print(); }
 
 function filterTasks(q) {
+  _updateTaskStats();
   const tb = document.getElementById('TASK-TB');
   if (!tb) return;
   const lq = (q||'').trim().toLowerCase();
+  const statF = document.getElementById('task-filter-status')?.value || '';
   let data = DB.tasks;
   if (lq) data = data.filter(t => (t.teacher||'').includes(lq) || (t.task||'').toLowerCase().includes(lq));
+  if (statF) data = data.filter(t => (t.status||'منتظر') === statF);
   const cnt = document.getElementById('TASK-CNT');
   if (cnt) cnt.textContent = data.length;
   if (!data.length) { tb.innerHTML = '<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--tx3)">لا توجد نتائج</td></tr>'; return; }
@@ -4085,23 +4131,7 @@ function exportMtgReport() {
 let _msgScope = 'private';
 
 function renderMessages() {
-  const wrap = document.getElementById('MSG-ARCHIVE');
-  if (!wrap) return;
-  if (!DB.messages.length) {
-    wrap.innerHTML = '<div style="padding:20px;text-align:center;color:var(--tx3)">لا توجد رسائل محفوظة بعد</div>';
-    return;
-  }
-  wrap.innerHTML = DB.messages.slice().reverse().map(m => `
-    <div style="background:var(--surf2);border:1.5px solid var(--brd);border-radius:10px;padding:12px;margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <span style="font-weight:800;font-size:11px;color:var(--d2)">${m.to||'الكل'}</span>
-        <div style="display:flex;gap:5px;align-items:center">
-          <span class="badge" style="background:${m.type==='wa'?'rgba(37,211,102,.15)':'rgba(30,58,95,.1)'};color:${m.type==='wa'?'#16a34a':'var(--d2)'}">${m.type==='wa'?'واتساب':'SMS'}</span>
-          <span style="font-size:10px;color:var(--tx3)">${m.date||''}</span>
-        </div>
-      </div>
-      <div style="font-size:11px;color:var(--tx1);line-height:1.7">${m.body||''}</div>
-    </div>`).join('');
+  filterMsgArchive(document.getElementById('msg-archive-search')?.value||'');
 }
 
 // ══════════════════════════════════════════
@@ -4310,6 +4340,50 @@ function sendMeetReportWA() {
 }
 
 function prtArchive()  { window.print(); }
+
+function filterMsgArchive(q) {
+  const wrap = document.getElementById('MSG-ARCHIVE');
+  if (!wrap) return;
+  const lq = (q||'').trim();
+  let data = (DB.messages||[]).slice().reverse();
+  if (lq) data = data.filter(m => (m.to||'').includes(lq) || (m.body||'').includes(lq));
+  if (!data.length) {
+    wrap.innerHTML = '<div style="padding:20px;text-align:center;color:var(--tx3)">لا توجد نتائج</div>';
+    return;
+  }
+  wrap.innerHTML = data.map(m => `
+    <div style="background:var(--surf2);border:1.5px solid var(--brd);border-radius:10px;padding:12px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-weight:800;font-size:11px;color:var(--d2)">${m.to||'الكل'}</span>
+        <div style="display:flex;gap:5px;align-items:center">
+          <span class="badge" style="background:${m.type==='wa'?'rgba(37,211,102,.15)':m.type==='report'?'rgba(30,58,95,.1)':'rgba(8,145,178,.1)'};color:${m.type==='wa'?'#16a34a':m.type==='report'?'var(--d2)':'var(--s2)'}">${m.type==='wa'?'واتساب':m.type==='report'?'تقرير':'SMS'}</span>
+          <span style="font-size:10px;color:var(--tx3)">${m.date||''}</span>
+          <button class="ab ad" onclick="delMsg(${m.id})">🗑</button>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--tx1);line-height:1.7">${m.body||''}</div>
+    </div>`).join('');
+}
+
+function delMsg(id) {
+  DB.messages = DB.messages.filter(m => m.id !== id);
+  saveAllData();
+  filterMsgArchive(document.getElementById('msg-archive-search')?.value||'');
+  toast('تم الحذف', true);
+}
+
+function exportMsgArchiveCSV() {
+  if (!DB.messages.length) { toast('لا توجد رسائل للتصدير', false); return; }
+  const rows = [['المستلم','النوع','نص الرسالة','التاريخ']];
+  DB.messages.slice().reverse().forEach(m => rows.push([m.to||'', m.type||'', (m.body||'').replace(/\n/g,' '), m.date||'']));
+  const csv = '\uFEFF' + rows.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'أرشيف_الرسائل.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast('تم تصدير الأرشيف', true);
+}
+
 function clearArchive() {
   if (!confirm('حذف جميع الرسائل المحفوظة؟')) return;
   DB.messages = [];
