@@ -381,6 +381,8 @@ body{background:#fff!important}
   </div>
 </header>
 
+<div class="layout">
+
 <nav class="sb no-print" id="SB">
   <div class="sb-head">
     <span class="sb-head-title">القائمة الرئيسية</span>
@@ -461,8 +463,6 @@ body{background:#fff!important}
   </div>
   </div><!-- sb-inner -->
 </nav>
-
-<div class="layout">
 
 <main class="main">
 
@@ -2779,7 +2779,7 @@ function doLogin() {
   const pin = DB.pin || '1234';
   if (entered === pin) {
     document.getElementById('LS').style.display = 'none';
-    document.getElementById('APP').style.display = 'flex';
+    document.getElementById('APP').style.display = 'block';
     initApp();
   } else {
     const le = document.getElementById('LE');
