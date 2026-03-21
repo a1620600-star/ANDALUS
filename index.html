@@ -495,6 +495,7 @@ body{background:#fff!important}
   <div class="mc" style="--mc-c:var(--s2);--mc-bg:rgba(8,145,178,.08)" onclick="gp('committees')"><div class="mc-ic" style="color:var(--s2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div><div class="mc-v" id="dm-comm">0</div><div class="mc-l">اللجان المدرسية</div><div class="mc-tg">عرض</div></div>
   <div class="mc" style="--mc-c:var(--o2);--mc-bg:rgba(234,88,12,.08)" onclick="gp('tasks')"><div class="mc-ic" style="color:var(--o2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div><div class="mc-v" id="dm-tasks">0</div><div class="mc-l">التكليفات</div><div class="mc-tg">عرض</div></div>
   <div class="mc" style="--mc-c:var(--g1);--mc-bg:rgba(6,95,70,.08)" onclick="gp('plan-op')"><div class="mc-ic" style="color:var(--g1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg></div><div class="mc-v" id="dm-plans">—</div><div class="mc-l">إنجاز الخطط</div><div class="mc-tg">عرض</div></div>
+  <div class="mc" style="--mc-c:var(--s1);--mc-bg:rgba(12,74,110,.1)" onclick="gp('super')"><div class="mc-ic" style="color:var(--s2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><div class="mc-v" id="dm-super">—</div><div class="mc-l">الإشراف اليومي</div><div class="mc-tg">عرض</div></div>
 </div>
 <div class="g2" style="margin-bottom:12px">
   <div class="card"><div class="ch"><span class="ct"><span class="ct-dot"></span>التحصيل حسب المادة <button class="btn b-gh bsm" onclick="showGradesChartDetail()">عرض التفاصيل</button></span></div><div style="position:relative;height:160px"><canvas id="SC"></canvas></div></div>
@@ -572,34 +573,94 @@ body{background:#fff!important}
 
 <div class="page" id="page-super">
 <div class="ph">
-  <div class="ph-l"><h2><span class="phi" style="background:linear-gradient(135deg,var(--s1),var(--s2))"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>مجموعات الإشراف الأسبوعي</h2></div>
-  <div class="ph-r no-print"><button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button><button class="btn b-s bsm" onclick="toggleSuperForm()">+ إضافة سجل</button><button class="btn b-gh bsm" onclick="prtSuper()">طباعة الجدول</button></div>
+  <div class="ph-l"><h2><span class="phi" style="background:linear-gradient(135deg,var(--s1),var(--s2))"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>الإشراف على الطلاب</h2></div>
+  <div class="ph-r no-print"><button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button></div>
 </div>
-<!-- نموذج إضافة سجل إشراف -->
-<div id="SUPER-FORM" style="display:none" class="card" style="margin-bottom:12px">
-  <div class="ch"><span class="ct"><span class="ct-dot"></span>تسجيل زيارة إشرافية جديدة</span></div>
-  <div class="g2">
-    <div class="fg"><label class="fl">المعلم *</label><select id="super-teacher" class="fc fc-sm"><option value="">-- اختر المعلم --</option></select></div>
-    <div class="fg"><label class="fl">المادة</label><input type="text" id="super-subject" class="fc fc-sm" placeholder="مثال: رياضيات"></div>
-    <div class="fg"><label class="fl">الفصل</label><select id="super-cls" class="fc fc-sm"><option value="A1">A1</option><option value="A2">A2</option><option value="A3">A3</option><option value="A4">A4</option><option value="B1">B1</option><option value="B2">B2</option><option value="B3">B3</option><option value="B4">B4</option><option value="C1">C1</option><option value="C2">C2</option><option value="C3">C3</option><option value="C4">C4</option></select></div>
-    <div class="fg"><label class="fl">التاريخ</label><input type="date" id="super-date" class="fc fc-sm"></div>
+<div class="tabs">
+  <button class="tbtn active" onclick="swtab(this,'sup','s1')">توزيع المجموعات</button>
+  <button class="tbtn" onclick="swtab(this,'sup','s2')">إرسال الإشراف</button>
+  <button class="tbtn" onclick="swtab(this,'sup','s3')">أرشيف الزيارات</button>
+</div>
+
+<!-- تبويب 1: توزيع المجموعات اليومية -->
+<div class="tab-c active" id="sup-s1">
+  <!-- شريط الحالة -->
+  <div id="SGS-BAR" class="card" style="padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="SGS-ICON" style="font-size:18px">⚙️</span>
+      <span id="SGS-MSG" style="font-size:12px;font-weight:700;color:var(--tx2)">قم بتوزيع المعلمين على أيام الأسبوع ثم اعتمد التوزيع</span>
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button id="SGS-SAVE" class="btn b-s bsm" onclick="saveSupGroups()">💾 حفظ التوزيع</button>
+      <button id="SGS-APPROVE" class="btn b-g bsm" onclick="approveSupGroups()">✅ اعتماد نهائي</button>
+      <button id="SGS-RESET" class="btn b-r bsm" style="display:none" onclick="resetSupGroups()">🔄 إعادة التوزيع</button>
+    </div>
   </div>
-  <div class="fg"><label class="fl">الملاحظات</label><textarea id="super-notes" class="fc" rows="2" placeholder="ملاحظات الزيارة الإشرافية..."></textarea></div>
-  <button class="btn b-s" onclick="saveSuperRecord()">حفظ السجل</button>
+  <!-- بطاقات الأيام -->
+  <div class="g2" id="SGDAYS"></div>
 </div>
-<div class="archive-filter">
-  <span>سجل الإشراف اليومي:</span>
-  <select id="super-filter-day" class="fc fc-sm" style="width:auto" onchange="filterSuperArchive()">
-    <option value="">الكل</option>
-    <option value="الأحد">الأحد</option>
-    <option value="الاثنين">الاثنين</option>
-    <option value="الثلاثاء">الثلاثاء</option>
-    <option value="الأربعاء">الأربعاء</option>
-    <option value="الخميس">الخميس</option>
-  </select>
-  <button class="btn b-gh bsm" onclick="exportSuperArchive()">📄 تصدير السجل</button>
+
+<!-- تبويب 2: إرسال الإشراف -->
+<div class="tab-c" id="sup-s2" style="display:none">
+  <div class="card">
+    <div class="ch"><span class="ct"><span class="ct-dot" style="background:var(--s2)"></span>إرسال تكليف الإشراف</span></div>
+    <div class="g2" style="margin-bottom:12px">
+      <div class="fg" style="margin:0">
+        <label class="fl">اليوم الدراسي</label>
+        <select class="fc" id="sg-send-day" onchange="previewSuperMsg()">
+          <option value="">-- اختر اليوم --</option>
+          <option value="الأحد">الأحد</option>
+          <option value="الاثنين">الاثنين</option>
+          <option value="الثلاثاء">الثلاثاء</option>
+          <option value="الأربعاء">الأربعاء</option>
+          <option value="الخميس">الخميس</option>
+        </select>
+      </div>
+      <div class="fg" style="margin:0">
+        <label class="fl">التاريخ</label>
+        <input type="date" class="fc" id="sg-send-date" onchange="previewSuperMsg()">
+      </div>
+    </div>
+    <div id="SG-PREVIEW" style="background:var(--surf3);border:1.5px dashed var(--brd2);border-radius:10px;padding:14px;font-size:12px;color:var(--tx2);min-height:60px;margin-bottom:12px;white-space:pre-wrap;font-family:Cairo,sans-serif;direction:rtl">
+      اختر اليوم والتاريخ لمعاينة رسائل الإشراف...
+    </div>
+    <div id="SG-TEACHERS-LIST"></div>
+  </div>
 </div>
-<div id="SUPD"></div>
+
+<!-- تبويب 3: أرشيف الزيارات -->
+<div class="tab-c" id="sup-s3" style="display:none">
+  <div class="archive-filter">
+    <span>تصفية:</span>
+    <select id="super-filter-day" class="fc fc-sm" style="width:auto" onchange="filterSuperArchive()">
+      <option value="">الكل</option>
+      <option value="الأحد">الأحد</option>
+      <option value="الاثنين">الاثنين</option>
+      <option value="الثلاثاء">الثلاثاء</option>
+      <option value="الأربعاء">الأربعاء</option>
+      <option value="الخميس">الخميس</option>
+    </select>
+    <button class="btn b-s bsm" onclick="toggleSuperForm()">+ تسجيل زيارة</button>
+    <button class="btn b-gh bsm" onclick="exportSuperArchive()">📄 تصدير</button>
+    <button class="btn b-gh bsm" onclick="prtSuper()">🖨 طباعة</button>
+  </div>
+  <!-- نموذج تسجيل زيارة -->
+  <div id="SUPER-FORM" style="display:none" class="card">
+    <div class="ch"><span class="ct"><span class="ct-dot"></span>تسجيل زيارة إشرافية جديدة</span></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">المعلم *</label><select id="super-teacher" class="fc fc-sm"><option value="">-- اختر المعلم --</option></select></div>
+      <div class="fg"><label class="fl">المادة</label><input type="text" id="super-subject" class="fc fc-sm" placeholder="مثال: رياضيات"></div>
+      <div class="fg"><label class="fl">الفصل</label><select id="super-cls" class="fc fc-sm"><option value="A1">A1</option><option value="A2">A2</option><option value="A3">A3</option><option value="A4">A4</option><option value="B1">B1</option><option value="B2">B2</option><option value="B3">B3</option><option value="B4">B4</option><option value="C1">C1</option><option value="C2">C2</option><option value="C3">C3</option><option value="C4">C4</option></select></div>
+      <div class="fg"><label class="fl">التاريخ</label><input type="date" id="super-date" class="fc fc-sm"></div>
+    </div>
+    <div class="fg"><label class="fl">ملاحظات</label><textarea id="super-notes" class="fc" rows="2" placeholder="ملاحظات الزيارة الإشرافية..."></textarea></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn b-s bsm" onclick="saveSuperRecord()">حفظ السجل</button>
+      <button class="btn b-r bsm" onclick="toggleSuperForm()">إلغاء</button>
+    </div>
+  </div>
+  <div id="SUPD"></div>
+</div>
 </div>
 
 <!-- GRADES -->
@@ -2713,6 +2774,14 @@ const DEFAULT_DB = {
     {id:3, date:'١٤٤٦/٧/٣', teacher:'سعد الشهري',        subject:'لغة عربية',cls:'A2', notes:'توظيف ممتاز لاستراتيجيات التعلم النشط'},
     {id:4, date:'١٤٤٦/٧/٤', teacher:'تركي النفيسة',      subject:'حاسب آلي', cls:'C3', notes:'أداء متميز في توظيف التقنية التعليمية'}
   ],
+  superGroups: {
+    approved: false,
+    'الأحد':    [],
+    'الاثنين':  [],
+    'الثلاثاء': [],
+    'الأربعاء': [],
+    'الخميس':   []
+  },
   grades: [],
   perf: [],
   tasks: [
@@ -2973,6 +3042,16 @@ function renderDash() {
   }
   const dmComm = document.getElementById('dm-comm');
   if (dmComm) dmComm.textContent = DB.committees.length || 0;
+  const dmSuper = document.getElementById('dm-super');
+  if (dmSuper) {
+    const sg = DB.superGroups;
+    if (sg && sg.approved) {
+      const total = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس'].reduce((s,d)=>(s+(sg[d]?sg[d].length:0)),0);
+      dmSuper.textContent = total + ' معلم';
+    } else {
+      dmSuper.textContent = sg ? 'قيد التوزيع' : '—';
+    }
+  }
   // نسبة الأداء الوظيفي
   const dmPerf = document.getElementById('dm-perf');
   if (dmPerf) {
@@ -3487,16 +3566,188 @@ body{font-family:Cairo,sans-serif;background:#fff;direction:rtl;color:#0a1628}
 }
 
 // ── الإشراف ──
+// ── سجل الإشراف — التوزيع اليومي ──
+const SUPER_DAYS = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس'];
+const SUPER_COLORS = ['--d2','--g2','--a2','--r2','--v2'];
+
 function renderSuper() {
-  // ملء قائمة المعلمين في نموذج الإشراف
+  // ضمان وجود superGroups
+  if (!DB.superGroups) DB.superGroups = {approved:false,'الأحد':[],'الاثنين':[],'الثلاثاء':[],'الأربعاء':[],'الخميس':[]};
+  renderSuperGroups();
+  // ملء قائمة المعلمين في نموذج الأرشيف
   const sel = document.getElementById('super-teacher');
-  if (sel && sel.options.length <= 1) {
+  if (sel && sel.options.length <= 1)
     DB.teachers.forEach(t => { const o = document.createElement('option'); o.value = t.name; o.textContent = t.name; sel.appendChild(o); });
-  }
-  // تاريخ اليوم
   const dt = document.getElementById('super-date');
   if (dt && !dt.value) dt.value = new Date().toISOString().slice(0,10);
+  // تاريخ الإرسال
+  const sd = document.getElementById('sg-send-date');
+  if (sd && !sd.value) sd.value = new Date().toISOString().slice(0,10);
   filterSuperArchive();
+  // تحديث بطاقة الداشبورد
+  const dmS = document.getElementById('dm-super');
+  if (dmS) {
+    const g = DB.superGroups;
+    const total = SUPER_DAYS.reduce((s,d)=>(s+(g[d]?g[d].length:0)),0);
+    dmS.textContent = g.approved ? (total+' معلم') : '—';
+  }
+}
+
+function renderSuperGroups() {
+  const wrap = document.getElementById('SGDAYS');
+  if (!wrap) return;
+  const sg   = DB.superGroups;
+  const approved = sg.approved;
+  // شريط الحالة
+  const sgsMsg = document.getElementById('SGS-MSG');
+  const sgsIcon = document.getElementById('SGS-ICON');
+  const sgsSave = document.getElementById('SGS-SAVE');
+  const sgsApprove = document.getElementById('SGS-APPROVE');
+  const sgsReset = document.getElementById('SGS-RESET');
+  if (approved) {
+    if (sgsMsg)  sgsMsg.textContent = 'تم اعتماد التوزيع نهائياً — يمكنك إرسال تكليف الإشراف من تبويب "إرسال الإشراف"';
+    if (sgsIcon) sgsIcon.textContent = '✅';
+    if (sgsSave)    sgsSave.style.display = 'none';
+    if (sgsApprove) sgsApprove.style.display = 'none';
+    if (sgsReset)   sgsReset.style.display = '';
+  } else {
+    if (sgsMsg)  sgsMsg.textContent = 'قم بتوزيع المعلمين على أيام الأسبوع ثم اعتمد التوزيع نهائياً';
+    if (sgsIcon) sgsIcon.textContent = '⚙️';
+    if (sgsSave)    sgsSave.style.display = '';
+    if (sgsApprove) sgsApprove.style.display = '';
+    if (sgsReset)   sgsReset.style.display = 'none';
+  }
+  // بطاقات الأيام
+  wrap.innerHTML = SUPER_DAYS.map((day, idx) => {
+    const col   = SUPER_COLORS[idx];
+    const teachers = sg[day] || [];
+    if (approved) {
+      // عرض للقراءة فقط
+      const list = teachers.length
+        ? teachers.map((t,i) => `<div style="display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:1px solid var(--brd)">
+            <span style="width:22px;height:22px;border-radius:50%;background:var(${col});color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center">${i+1}</span>
+            <span style="font-size:12px;font-weight:600">${t}</span>
+          </div>`).join('')
+        : '<p style="font-size:11px;color:var(--tx3);padding:8px 0">لا يوجد معلمون مخصصون</p>';
+      return `<div class="card" style="border-top:3px solid var(${col})">
+        <div class="ch"><span class="ct" style="color:var(${col});font-weight:800">${day}</span>
+          <span class="badge" style="background:var(${col});color:#fff">${teachers.length} معلم</span></div>
+        ${list}</div>`;
+    } else {
+      // وضع التحرير — checkbox لكل معلم
+      const opts = DB.teachers.map(t => {
+        const checked = teachers.includes(t.name) ? 'checked' : '';
+        return `<label style="display:flex;align-items:center;gap:7px;padding:6px 4px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600" class="sg-lbl">
+          <input type="checkbox" value="${t.name}" ${checked} style="width:15px;height:15px;accent-color:var(${col})">
+          <span>${t.name}</span><span style="font-size:10px;color:var(--tx3)">(${t.subject||''})</span>
+        </label>`;
+      }).join('');
+      return `<div class="card" style="border-top:3px solid var(${col})">
+        <div class="ch"><span class="ct" style="color:var(${col});font-weight:800">${day}</span>
+          <span class="badge" style="background:var(${col});color:#fff" id="sgcnt-${idx}">0</span></div>
+        <div id="sg-day-${idx}" style="max-height:260px;overflow-y:auto">${opts}</div>
+      </div>`;
+    }
+  }).join('');
+  // تحديث عدادات الاختيار
+  if (!approved) updateSuperCounts();
+}
+
+function updateSuperCounts() {
+  SUPER_DAYS.forEach((_, idx) => {
+    const wrap = document.getElementById(`sg-day-${idx}`);
+    const cntEl = document.getElementById(`sgcnt-${idx}`);
+    if (!wrap || !cntEl) return;
+    cntEl.textContent = wrap.querySelectorAll('input:checked').length + ' معلم';
+    wrap.querySelectorAll('input[type=checkbox]').forEach(cb => {
+      cb.onchange = updateSuperCounts;
+    });
+  });
+}
+
+function saveSupGroups() {
+  if (!DB.superGroups) DB.superGroups = {approved:false,'الأحد':[],'الاثنين':[],'الثلاثاء':[],'الأربعاء':[],'الخميس':[]};
+  SUPER_DAYS.forEach((day, idx) => {
+    const wrap = document.getElementById(`sg-day-${idx}`);
+    if (!wrap) return;
+    DB.superGroups[day] = [...wrap.querySelectorAll('input:checked')].map(cb => cb.value);
+  });
+  saveAllData();
+  toast('تم حفظ التوزيع', true);
+}
+
+function approveSupGroups() {
+  // حفظ أولاً ثم اعتماد
+  saveSupGroups();
+  const total = SUPER_DAYS.reduce((s,d)=>(s+((DB.superGroups[d]||[]).length)),0);
+  if (!total) { toast('لم تُوزَّع أي معلمين بعد', false); return; }
+  if (!confirm('هل تريد اعتماد التوزيع نهائياً؟ لن يمكن التعديل بعد الاعتماد إلا بإعادة التوزيع.')) return;
+  DB.superGroups.approved = true;
+  saveAllData();
+  renderSuperGroups();
+  toast('تم اعتماد التوزيع نهائياً ✅', true);
+}
+
+function resetSupGroups() {
+  if (!confirm('هل تريد إعادة التوزيع؟ سيتم فتح التعديل مرة أخرى.')) return;
+  DB.superGroups.approved = false;
+  saveAllData();
+  renderSuperGroups();
+  toast('تم فتح التوزيع للتعديل', true);
+}
+
+function previewSuperMsg() {
+  const day     = document.getElementById('sg-send-day')?.value;
+  const dateVal = document.getElementById('sg-send-date')?.value;
+  const preview = document.getElementById('SG-PREVIEW');
+  const list    = document.getElementById('SG-TEACHERS-LIST');
+  if (!day) { if (preview) preview.textContent = 'اختر اليوم والتاريخ لمعاينة رسائل الإشراف...'; if (list) list.innerHTML = ''; return; }
+  const sg = DB.superGroups;
+  const teachers = (sg && sg[day]) ? sg[day] : [];
+  const dateDisp = dateVal
+    ? new Date(dateVal).toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'})
+    : new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  if (!teachers.length) {
+    if (preview) preview.textContent = `لا يوجد معلمون مخصصون ليوم ${day}.\nيرجى توزيع المجموعات أولاً من تبويب "توزيع المجموعات".`;
+    if (list) list.innerHTML = ''; return;
+  }
+  // نموذج رسالة واحد للمعاينة
+  const sampleMsg = _buildSuperMsg(teachers[0], day, dateDisp);
+  if (preview) preview.textContent = sampleMsg;
+  // بطاقات كل معلم
+  if (list) {
+    list.innerHTML = `<div style="font-size:12px;font-weight:700;color:var(--s1);margin-bottom:10px">المعلمون المكلفون بالإشراف يوم ${day} (${teachers.length}):</div>` +
+      teachers.map(tName => {
+        const t = DB.teachers.find(x => x.name === tName);
+        const msg = _buildSuperMsg(tName, day, dateDisp);
+        const phone = t?.phone || '';
+        const waUrl = 'https://wa.me/966' + (phone.startsWith('0') ? phone.slice(1) : phone) + '?text=' + encodeURIComponent(msg);
+        return `<div class="card" style="padding:10px 12px;margin-bottom:8px;border-right:3px solid var(--s2)">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
+            <div>
+              <div style="font-size:13px;font-weight:700">${tName}</div>
+              <div style="font-size:11px;color:var(--tx3)">${t?.subject||''} ${phone?'· '+phone:''}</div>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="btn bsm" style="background:#25d366;color:#fff" onclick="window.open('${waUrl}','_blank')">📱 واتساب</button>
+              <button class="btn b-s bsm" onclick="copySuperMsg(${JSON.stringify(msg)})">📋 نسخ</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+  }
+}
+
+function _buildSuperMsg(teacherName, day, dateDisp) {
+  return `عزيزي المعلم / ${teacherName}
+نشكر تعاونكم، تم تكليفكم بالإشراف على الطلاب
+اليوم: ${day}
+التاريخ: ${dateDisp}
+الشؤون التعليمية — ثانوية الأندلس بترقش`;
+}
+
+function copySuperMsg(msg) {
+  navigator.clipboard.writeText(msg).then(() => toast('تم نسخ الرسالة', true)).catch(() => toast('تعذّر النسخ', false));
 }
 
 function toggleSuperForm() {
@@ -3505,9 +3756,8 @@ function toggleSuperForm() {
   f.style.display = f.style.display === 'none' ? 'block' : 'none';
   if (f.style.display === 'block') {
     const sel = document.getElementById('super-teacher');
-    if (sel && sel.options.length <= 1) {
+    if (sel && sel.options.length <= 1)
       DB.teachers.forEach(t => { const o = document.createElement('option'); o.value = t.name; o.textContent = t.name; sel.appendChild(o); });
-    }
   }
 }
 
@@ -3519,7 +3769,7 @@ function saveSuperRecord() {
   const notes   = document.getElementById('super-notes')?.value.trim();
   if (!teacher) { toast('اختر المعلم', false); return; }
   const t = DB.teachers.find(x => x.name === teacher);
-  DB.supervision.push({ id: Date.now(), date: date || new Date().toLocaleDateString('ar-SA'), teacher, subject: subject || (t?.subject||''), cls, notes });
+  DB.supervision.push({ id: Date.now(), date: date ? new Date(date).toLocaleDateString('ar-SA') : new Date().toLocaleDateString('ar-SA'), teacher, subject: subject || (t?.subject||''), cls, notes });
   document.getElementById('super-notes').value = '';
   document.getElementById('SUPER-FORM').style.display = 'none';
   saveAllData();
@@ -3534,20 +3784,18 @@ function filterSuperArchive() {
   let data = [...(DB.supervision||[])];
   if (fDay && fDay.value) data = data.filter(r => r.day === fDay.value || r.date === fDay.value);
   if (!data.length) {
-    wrap.innerHTML = '<div class="card"><p style="padding:14px;text-align:center;color:var(--tx3)">لا توجد سجلات إشراف</p></div>';
+    wrap.innerHTML = '<div class="card"><p style="padding:14px;text-align:center;color:var(--tx3)">لا توجد زيارات إشرافية مسجلة</p></div>';
     return;
   }
   wrap.innerHTML = `<div class="card"><div class="tw"><table>
-    <thead><tr style="background:var(--s1);color:#fff">
-      <th style="padding:8px">التاريخ</th><th style="padding:8px">المعلم</th>
-      <th style="padding:8px">المادة</th><th style="padding:8px">الفصل</th><th style="padding:8px">الملاحظات</th>
-    </tr></thead>
-    <tbody>${data.map(r=>`<tr>
-      <td style="padding:8px;border-bottom:1px solid var(--brd)">${r.date||''}</td>
-      <td style="padding:8px;border-bottom:1px solid var(--brd)">${r.teacher||''}</td>
-      <td style="padding:8px;border-bottom:1px solid var(--brd)">${r.subject||''}</td>
-      <td style="padding:8px;border-bottom:1px solid var(--brd)">${r.cls||''}</td>
-      <td style="padding:8px;border-bottom:1px solid var(--brd)">${r.notes||''}</td>
+    <thead><tr><th>#</th><th>التاريخ</th><th>المعلم</th><th>المادة</th><th>الفصل</th><th>الملاحظات</th></tr></thead>
+    <tbody>${data.map((r,i)=>`<tr>
+      <td style="text-align:center">${i+1}</td>
+      <td>${r.date||''}</td>
+      <td style="font-weight:700">${r.teacher||''}</td>
+      <td>${r.subject||''}</td>
+      <td style="text-align:center;font-weight:700">${r.cls||''}</td>
+      <td style="color:var(--tx2)">${r.notes||'—'}</td>
     </tr>`).join('')}</tbody>
   </table></div></div>`;
 }
@@ -3558,11 +3806,12 @@ function exportSuperArchive() {
   DB.supervision.forEach(r => rows.push([r.date||'', r.teacher||'', r.subject||'', r.cls||'', r.notes||'']));
   const csv = '\uFEFF' + rows.map(r => r.map(c => '"'+c+'"').join(',')).join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'سجل_الإشراف.csv'; a.click();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a'); a.href = url; a.download = 'سجل_الإشراف.csv'; a.click();
   URL.revokeObjectURL(url);
   toast('تم التصدير بنجاح', true);
 }
+
 function prtSuper() { window.print(); }
 
 // ── الدرجات ──
