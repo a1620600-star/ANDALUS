@@ -7724,7 +7724,7 @@ function chgPin() {
   const np=document.getElementById('NP2');
   if (!cp||!np) return;
   const cpVal=cp.value.split('').map(c=>AR_TO_EN[c]||c).join('');
-  if (cpVal!==(DB.pin||'1234')) { toast('الرمز الحالي غير صحيح', false); return; }
+  if (cpVal!==(DB.pin||'A2009')) { toast('الرمز الحالي غير صحيح', false); return; }
   if (!np.value) { toast('أدخل الرمز الجديد', false); return; }
   DB.pin=np.value.split('').map(c=>AR_TO_EN[c]||c).join('');
   cp.value=''; np.value='';
