@@ -94,6 +94,12 @@ body{font-family:Cairo,sans-serif;background:var(--bg);color:var(--tx1);directio
 .no-mobile{display:none!important}
 .tb-txt{display:none}
 .tb-btn{padding:5px 7px}
+.main{padding:10px 8px}
+.ph{flex-wrap:wrap;gap:6px}
+.ph-r{width:100%}
+.back-btn{width:100%}
+.ov-box{padding:16px 12px!important}
+.card{padding:14px 12px}
 }
 .ns-t{font-size:9px;font-weight:800;color:var(--tx3);padding:7px 9px 2px;letter-spacing:1.2px;text-transform:uppercase}
 .ni{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:9px;cursor:pointer;color:var(--tx2);font-size:12px;font-weight:600;margin-bottom:1px;-webkit-tap-highlight-color:transparent;user-select:none}
@@ -3412,7 +3418,14 @@ body{background:#fff!important}
     <button class="btn bsm" onclick="checkSaveInfo()" style="background:var(--surf3);color:var(--tx2);flex:1">🔍 فحص البيانات</button>
     <button class="btn bsm" onclick="clearAllData()" style="background:rgba(185,28,28,.1);color:var(--r2);border:1.5px solid rgba(185,28,28,.3);flex:1">🗑 مسح المحفوظ</button>
   </div>
-  <p style="font-size:9px;color:var(--tx3);margin-top:8px;text-align:center">💡 البيانات تُحفظ في متصفحك محلياً وتبقى عند إعادة فتح الصفحة — الحجم الأقصى: 5 MB</p>
+  <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:7px">
+    <button class="btn bsm" onclick="exportBackup()" style="background:linear-gradient(135deg,var(--v1),var(--v2));color:#fff;flex:1">📤 تصدير نسخة احتياطية</button>
+    <label class="btn bsm" style="background:linear-gradient(135deg,var(--o1),var(--o2));color:#fff;flex:1;cursor:pointer;text-align:center">
+      📂 استيراد نسخة احتياطية
+      <input type="file" accept=".json" onchange="importBackup(event)" style="display:none">
+    </label>
+  </div>
+  <p style="font-size:9px;color:var(--tx3);margin-top:8px;text-align:center">💡 البيانات تُحفظ في متصفحك محلياً — استخدم "تصدير" لحفظ نسخة خارجية احتياطية</p>
 </div>
 </div>
 
@@ -3562,11 +3575,46 @@ function checkSaveInfo() {
 }
 
 function clearAllData() {
-  if (confirm('هل تريد مسح جميع البيانات المحفوظة؟')) {
+  if (confirm('تحذير: سيتم مسح جميع البيانات بشكل نهائي ولا يمكن التراجع.\nهل أنت متأكد؟')) {
     localStorage.removeItem('ANDALUS_V2');
     DB = JSON.parse(JSON.stringify(DEFAULT_DB));
-    toast('تم المسح', true);
+    toast('تم مسح جميع البيانات', true);
   }
+}
+
+function exportBackup() {
+  try {
+    const data = JSON.stringify(DB, null, 2);
+    const blob = new Blob([data], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = 'andalus-backup-' + date + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('تم تصدير النسخة الاحتياطية بنجاح', true);
+  } catch(e) { toast('خطأ في التصدير', false); }
+}
+
+function importBackup(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!confirm('سيتم استبدال جميع البيانات الحالية بالنسخة المستوردة. هل أنت متأكد؟')) {
+    e.target.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      DB = Object.assign({}, DEFAULT_DB, imported);
+      saveAllData();
+      toast('تم استيراد البيانات بنجاح', true);
+    } catch(err) { toast('ملف غير صالح — تأكد من اختيار ملف النسخة الاحتياطية', false); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
 }
 
 // ── لوحة مفاتيح الدخول ──
