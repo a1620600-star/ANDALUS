@@ -7515,9 +7515,10 @@ function _openDoc(html) {
 // ── تصدير استمارة 1 و 2 ────────────────────────────────────────
 function exportImpPlan1() {
   const order = IMP_DOMAINS_LIST.map(d=>d.id);
+  const validDomains = new Set(order);
   const grouped = {};
   order.forEach(d=>{grouped[d]=[];});
-  DB.impPlans.forEach(p=>{ const d=p.domain||'أخرى'; if(!grouped[d]) grouped[d]=[]; grouped[d].push(p); });
+  DB.impPlans.forEach(p=>{ const d=p.domain||''; if(validDomains.has(d)) grouped[d].push(p); });
   let rows = '';
   Object.entries(grouped).forEach(([domain,items])=>{
     if(!items.length) return;
@@ -7529,7 +7530,7 @@ function exportImpPlan1() {
         <td style="padding:8px">${p.target||'—'}</td>
         <td style="padding:8px">${(p.actions||'—').replace(/\n/g,'<br>')}</td>
         <td style="padding:8px">${p.methods||'—'}</td>
-        <td style="text-align:center;padding:8px;white-space:nowrap">${p.deadline||'—'}</td>
+        <td style="text-align:center;padding:8px">${p.deadline||'—'}</td>
         <td style="padding:8px">${p.resp||'—'}</td>
         <td style="text-align:center;padding:8px">
           <div style="background:#e2e8f0;border-radius:4px;height:7px;width:70px;margin:0 auto 3px">
@@ -7553,11 +7554,11 @@ body{font-family:'Cairo',Arial,sans-serif;background:#fff;color:#111;direction:r
 .hdr-school{font-size:16px;font-weight:900;color:#1e3a5f;margin-bottom:3px}
 .hdr-form{font-size:13px;font-weight:700;color:#1e3a5f;background:#dbeafe;display:inline-block;padding:4px 18px;border-radius:20px;margin-top:4px}
 .meta{display:flex;justify-content:center;gap:20px;font-size:11px;color:#555;margin-bottom:14px}
-table{width:100%;border-collapse:collapse;font-size:11px}
-th{background:#1e3a5f;color:#fff;padding:8px 7px;font-size:11px;font-weight:700;text-align:center;border:1px solid #1e3a5f}
-td{border:1px solid #b8cfe8;vertical-align:top}
+table{width:100%;border-collapse:collapse;font-size:10.5px;table-layout:fixed}
+th{background:#1e3a5f;color:#fff;padding:6px 5px;font-size:10px;font-weight:700;text-align:center;border:1px solid #1e3a5f;word-break:break-word}
+td{border:1px solid #b8cfe8;vertical-align:top;word-break:break-word;overflow-wrap:break-word}
 .no-print{display:flex;justify-content:center;gap:10px;padding:14px;background:#f8fafc;border-top:1px solid #e2e8f0;margin-top:14px}
-@media print{.no-print{display:none!important}body{margin:0}.page{width:100%}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}@page{margin:1cm;size:A4 landscape}}
+@media print{.no-print{display:none!important}body{margin:0}.page{width:100%;padding:6mm 8mm}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}@page{margin:0.5cm;size:A4 landscape}}
 </style></head><body>
 <div class="page">
   <div class="hdr">
@@ -7595,9 +7596,10 @@ td{border:1px solid #b8cfe8;vertical-align:top}
 
 function exportImpPlan2() {
   const order = IMP_DOMAINS_LIST.map(d=>d.id);
+  const validDomains = new Set(order);
   const grouped = {};
   order.forEach(d=>{grouped[d]=[];});
-  DB.impExec.forEach(r=>{ const d=r.domain||'أخرى'; if(!grouped[d]) grouped[d]=[]; grouped[d].push(r); });
+  DB.impExec.forEach(r=>{ const d=r.domain||''; if(validDomains.has(d)) grouped[d].push(r); });
   let rows = '';
   Object.entries(grouped).forEach(([domain,items])=>{
     if(!items.length) return;
@@ -7609,7 +7611,7 @@ function exportImpPlan2() {
       rows += `<tr style="background:${i%2===0?info.bg:'#fff'}">
         <td style="font-weight:700;border-right:4px solid ${info.color};padding:8px">${r.title||'—'}</td>
         <td style="padding:8px">${(r.notes||'—').replace(/\n/g,'<br>')}</td>
-        <td style="text-align:center;padding:8px;white-space:nowrap">${r.date||'—'}</td>
+        <td style="text-align:center;padding:8px">${r.date||'—'}</td>
         <td style="padding:8px">${r.committee||'—'}</td>
         <td style="padding:8px">${r.supervisor||'—'}</td>
         <td style="text-align:center;padding:8px"><span style="padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;background:${stBg};color:${stClr}">${r.status||'—'}</span></td>
@@ -7635,11 +7637,11 @@ body{font-family:'Cairo',Arial,sans-serif;background:#fff;color:#111;direction:r
 .hdr-school{font-size:16px;font-weight:900;color:#166534;margin-bottom:3px}
 .hdr-form{font-size:13px;font-weight:700;color:#166534;background:#dcfce7;display:inline-block;padding:4px 18px;border-radius:20px;margin-top:4px}
 .meta{display:flex;justify-content:center;gap:20px;font-size:11px;color:#555;margin-bottom:14px}
-table{width:100%;border-collapse:collapse;font-size:11px}
-th{background:#166534;color:#fff;padding:8px 7px;font-size:11px;font-weight:700;text-align:center;border:1px solid #166534}
-td{border:1px solid #bbf7d0;vertical-align:top}
+table{width:100%;border-collapse:collapse;font-size:10.5px;table-layout:fixed}
+th{background:#166534;color:#fff;padding:6px 5px;font-size:10px;font-weight:700;text-align:center;border:1px solid #166534;word-break:break-word}
+td{border:1px solid #bbf7d0;vertical-align:top;word-break:break-word;overflow-wrap:break-word}
 .no-print{display:flex;justify-content:center;gap:10px;padding:14px;background:#f8fafc;border-top:1px solid #e2e8f0;margin-top:14px}
-@media print{.no-print{display:none!important}body{margin:0}.page{width:100%}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}@page{margin:1cm;size:A4 landscape}}
+@media print{.no-print{display:none!important}body{margin:0}.page{width:100%;padding:6mm 8mm}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}@page{margin:0.5cm;size:A4 landscape}}
 </style></head><body>
 <div class="page">
   <div class="hdr">
