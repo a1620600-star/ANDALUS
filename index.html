@@ -6354,7 +6354,9 @@ function _renderImpDomStats(elId, data, mode) {
 function renderImpBuildTable(data) {
   const tb = document.getElementById('IMP-BUILD-LIST');
   if (!tb) return;
-  const rows = data || DB.impPlans;
+  const fDom = document.getElementById('imp1-dom-filter')?.value || '';
+  const allRows = data || DB.impPlans;
+  const rows = fDom ? allRows.filter(p => p.domain === fDom) : allRows;
   const statEl = document.getElementById('imp-stat-build'); if(statEl) statEl.textContent = DB.impPlans.length;
   if (!rows.length) { tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:18px;color:var(--tx3)">لا توجد مبادرات — اضغط "+ إضافة عملية" أو "البيانات الرسمية"</td></tr>'; return; }
   const evidCount = id => ((DB.impPlanEvid||{})[id]||[]).length;
