@@ -308,6 +308,7 @@ tbody tr:nth-child(even) td{background:var(--surf2)}
 body{background:#fff!important}
 #APP{display:block!important}
 .layout{display:block!important}
+*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
 }
 /* ── نموذج الانتظار الرسمي للطباعة ── */
 .wait-print-wrap{display:none}
@@ -6922,6 +6923,7 @@ tr:nth-child(even) td{background:#f0fdf9}
   .no-print{display:none!important}
   body{margin:0}
   .page{width:100%}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
   @page{margin:1.2cm;size:A4}
 }
 </style>
@@ -7060,7 +7062,7 @@ table{width:100%;border-collapse:collapse;font-size:11px}
 th{background:#1e3a5f;color:#fff;padding:8px 7px;font-size:11px;font-weight:700;text-align:center;border:1px solid #1e3a5f}
 td{border:1px solid #b8cfe8;vertical-align:top}
 .no-print{display:flex;justify-content:center;gap:10px;padding:14px;background:#f8fafc;border-top:1px solid #e2e8f0;margin-top:14px}
-@media print{.no-print{display:none!important}body{margin:0}.page{width:100%}@page{margin:1cm;size:A4 landscape}}
+@media print{.no-print{display:none!important}body{margin:0}.page{width:100%}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}@page{margin:1cm;size:A4 landscape}}
 </style></head><body>
 <div class="page">
   <div class="hdr">
@@ -7142,7 +7144,7 @@ table{width:100%;border-collapse:collapse;font-size:11px}
 th{background:#166534;color:#fff;padding:8px 7px;font-size:11px;font-weight:700;text-align:center;border:1px solid #166534}
 td{border:1px solid #bbf7d0;vertical-align:top}
 .no-print{display:flex;justify-content:center;gap:10px;padding:14px;background:#f8fafc;border-top:1px solid #e2e8f0;margin-top:14px}
-@media print{.no-print{display:none!important}body{margin:0}.page{width:100%}@page{margin:1cm;size:A4 landscape}}
+@media print{.no-print{display:none!important}body{margin:0}.page{width:100%}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}@page{margin:1cm;size:A4 landscape}}
 </style></head><body>
 <div class="page">
   <div class="hdr">
