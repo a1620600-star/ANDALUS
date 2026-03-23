@@ -657,6 +657,43 @@ body{background:#fff!important}
   </div>
 </div>
 
+<!-- مودال الإرسال التباعي -->
+<div id="SEQ-SEND-MODAL" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:600;background:rgba(10,22,40,.82);overflow-y:auto;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)">
+  <div style="max-width:420px;margin:60px auto;padding:16px">
+    <div class="card" style="border-top:4px solid #25d366">
+      <!-- رأس المودال -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div>
+          <div style="font-size:14px;font-weight:800;color:var(--tx1)">📱 إرسال تباعاً</div>
+          <div id="SEQ-PROGRESS-TXT" style="font-size:11px;color:var(--tx3);margin-top:2px"></div>
+        </div>
+        <button onclick="closeSeqModal()" style="background:rgba(220,38,38,.1);color:var(--r2);border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:Cairo,sans-serif">✕ إغلاق</button>
+      </div>
+      <!-- شريط التقدم -->
+      <div style="background:var(--brd);border-radius:4px;height:5px;margin-bottom:16px;overflow:hidden">
+        <div id="SEQ-PROGRESS-BAR" style="height:100%;background:#25d366;border-radius:4px;transition:width .4s ease;width:0%"></div>
+      </div>
+      <!-- بيانات المعلم الحالي -->
+      <div id="SEQ-TEACHER-CARD" style="background:var(--surf3);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="width:40px;height:40px;border-radius:50%;background:#25d366;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">👤</div>
+          <div>
+            <div id="SEQ-TEACHER-NAME" style="font-size:14px;font-weight:800"></div>
+            <div id="SEQ-TEACHER-INFO" style="font-size:11px;color:var(--tx3)"></div>
+          </div>
+        </div>
+        <div id="SEQ-MSG-PREVIEW" style="background:#fff;border:1px solid var(--brd);border-radius:8px;padding:10px;font-size:11px;color:var(--tx2);white-space:pre-wrap;direction:rtl;line-height:1.7"></div>
+      </div>
+      <!-- أزرار الإجراء -->
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button id="SEQ-WA-BTN" onclick="openSeqWA()" style="flex:1;background:#25d366;color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif">📱 فتح واتساب</button>
+        <button onclick="seqNext()" id="SEQ-NEXT-BTN" style="flex:1;background:var(--d2);color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif">التالي ←</button>
+      </div>
+      <div id="SEQ-DONE-MSG" style="display:none;text-align:center;padding:14px;background:#f0fdf4;border-radius:10px;color:#166534;font-weight:700;font-size:13px">✅ تم إرسال التكليف لجميع المعلمين!</div>
+    </div>
+  </div>
+</div>
+
 <!-- تبويب 3: أرشيف الزيارات -->
 <div class="tab-c" id="sup-s3" style="display:none">
   <div class="archive-filter">
@@ -4486,28 +4523,113 @@ function previewSuperMsg() {
   // نموذج رسالة واحد للمعاينة
   const sampleMsg = _buildSuperMsg(teachers[0], day, dateDisp);
   if (preview) preview.textContent = sampleMsg;
-  // بطاقات كل معلم
+  // أزرار الإجراءات الجماعية + بطاقات كل معلم
   if (list) {
-    list.innerHTML = `<div style="font-size:12px;font-weight:700;color:var(--s1);margin-bottom:10px">المعلمون المكلفون بالإشراف يوم ${day} (${teachers.length}):</div>` +
+    const hasPhones = teachers.some(n => DB.teachers.find(x => x.name === n)?.phone);
+    list.innerHTML =
+      `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="btn bsm" style="background:#25d366;color:#fff;flex:1;min-width:130px" onclick="startSeqSend()" ${!hasPhones?'disabled title="لا توجد أرقام جوال"':''}>📱 إرسال تباعاً</button>
+        <button class="btn b-s bsm" style="flex:1;min-width:130px" onclick="copyGroupSuperMsg()">📋 نسخ رسالة المجموعة</button>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--s1);margin-bottom:8px">المعلمون المكلفون (${teachers.length}):</div>` +
       teachers.map(tName => {
         const t = DB.teachers.find(x => x.name === tName);
         const msg = _buildSuperMsg(tName, day, dateDisp);
         const phone = t?.phone || '';
-        const waUrl = 'https://wa.me/966' + (phone.startsWith('0') ? phone.slice(1) : phone) + '?text=' + encodeURIComponent(msg);
+        const waUrl = phone ? ('https://wa.me/966' + (phone.startsWith('0') ? phone.slice(1) : phone) + '?text=' + encodeURIComponent(msg)) : '';
         return `<div class="card" style="padding:10px 12px;margin-bottom:8px;border-right:3px solid var(--s2)">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
             <div>
               <div style="font-size:13px;font-weight:700">${tName}</div>
-              <div style="font-size:11px;color:var(--tx3)">${t?.subject||''} ${phone?'· '+phone:''}</div>
+              <div style="font-size:11px;color:var(--tx3)">${t?.subject||''} ${phone?'· '+phone:'· <span style="color:var(--r2)">لا يوجد رقم</span>'}</div>
             </div>
             <div style="display:flex;gap:6px">
-              <button class="btn bsm" style="background:#25d366;color:#fff" onclick="window.open('${waUrl}','_blank')">📱 واتساب</button>
+              ${waUrl ? `<button class="btn bsm" style="background:#25d366;color:#fff" onclick="window.open('${waUrl}','_blank')">📱 واتساب</button>` : '<span style="font-size:10px;color:var(--tx3)">—</span>'}
               <button class="btn b-s bsm" onclick="copySuperMsg(${JSON.stringify(msg)})">📋 نسخ</button>
             </div>
           </div>
         </div>`;
       }).join('');
   }
+}
+
+// ── رسالة المجموعة الموحدة ──
+function copyGroupSuperMsg() {
+  const day     = document.getElementById('sg-send-day')?.value;
+  const dateVal = document.getElementById('sg-send-date')?.value;
+  if (!day) { toast('اختر اليوم أولاً', false); return; }
+  const teachers = DB.superGroups?.[day] || [];
+  if (!teachers.length) { toast('لا يوجد معلمون لهذا اليوم', false); return; }
+  const dateDisp = dateVal
+    ? new Date(dateVal).toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'})
+    : new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  const names = teachers.map((n,i) => `${i+1}. ${n}`).join('\n');
+  const msg = `📋 تكليف الإشراف اليومي\nيوم ${day} — ${dateDisp}\n\nالمعلمون المكلفون بالإشراف:\n${names}\n\nيُرجى الالتزام بمهام الإشراف في الوقت المحدد.\nالشؤون التعليمية — ثانوية الأندلس بترقش`;
+  navigator.clipboard.writeText(msg).then(() => toast('✅ تم نسخ الرسالة — الصقها في مجموعة واتساب', true)).catch(() => toast('تعذّر النسخ', false));
+}
+
+// ── الإرسال التباعي ──
+let _seqData = { teachers:[], idx:0, day:'', dateDisp:'' };
+
+function startSeqSend() {
+  const day     = document.getElementById('sg-send-day')?.value;
+  const dateVal = document.getElementById('sg-send-date')?.value;
+  if (!day) { toast('اختر اليوم أولاً', false); return; }
+  const teachers = (DB.superGroups?.[day] || []).filter(n => DB.teachers.find(x => x.name === n)?.phone);
+  if (!teachers.length) { toast('لا يوجد معلمون لديهم أرقام جوال لهذا اليوم', false); return; }
+  const dateDisp = dateVal
+    ? new Date(dateVal).toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'})
+    : new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  _seqData = { teachers, idx:0, day, dateDisp };
+  document.getElementById('SEQ-SEND-MODAL').style.display = 'block';
+  document.getElementById('SEQ-DONE-MSG').style.display   = 'none';
+  document.getElementById('SEQ-WA-BTN').style.display     = '';
+  document.getElementById('SEQ-NEXT-BTN').style.display   = '';
+  _renderSeqCard();
+}
+
+function _renderSeqCard() {
+  const { teachers, idx, day, dateDisp } = _seqData;
+  const tName = teachers[idx];
+  const t     = DB.teachers.find(x => x.name === tName);
+  const msg   = _buildSuperMsg(tName, day, dateDisp);
+  const total = teachers.length;
+  document.getElementById('SEQ-TEACHER-NAME').textContent = tName;
+  document.getElementById('SEQ-TEACHER-INFO').innerHTML   = `${t?.subject||''} ${t?.phone ? '· ' + t.phone : ''}`;
+  document.getElementById('SEQ-MSG-PREVIEW').textContent  = msg;
+  document.getElementById('SEQ-PROGRESS-TXT').textContent = `${idx+1} من ${total}`;
+  document.getElementById('SEQ-PROGRESS-BAR').style.width = ((idx+1)/total*100) + '%';
+  const nextBtn = document.getElementById('SEQ-NEXT-BTN');
+  if (nextBtn) nextBtn.textContent = idx+1 < total ? 'التالي ←' : '✅ انتهى';
+}
+
+function openSeqWA() {
+  const { teachers, idx, day, dateDisp } = _seqData;
+  const tName = teachers[idx];
+  const t     = DB.teachers.find(x => x.name === tName);
+  const phone = t?.phone || '';
+  if (!phone) { toast('لا يوجد رقم لهذا المعلم', false); return; }
+  const msg = _buildSuperMsg(tName, day, dateDisp);
+  const url = 'https://wa.me/966' + (phone.startsWith('0') ? phone.slice(1) : phone) + '?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+
+function seqNext() {
+  const total = _seqData.teachers.length;
+  if (_seqData.idx + 1 >= total) {
+    document.getElementById('SEQ-DONE-MSG').style.display = 'block';
+    document.getElementById('SEQ-WA-BTN').style.display   = 'none';
+    document.getElementById('SEQ-NEXT-BTN').style.display = 'none';
+    document.getElementById('SEQ-PROGRESS-BAR').style.width = '100%';
+    document.getElementById('SEQ-PROGRESS-TXT').textContent = `تم الإرسال لـ ${total} معلم`;
+    return;
+  }
+  _seqData.idx++;
+  _renderSeqCard();
+}
+
+function closeSeqModal() {
+  document.getElementById('SEQ-SEND-MODAL').style.display = 'none';
 }
 
 function _buildSuperMsg(teacherName, day, dateDisp) {
