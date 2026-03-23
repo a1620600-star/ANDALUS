@@ -5411,14 +5411,28 @@ function renderPerf() {
   const pmDone = document.getElementById('pm-done');
   const pmPend = document.getElementById('pm-pend');
   const pmStat = document.getElementById('pm-stat');
-  if (pmAll)  pmAll.textContent  = DB.teachers.length;
-  const approved = DB.teachers.filter(t => t.perfStatus === 'approved').length;
-  const pending  = DB.teachers.filter(t => t.perfStatus === 'pending').length;
-  if (pmDone) pmDone.textContent = approved;
-  if (pmPend) pmPend.textContent = pending > 0 ? pending + ' طلب اعتماد' : (DB.teachers.length - approved);
+
+  // إخفاء الإحصائيات العامة عند دخول المعلم لحماية خصوصية بيانات زملائه
+  const isTeacher = currentRole === 'teacher';
+  const statsRow = pmAll && pmAll.closest('.stats-row, .perf-stats, [class*="stat"]');
+  if (isTeacher) {
+    [pmAll, pmDone, pmPend].forEach(el => { if (el) { const card = el.closest('.stat-card, .kpi-card, .metric-box, td, [onclick]') || el.parentElement; if (card) card.style.display = 'none'; } });
+  } else {
+    if (pmAll)  pmAll.textContent  = DB.teachers.length;
+    const approved = DB.teachers.filter(t => t.perfStatus === 'approved').length;
+    const pending  = DB.teachers.filter(t => t.perfStatus === 'pending').length;
+    if (pmDone) pmDone.textContent = approved;
+    if (pmPend) pmPend.textContent = pending > 0 ? pending + ' طلب اعتماد' : (DB.teachers.length - approved);
+  }
   if (pmStat) pmStat.textContent = DB.evalOpen ? 'مفتوح' : 'مغلق';
+
+  // تصفية المعلمين: المعلم يرى بطاقته فقط، المدير يرى الجميع
+  const teachersList = isTeacher
+    ? DB.teachers.filter(t => t.id == currentTeacherId)
+    : DB.teachers;
+
   if (!tb) return;
-  if (!DB.teachers.length) {
+  if (!teachersList.length) {
     tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:18px;color:var(--tx3)">لا يوجد معلمون — أضف معلمين من صفحة بيانات المعلمين</td></tr>';
     return;
   }
@@ -5431,7 +5445,7 @@ function renderPerf() {
     return {lbl:'جديد', c:'var(--tx3)', bg:'var(--surf3)'};
   };
   const maxWs = PERF_ELEMENTS.reduce((s,e)=>s+e.w, 0);
-  tb.innerHTML = DB.teachers.map((t,i) => {
+  tb.innerHTML = teachersList.map((t,i) => {
     const p  = calcPerfPercent(t);
     const sc = calcPerfScore(t);
     const ws = countPerfWitnesses(t);
@@ -5455,8 +5469,8 @@ function renderPerf() {
       <td style="text-align:center;padding:8px;border-bottom:1px solid var(--brd)">
         <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap">
           <button class="ab ae" onclick="showPerfCard(${t.id})" title="فتح البطاقة">📋</button>
-          ${t.perfStatus==='pending'?`<button class="ab" style="background:rgba(22,163,74,.1);color:var(--g1)" onclick="approvePerf(${t.id})" title="اعتماد">✔</button><button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="rejectPerf(${t.id})" title="رفض">✖</button>`:''}
-          <button class="ab" style="background:rgba(37,211,102,.1);color:#25d366" onclick="sendPerfWA(${t.id})" title="واتساب">📱</button>
+          ${(!isTeacher && t.perfStatus==='pending')?`<button class="ab" style="background:rgba(22,163,74,.1);color:var(--g1)" onclick="approvePerf(${t.id})" title="اعتماد">✔</button><button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="rejectPerf(${t.id})" title="رفض">✖</button>`:''}
+          ${!isTeacher?`<button class="ab" style="background:rgba(37,211,102,.1);color:#25d366" onclick="sendPerfWA(${t.id})" title="واتساب">📱</button>`:''}
         </div>
       </td>
     </tr>`;
