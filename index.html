@@ -4271,171 +4271,30 @@ function prtWait() {
     periodRows = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#aaa">— لا توجد حصص مدخلة —</td></tr>';
   }
 
-  const html = `<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<title>نموذج الانتظار</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Cairo,sans-serif;background:#fff;direction:rtl;color:#0a1628}
-.page{width:210mm;min-height:297mm;margin:0 auto;padding:14mm 16mm 16mm;position:relative}
-/* الكليشة */
-.header{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #0d6938;padding-bottom:12px;margin-bottom:4px}
-.header-center{text-align:center;flex:1}
-.ksa-title{font-size:11px;font-weight:700;color:#555;margin-bottom:2px}
-.min-title{font-size:15px;font-weight:900;color:#0d6938;margin-bottom:2px}
-.dept-title{font-size:11px;font-weight:700;color:#0a3d20;margin-bottom:2px}
-.school-title{font-size:13px;font-weight:800;color:#0a1628}
-.logo-box{width:72px;text-align:center}
-.logo-box svg{display:block;margin:0 auto}
-.logo-box .logo-text{font-size:9px;font-weight:700;color:#0d6938;margin-top:3px}
-.bismillah{text-align:center;font-size:13px;font-weight:700;color:#0d6938;margin:10px 0 6px;letter-spacing:1px}
-/* عنوان النموذج */
-.form-title-bar{background:linear-gradient(135deg,#0d6938,#1a7a42);color:#fff;text-align:center;padding:8px 16px;border-radius:8px;font-size:16px;font-weight:900;margin-bottom:14px;letter-spacing:0.5px}
-/* رقم ـ تاريخ */
-.meta-row{display:flex;gap:14px;margin-bottom:12px;font-size:12px}
-.meta-item{display:flex;align-items:center;gap:5px;background:#f5faf7;border:1px solid #c3ddc9;border-radius:7px;padding:6px 12px;flex:1}
-.meta-label{font-weight:700;color:#0d6938}
-.meta-val{font-weight:600;color:#0a1628}
-/* نص الغياب */
-.absent-box{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid #f59e0b;border-radius:10px;padding:12px 16px;margin-bottom:14px}
-.absent-line{font-size:13px;font-weight:600;color:#0a1628;line-height:1.9}
-.absent-name{font-size:15px;font-weight:900;color:#92400e;border-bottom:2px solid #f59e0b;padding:0 6px 1px;display:inline-block;min-width:160px;text-align:center}
-/* جدول الحصص */
-.periods-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px}
-.periods-table th{background:linear-gradient(135deg,#0d6938,#1a7a42);color:#fff;padding:9px 10px;text-align:center;font-weight:700;font-size:12px}
-.periods-table td{border:1px solid #c3ddc9;padding:9px 10px;vertical-align:middle}
-.periods-table tr:nth-child(even) td{background:#f5faf7}
-.periods-table tr:nth-child(odd) td{background:#fff}
-.periods-table td:first-child{text-align:center;font-weight:700;font-size:15px;color:#0d6938;width:60px}
-.periods-table td:nth-child(2){text-align:center;font-weight:700;width:70px}
-.periods-table td:last-child{text-align:center;color:#aaa;width:110px}
-/* التوقيعات */
-.sigs{display:flex;justify-content:space-between;margin-top:20px;padding-top:14px;border-top:1.5px dashed #c3ddc9}
-.sig-box{text-align:center;width:140px}
-.sig-title{font-size:11px;font-weight:700;color:#0d6938;margin-bottom:20px}
-.sig-line{border-bottom:1px solid #999;width:120px;margin:0 auto}
-/* ذيل */
-.footer{position:absolute;bottom:14mm;right:16mm;left:16mm;display:flex;align-items:center;justify-content:space-between;border-top:2px solid #0d6938;padding-top:8px}
-.footer-school{font-size:10px;font-weight:700;color:#0d6938}
-.footer-page{font-size:10px;color:#888}
-@media print{
-  body{margin:0}
-  .page{padding:10mm 12mm 14mm;box-shadow:none}
-  @page{size:A4;margin:0}
-}
-</style>
-</head>
-<body>
-<div class="page">
-  <!-- الكليشة الرسمية -->
-  <div class="header">
-    <div class="logo-box">
-      <svg width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="48" fill="none" stroke="#0d6938" stroke-width="2.5"/>
-        <circle cx="50" cy="50" r="38" fill="none" stroke="#0d6938" stroke-width="1.5"/>
-        <text x="50" y="46" text-anchor="middle" font-family="Cairo,serif" font-size="9" font-weight="700" fill="#0d6938">وزارة</text>
-        <text x="50" y="59" text-anchor="middle" font-family="Cairo,serif" font-size="9" font-weight="700" fill="#0d6938">التعليم</text>
-        <path d="M50 20 Q55 30 50 35 Q45 30 50 20Z" fill="#0d6938"/>
-        <path d="M50 65 Q55 75 50 80 Q45 75 50 65Z" fill="#0d6938"/>
-        <path d="M20 50 Q30 45 35 50 Q30 55 20 50Z" fill="#0d6938"/>
-        <path d="M65 50 Q75 45 80 50 Q75 55 65 50Z" fill="#0d6938"/>
-      </svg>
-      <div class="logo-text">وزارة التعليم</div>
-    </div>
-    <div class="header-center">
-      <div class="ksa-title">المملكة العربية السعودية</div>
-      <div class="min-title">وزارة التعليم</div>
-      <div class="dept-title">الإدارة العامة للتعليم بمنطقة عسير</div>
-      <div class="school-title">ثانوية الأندلس بترقش</div>
-    </div>
-    <div class="logo-box">
-      <svg width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <rect x="10" y="10" width="80" height="80" rx="12" fill="none" stroke="#0d6938" stroke-width="2.5"/>
-        <text x="50" y="38" text-anchor="middle" font-family="Cairo,serif" font-size="8" font-weight="700" fill="#0d6938">ثانوية</text>
-        <text x="50" y="52" text-anchor="middle" font-family="Cairo,serif" font-size="8" font-weight="700" fill="#0d6938">الأندلس</text>
-        <text x="50" y="66" text-anchor="middle" font-family="Cairo,serif" font-size="7" fill="#0d6938">بترقش</text>
-      </svg>
-      <div class="logo-text">ثانوية الأندلس</div>
-    </div>
-  </div>
-
-  <div class="bismillah">بسم الله الرحمن الرحيم</div>
-
-  <!-- عنوان النموذج -->
-  <div class="form-title-bar">نموذج سجل الانتظار</div>
-
-  <!-- التاريخ واليوم -->
-  <div class="meta-row">
-    <div class="meta-item">
-      <span class="meta-label">التاريخ:</span>
-      <span class="meta-val">${dateVal}</span>
-    </div>
-    <div class="meta-item">
-      <span class="meta-label">اليوم:</span>
-      <span class="meta-val">${dayVal}</span>
-    </div>
-    <div class="meta-item">
-      <span class="meta-label">الرقم:</span>
-      <span class="meta-val">_________</span>
-    </div>
-  </div>
-
-  <!-- نص الغياب -->
-  <div class="absent-box">
-    <div class="absent-line">
-      نظراً لغياب الزميل / <span class="absent-name">${absentName}</span>
-    </div>
-    <div class="absent-line" style="margin-top:6px">
-      نأمل منكم تسديد حصصه كما يلي:
-    </div>
-  </div>
-
-  <!-- جدول الحصص -->
-  <table class="periods-table">
-    <thead>
-      <tr>
-        <th>الحصة</th>
-        <th>الصف</th>
-        <th>المادة</th>
-        <th>المعلم المنتظر</th>
-        <th>التوقيع</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${periodRows}
-    </tbody>
-  </table>
-
-  <!-- التوقيعات -->
-  <div class="sigs">
-    <div class="sig-box">
-      <div class="sig-title">وكيل الشؤون التعليمية</div>
-      <div class="sig-line"></div>
-    </div>
-    <div class="sig-box">
-      <div class="sig-title">مدير المدرسة</div>
-      <div class="sig-line"></div>
-    </div>
-    <div class="sig-box">
-      <div class="sig-title">اعتماد</div>
-      <div class="sig-line"></div>
-    </div>
-  </div>
-
-  <!-- الذيل -->
-  <div class="footer">
-    <div class="footer-school">الشؤون التعليمية — ثانوية الأندلس بترقش</div>
-    <div class="footer-page">نموذج سجل الانتظار</div>
-  </div>
-</div>
-<script>window.onload=function(){window.print();window.onafterprint=function(){window.close()};}<\/script>
-</body></html>`;
-
-  const w = window.open('', '_blank', 'width=800,height=900');
-  if (w) { w.document.write(html); w.document.close(); }
+  _directorExport(showStamp => {
+    const body = `
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:7px;padding:8px 14px;flex:1;font-size:12px"><b style="color:#0d7a5f">التاريخ:</b> ${dateVal}</div>
+        <div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:7px;padding:8px 14px;flex:1;font-size:12px"><b style="color:#0d7a5f">اليوم:</b> ${dayVal}</div>
+        <div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:7px;padding:8px 14px;flex:1;font-size:12px"><b style="color:#0d7a5f">الرقم:</b> _________</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid #f59e0b;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:12px;line-height:2">
+        نظراً لغياب الزميل / <span style="font-size:14px;font-weight:900;color:#92400e;border-bottom:2px solid #f59e0b;padding:0 6px 1px;display:inline-block;min-width:140px;text-align:center">${absentName}</span>
+        <br>نأمل منكم تسديد حصصه كما يلي:
+      </div>
+      <table>
+        <thead><tr><th style="width:60px">الحصة</th><th style="width:70px">الصف</th><th>المادة</th><th>المعلم المنتظر</th><th style="width:100px">التوقيع</th></tr></thead>
+        <tbody>${periodRows}</tbody>
+      </table>
+      <div style="display:flex;justify-content:space-between;margin-top:18px;padding-top:12px;border-top:1px dashed #0d7a5f44">
+        <div style="text-align:center;width:140px">
+          <div style="font-size:11px;font-weight:700;color:#0d7a5f;margin-bottom:20px">وكيل الشؤون التعليمية</div>
+          <div style="border-bottom:1px solid #999;width:120px;margin:0 auto"></div>
+        </div>
+        <div style="width:50px"></div>
+      </div>`;
+    _openDoc(_officialDoc('نموذج سجل الانتظار', body, {showStamp, date: dateVal, subject:`غياب: ${absentName}`}));
+  });
 }
 
 // ── الإشراف ──
@@ -5310,55 +5169,42 @@ function sendPerfWA(id) {
 function prtPerfCard() {
   const t = DB.teachers.find(x => x.id == window._perfCardId);
   if (!t) return;
-  const pd  = _perfDataOf(t);
-  const p   = calcPerfPercent(t);
-  const sc  = calcPerfScore(t);
-  const ws  = countPerfWitnesses(t);
-  const maxWs = PERF_ELEMENTS.reduce((s,e)=>s+e.w,0);
-  const level = p>=90?'ممتاز':p>=80?'جيد جداً':p>=70?'جيد':p>=60?'مقبول':'يحتاج تطوير';
-  const elRows = PERF_ELEMENTS.map(e => {
-    const witnesses = (pd[e.id]||[]).filter(w=>w&&w.text&&w.text.trim());
-    const earned = Math.min(witnesses.length, e.w);
-    return `<tr>
-      <td style="padding:8px;border:1px solid #ddd;text-align:right">${e.id}. ${e.name}</td>
-      <td style="padding:8px;border:1px solid #ddd;text-align:center">${e.weight}%</td>
-      <td style="padding:8px;border:1px solid #ddd">${witnesses.map((w,i)=>`<div style="margin-bottom:3px;font-size:11px">${i+1}. ${w.text}</div>`).join('')}${witnesses.length===0?'<span style="color:#9ca3af;font-size:11px">لا توجد شواهد</span>':''}</td>
-      <td style="padding:8px;border:1px solid #ddd;text-align:center;font-weight:700">${earned}/${e.w}</td>
-    </tr>`;
-  }).join('');
-  const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>بطاقة الأداء — ${t.name}</title>
-  <style>body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;direction:rtl;margin:0;padding:20px;font-size:13px;color:#1a1a1a;background:#fff}
-  .hdr{background:linear-gradient(135deg,#1e3a5f,#2d6a4f);color:#fff;padding:18px 22px;border-radius:10px;margin-bottom:18px}
-  .hdr h1{margin:0 0 4px;font-size:18px}.hdr p{margin:0;opacity:.8;font-size:12px}
-  .sc{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap}
-  .sc-item{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 18px;text-align:center;flex:1;min-width:80px}
-  .sc-v{font-size:24px;font-weight:900;color:#1e3a5f}.sc-l{font-size:10px;color:#64748b;margin-top:2px}
-  table{width:100%;border-collapse:collapse;margin-bottom:20px}th{background:#1e3a5f;color:#fff;padding:9px;font-size:12px;text-align:center}
-  .sig{display:flex;justify-content:space-between;margin-top:30px;padding-top:16px;border-top:2px solid #1e3a5f}
-  .sig div{text-align:center;flex:1}.sig .line{border-bottom:1px solid #333;height:30px;margin-bottom:6px}
-  @media print{body{padding:0}}</style></head><body>
-  <div class="hdr"><h1>بطاقة الأداء الوظيفي للمعلم</h1><p>المملكة العربية السعودية — وزارة التعليم — ثانوية الأندلس بترقش</p></div>
-  <div style="display:flex;justify-content:space-between;margin-bottom:14px;background:#f8fafc;border-radius:8px;padding:12px 16px;flex-wrap:wrap;gap:8px;border:1px solid #e2e8f0">
-    <div><strong>اسم المعلم:</strong> ${t.name}</div>
-    <div><strong>التخصص:</strong> ${t.subject||'—'}</div>
-    <div><strong>رقم الهوية:</strong> ${t.idNum||'—'}</div>
-    <div><strong>التاريخ:</strong> ${new Date().toLocaleDateString('ar-SA')}</div>
-    ${t.perfStatus==='approved'?`<div style="color:#16a34a;font-weight:700">✔ معتمدة — ${t.perfApprovedDate||''}</div>`:''}
-  </div>
-  <div class="sc">
-    <div class="sc-item"><div class="sc-v">${p}%</div><div class="sc-l">نسبة الأداء</div></div>
-    <div class="sc-item"><div class="sc-v">${sc}/5</div><div class="sc-l">الدرجة</div></div>
-    <div class="sc-item"><div class="sc-v">${ws}/${maxWs}</div><div class="sc-l">الشواهد</div></div>
-    <div class="sc-item"><div class="sc-v">${level}</div><div class="sc-l">التقدير</div></div>
-  </div>
-  <table><thead><tr><th style="width:30%">عنصر التقييم</th><th style="width:8%">الوزن</th><th>الشواهد والأدلة</th><th style="width:10%">الشواهد</th></tr></thead><tbody>${elRows}</tbody></table>
-  <div class="sig">
-    <div><div class="line"></div><div>توقيع المعلم</div></div>
-    <div><div class="line"></div><div>المشرف المباشر</div></div>
-    <div><div class="line"></div><div>مدير المدرسة</div></div>
-  </div>
-  <script>window.onload=()=>{window.print();}<\/script></body></html>`;
-  const w = window.open('','_blank'); w.document.write(html); w.document.close();
+  _directorExport(showStamp => {
+    const pd  = _perfDataOf(t);
+    const p   = calcPerfPercent(t);
+    const sc  = calcPerfScore(t);
+    const ws  = countPerfWitnesses(t);
+    const maxWs = PERF_ELEMENTS.reduce((s,e)=>s+e.w,0);
+    const level = p>=90?'ممتاز':p>=80?'جيد جداً':p>=70?'جيد':p>=60?'مقبول':'يحتاج تطوير';
+    const elRows = PERF_ELEMENTS.map(e => {
+      const witnesses = (pd[e.id]||[]).filter(w=>w&&w.text&&w.text.trim());
+      const earned = Math.min(witnesses.length, e.w);
+      return `<tr>
+        <td style="border-right:3px solid #0d7a5f">${e.id}. ${e.name}</td>
+        <td style="text-align:center">${e.weight}%</td>
+        <td>${witnesses.map((w,i)=>`<div style="margin-bottom:3px;font-size:10px">${i+1}. ${w.text}</div>`).join('')}${witnesses.length===0?'<span style="color:#9ca3af;font-size:10px">لا توجد شواهد</span>':''}</td>
+        <td style="text-align:center;font-weight:700">${earned}/${e.w}</td>
+      </tr>`;
+    }).join('');
+    const body = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+        <div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:900;color:#0d7a5f">${p}%</div><div style="font-size:10px;color:#64748b">نسبة الأداء</div></div>
+        <div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:900;color:#0d7a5f">${sc}/5</div><div style="font-size:10px;color:#64748b">الدرجة</div></div>
+        <div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:900;color:#0d7a5f">${ws}/${maxWs}</div><div style="font-size:10px;color:#64748b">الشواهد</div></div>
+        <div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:900;color:#0d7a5f">${level}</div><div style="font-size:10px;color:#64748b">التقدير</div></div>
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:14px;font-size:11px">
+        <span><b>اسم المعلم:</b> ${t.name}</span>
+        <span><b>التخصص:</b> ${t.subject||'—'}</span>
+        <span><b>رقم الهوية:</b> ${t.idNum||'—'}</span>
+        ${t.perfStatus==='approved'?`<span style="color:#16a34a;font-weight:700">✔ معتمدة ${t.perfApprovedDate||''}</span>`:''}
+      </div>
+      <table>
+        <thead><tr><th style="width:30%">عنصر التقييم</th><th style="width:8%">الوزن</th><th>الشواهد والأدلة</th><th style="width:10%">الشواهد</th></tr></thead>
+        <tbody>${elRows}</tbody>
+      </table>`;
+    _openDoc(_officialDoc('بطاقة الأداء الوظيفي للمعلم — ' + t.name, body, {showStamp, subject:'بطاقة الأداء الوظيفي'}));
+  });
 }
 
 function exportPerfCard() { prtPerfCard(); }
@@ -5955,27 +5801,24 @@ function exportMtgReport() {
   const content = document.getElementById('mtg-content')?.value || '';
   const recs = document.getElementById('mtg-recs')?.value || '';
   if (!content) { toast('أدخل محتوى الاجتماع أولاً', false); return; }
-  const win = window.open('', '_blank');
-  win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head>
-    <meta charset="UTF-8"><title>محضر اجتماع</title>
-    <style>body{font-family:Arial,sans-serif;padding:40px;direction:rtl}
-    h1{font-size:18px;text-align:center;border-bottom:2px solid #333;padding-bottom:10px}
-    .info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0}
-    .info div{background:#f5f5f5;padding:8px 12px;border-radius:4px;font-size:13px}
-    .section{margin:15px 0} .section h3{font-size:14px;color:#0a1628;border-right:4px solid #0a1628;padding-right:8px}
-    .section p{font-size:12px;line-height:2;background:#fafafa;padding:10px;border-radius:4px}
-    @media print{body{padding:20px}}</style></head><body>
-    <h1>محضر اجتماع ${c ? '— ' + c.name : ''}</h1>
-    <div class="info">
-      <div><b>رقم الاجتماع:</b> ${num}</div>
-      <div><b>التاريخ:</b> ${date}</div>
-      <div><b>المدرسة:</b> ثانوية الأندلس بترقش</div>
-      <div><b>رئيس الاجتماع:</b> ${c?.head || '—'}</div>
-    </div>
-    <div class="section"><h3>ما تم في الاجتماع</h3><p>${content.replace(/\n/g,'<br>')}</p></div>
-    ${recs ? `<div class="section"><h3>التوصيات</h3><p>${recs.replace(/\n/g,'<br>')}</p></div>` : ''}
-    </body></html>`);
-  win.document.close(); win.print();
+  _directorExport(showStamp => {
+    const body = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:7px;padding:8px 12px;font-size:11px"><b style="color:#0d7a5f">رقم الاجتماع:</b> ${num}</div>
+        <div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:7px;padding:8px 12px;font-size:11px"><b style="color:#0d7a5f">التاريخ:</b> ${date}</div>
+        <div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:7px;padding:8px 12px;font-size:11px"><b style="color:#0d7a5f">اللجنة:</b> ${c ? c.name : '—'}</div>
+        <div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:7px;padding:8px 12px;font-size:11px"><b style="color:#0d7a5f">رئيس الاجتماع:</b> ${c?.head||'—'}</div>
+      </div>
+      <div style="margin:10px 0">
+        <div style="font-size:12px;font-weight:900;color:#0d7a5f;border-right:3px solid #0d7a5f;padding-right:8px;margin-bottom:6px">ما تم في الاجتماع</div>
+        <div style="font-size:11px;line-height:2;background:#f9fafb;padding:10px;border-radius:6px">${content.replace(/\n/g,'<br>')}</div>
+      </div>
+      ${recs ? `<div style="margin:10px 0">
+        <div style="font-size:12px;font-weight:900;color:#0d7a5f;border-right:3px solid #0d7a5f;padding-right:8px;margin-bottom:6px">التوصيات</div>
+        <div style="font-size:11px;line-height:2;background:#f9fafb;padding:10px;border-radius:6px">${recs.replace(/\n/g,'<br>')}</div>
+      </div>` : ''}`;
+    _openDoc(_officialDoc(`محضر اجتماع${c ? ' — ' + c.name : ''}`, body, {showStamp, date, subject:'محضر اجتماع لجنة'}));
+  });
 }
 
 // ══════════════════════════════════════════
@@ -6109,26 +5952,22 @@ function prtMeetInvite() {
   const place  = document.getElementById('mt-place')?.value;
   const agenda = document.getElementById('mt-agenda')?.value.trim();
   if (!title) { toast('أدخل عنوان الاجتماع أولاً', false); return; }
-  const win = window.open('','_blank');
-  win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>دعوة اجتماع</title>
-  <style>body{font-family:Arial,sans-serif;padding:40px;direction:rtl}.header{text-align:center;border-bottom:3px double #0a1628;padding-bottom:15px;margin-bottom:20px}
-  h1{font-size:18px;color:#0a1628}.card{border:2px solid #0a1628;border-radius:10px;padding:20px;margin-bottom:15px}
-  table{width:100%;border-collapse:collapse}td{padding:8px 12px;font-size:13px;border-bottom:1px solid #eee}
-  td:first-child{font-weight:700;color:#0a1628;width:120px}.sig{margin-top:40px;display:flex;justify-content:space-between}
-  .sig div{text-align:center}.sig div span{display:block;margin-top:30px;border-top:1px solid #333;padding-top:5px;font-size:12px}
-  @media print{body{padding:20px}}</style></head><body>
-  <div class="header"><h1>المملكة العربية السعودية — وزارة التعليم</h1>
-  <h2 style="font-size:14px">ثانوية الأندلس بترقش</h2></div>
-  <div style="text-align:center;font-size:18px;font-weight:900;color:#0a1628;margin-bottom:20px">بطاقة دعوة اجتماع</div>
-  <div class="card"><table>
-  <tr><td>موضوع الاجتماع</td><td>${title}</td></tr>
-  <tr><td>التاريخ</td><td>${date||'—'}</td></tr>
-  <tr><td>الوقت</td><td>${time||'—'}</td></tr>
-  <tr><td>المكان</td><td>${place||'—'}</td></tr>
-  </table></div>
-  ${agenda?`<div class="card"><div style="font-weight:700;margin-bottom:8px">بنود الاجتماع:</div><p style="font-size:13px;line-height:2">${agenda.replace(/\n/g,'<br>')}</p></div>`:''}
-  <div class="sig"><div><span>مدير المدرسة</span></div><div><span>وكيل الشؤون التعليمية</span></div></div>
-  </body></html>`); win.document.close(); win.print();
+  _directorExport(showStamp => {
+    const body = `
+      <div style="border:1.5px solid #0d7a5f;border-radius:10px;padding:16px;margin-bottom:14px">
+        <table style="margin:0">
+          <tr><td style="font-weight:700;color:#0d7a5f;width:130px;border:none;background:none;padding:7px 0">موضوع الاجتماع</td><td style="border:none;background:none;padding:7px 0">${title}</td></tr>
+          <tr><td style="font-weight:700;color:#0d7a5f;border:none;background:none;padding:7px 0">التاريخ</td><td style="border:none;background:none;padding:7px 0">${date||'—'}</td></tr>
+          <tr><td style="font-weight:700;color:#0d7a5f;border:none;background:none;padding:7px 0">الوقت</td><td style="border:none;background:none;padding:7px 0">${time||'—'}</td></tr>
+          <tr><td style="font-weight:700;color:#0d7a5f;border:none;background:none;padding:7px 0">المكان</td><td style="border:none;background:none;padding:7px 0">${place||'—'}</td></tr>
+        </table>
+      </div>
+      ${agenda ? `<div>
+        <div style="font-size:12px;font-weight:900;color:#0d7a5f;border-right:3px solid #0d7a5f;padding-right:8px;margin-bottom:8px">بنود الاجتماع</div>
+        <div style="font-size:11px;line-height:2;background:#f9fafb;padding:10px;border-radius:6px">${agenda.replace(/\n/g,'<br>')}</div>
+      </div>` : ''}`;
+    _openDoc(_officialDoc('بطاقة دعوة اجتماع', body, {showStamp, date, subject:title}));
+  });
 }
 
 function saveMeetReport() {
@@ -6151,34 +5990,25 @@ function exportMeetReportPDF() {
   const actions   = document.getElementById('mr-actions')?.value.trim();
   const next      = document.getElementById('mr-next')?.value.trim();
   if (!title) { toast('أدخل عنوان الاجتماع أولاً', false); return; }
-  const win = window.open('','_blank');
-  win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>محضر اجتماع</title>
-  <style>body{font-family:Arial,sans-serif;padding:40px;direction:rtl;color:#111}
-  .header{text-align:center;border-bottom:3px double #0a1628;padding-bottom:15px;margin-bottom:20px}
-  h1{font-size:18px;color:#0a1628}.section{margin:14px 0}
-  .section h3{font-size:13px;font-weight:900;color:#0a1628;border-right:4px solid #0a1628;padding-right:8px;margin-bottom:6px}
-  .section p{font-size:12px;line-height:2;background:#f9f9f9;padding:10px;border-radius:6px}
-  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
-  .info-item{background:#f0f4ff;padding:8px 12px;border-radius:6px;font-size:12px}.info-item b{color:#0a1628}
-  .sig{margin-top:40px;display:flex;justify-content:space-between}.sig div{text-align:center}
-  .sig div span{display:block;margin-top:30px;border-top:1px solid #333;padding-top:5px;font-size:11px}
-  @media print{body{padding:20px}}</style></head><body>
-  <div class="header"><h1>المملكة العربية السعودية — وزارة التعليم</h1>
-  <h2 style="font-size:13px">ثانوية الأندلس بترقش — إدارة التعليم بمنطقة عسير</h2>
-  <h2 style="font-size:16px;margin-top:8px">محضر اجتماع</h2></div>
-  <div class="info-grid">
-  <div class="info-item"><b>العنوان:</b> ${title}</div>
-  <div class="info-item"><b>التاريخ:</b> ${date||'—'}</div>
-  <div class="info-item"><b>المكان:</b> ${place||'—'}</div>
-  <div class="info-item"><b>رئيس الاجتماع:</b> ${head||'—'}</div>
-  </div>
-  ${attendees?`<div class="section"><h3>الحضور</h3><p>${attendees.replace(/\n/g,'<br>')}</p></div>`:''}
-  ${topics?`<div class="section"><h3>بنود الاجتماع</h3><p>${topics.replace(/\n/g,'<br>')}</p></div>`:''}
-  ${decisions?`<div class="section"><h3>القرارات والتوصيات</h3><p>${decisions.replace(/\n/g,'<br>')}</p></div>`:''}
-  ${actions?`<div class="section"><h3>الإجراءات المطلوبة</h3><p>${actions.replace(/\n/g,'<br>')}</p></div>`:''}
-  ${next?`<div class="section"><h3>الاجتماع القادم</h3><p>${next}</p></div>`:''}
-  <div class="sig"><div><span>رئيس الاجتماع</span></div><div><span>أمين السر</span></div><div><span>مدير المدرسة</span></div></div>
-  </body></html>`); win.document.close(); win.print();
+  _directorExport(showStamp => {
+    const sec = (h, txt) => txt ? `<div style="margin:10px 0">
+      <div style="font-size:12px;font-weight:900;color:#0d7a5f;border-right:3px solid #0d7a5f;padding-right:8px;margin-bottom:6px">${h}</div>
+      <div style="font-size:11px;line-height:2;background:#f9fafb;padding:10px;border-radius:6px">${txt.replace(/\n/g,'<br>')}</div>
+    </div>` : '';
+    const body = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:7px;padding:8px 12px;font-size:11px"><b style="color:#0d7a5f">العنوان:</b> ${title}</div>
+        <div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:7px;padding:8px 12px;font-size:11px"><b style="color:#0d7a5f">التاريخ:</b> ${date||'—'}</div>
+        <div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:7px;padding:8px 12px;font-size:11px"><b style="color:#0d7a5f">المكان:</b> ${place||'—'}</div>
+        <div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:7px;padding:8px 12px;font-size:11px"><b style="color:#0d7a5f">رئيس الاجتماع:</b> ${head||'—'}</div>
+      </div>
+      ${sec('الحضور', attendees)}
+      ${sec('بنود الاجتماع', topics)}
+      ${sec('القرارات والتوصيات', decisions)}
+      ${sec('الإجراءات المطلوبة', actions)}
+      ${sec('الاجتماع القادم', next)}`;
+    _openDoc(_officialDoc('محضر اجتماع', body, {showStamp, date, subject:title}));
+  });
 }
 
 function sendMeetReportWA() {
@@ -7027,29 +6857,323 @@ function delImpRowEvid(eid) {
   saveAllData(); _renderImpRowEvidList();
 }
 
-// ── تصدير استمارة 1 و 2 ────────────────────────────────────────
-function exportImpPlan1() {
-  const dc = {'التدريس والتعلم':'#1e3a5f','المناخ التعليمي':'#0d4f8c','نواتج التعلم':'#0d6b3e','التوجيه والإرشاد':'#92400e','النشاط الطلابي':'#be123c','التطوير المهني':'#5b21b6','الشراكة المجتمعية':'#6b21a8'};
-  const rows = DB.impPlans.map(p=>`<tr><td>${p.domain||'—'}</td><td>${p.title||'—'}</td><td>${p.target||'—'}</td><td>${p.actions||'—'}</td><td>${p.methods||'—'}</td><td>${p.deadline||'—'}</td><td>${p.resp||'—'}</td><td>${p.pct||0}%</td></tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:#999">لا توجد بيانات</td></tr>';
-  const w = window.open('','_blank','width=1100,height=800');
-  w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>استمارة 1 - بناء خطة التحسين</title><style>body{font-family:'Tajawal',Arial,sans-serif;margin:0;padding:16px;font-size:11px;color:#111}h2{text-align:center;color:#0a1628;margin:0 0 4px}p.sub{text-align:center;color:#555;margin:0 0 12px;font-size:10px}table{width:100%;border-collapse:collapse}th{background:#0a1628;color:#fff;padding:8px 6px;font-size:10px}td{padding:7px 6px;border:1px solid #ddd;vertical-align:top}tr:nth-child(even)td{background:#f8fafc}@media print{@page{margin:1cm}button{display:none}}</style></head><body>
-  <h2>استمارة بناء خطة التحسين (استمارة 1)</h2><p class="sub">المدرسة: ${DB.opPlan?.schoolName||'—'} | العام الدراسي: ${DB.opPlan?.year||'—'}</p>
-  <table><thead><tr><th>المجال</th><th>العملية</th><th>وصف الاحتياج</th><th>إجراءات التحسين</th><th>الأساليب</th><th>مدة الإنجاز</th><th>المسؤول</th><th>نسبة الإنجاز</th></tr></thead><tbody>${rows}</tbody></table>
-  <div style="text-align:center;margin-top:16px"><button onclick="window.print()" style="padding:8px 24px;background:#0a1628;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">🖨 طباعة</button></div>
-  </body></html>`);
+// ══════════════════════════════════════════════════════════════════════
+// القالب الرسمي الاحترافي — يُستخدم في جميع التقارير
+// ══════════════════════════════════════════════════════════════════════
+function _officialDoc(title, bodyHtml, opts={}) {
+  const school   = 'ثانوية الأندلس بترقش';
+  const director = DB.opPlan?.principal || document.getElementById('imp-director')?.value || 'عبدالعزيز عبده حديش';
+  const today    = new Date().toLocaleDateString('ar-SA-u-nu-latn');
+  const showStamp = !!opts.showStamp;
+
+  const stampSVG = `<svg width="110" height="110" viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="55" cy="55" r="52" fill="none" stroke="#0d7a5f" stroke-width="2.5"/>
+    <circle cx="55" cy="55" r="44" fill="none" stroke="#0d7a5f" stroke-width="1"/>
+    <text x="55" y="28" text-anchor="middle" font-size="7.5" font-family="Cairo,Arial" fill="#0d7a5f" font-weight="700">الإدارة العامة للتعليم</text>
+    <text x="55" y="39" text-anchor="middle" font-size="7.5" font-family="Cairo,Arial" fill="#0d7a5f" font-weight="700">بمنطقة عسير</text>
+    <text x="55" y="53" text-anchor="middle" font-size="9" font-family="Cairo,Arial" fill="#0d7a5f" font-weight="900">ثانوية الأندلس</text>
+    <text x="55" y="65" text-anchor="middle" font-size="9" font-family="Cairo,Arial" fill="#0d7a5f" font-weight="900">بترقش</text>
+    <text x="55" y="79" text-anchor="middle" font-size="7" font-family="Cairo,Arial" fill="#0d7a5f">للبنين والتعليم بمنطقة</text>
+    <text x="55" y="90" text-anchor="middle" font-size="6.5" font-family="Cairo,Arial" fill="#0d7a5f">${today}</text>
+  </svg>`;
+
+  return `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8">
+<title>${title}</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Cairo','Tajawal',Arial,sans-serif;background:#fff;color:#111;direction:rtl;font-size:12px}
+.page{width:210mm;min-height:297mm;margin:0 auto;position:relative;background:#fff}
+/* ── رأس الصفحة ── */
+.doc-hdr{display:flex;align-items:flex-start;justify-content:space-between;padding:14px 22px 10px;border-bottom:2px solid #0d7a5f}
+.doc-hdr-r{text-align:right;line-height:1.8;font-size:11px;color:#0d7a5f;font-weight:700}
+.doc-hdr-c{text-align:center;flex-shrink:0;padding:0 10px}
+.bsmala{font-size:18px;font-weight:900;color:#0d7a5f;font-family:'Cairo',serif;line-height:1.3}
+.doc-hdr-l{text-align:left;line-height:2.1;font-size:11px;color:#333}
+.doc-hdr-l .lbl{color:#0d7a5f;font-weight:700}
+/* ── صندوق المحتوى ── */
+.doc-body{margin:14px 18px;border:1.5px solid #0d7a5f;border-radius:12px;padding:20px 24px;min-height:180mm}
+.doc-title{text-align:center;font-size:16px;font-weight:900;color:#0d7a5f;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #0d7a5f33}
+/* ── الجداول ── */
+table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:11px}
+th{background:#0d7a5f;color:#fff;padding:8px 7px;font-size:11px;font-weight:700;text-align:center}
+td{padding:7px 8px;border:1px solid #b2dfdb;vertical-align:top}
+tr:nth-child(even) td{background:#f0fdf9}
+.dom-hdr td{background:#0d7a5f!important;color:#fff!important;font-weight:900;text-align:center;padding:7px 14px;letter-spacing:.3px}
+/* ── التوقيع والختم ── */
+.doc-sig{display:flex;justify-content:space-between;align-items:flex-end;margin-top:28px;padding-top:14px;border-top:1px solid #0d7a5f33}
+.sig-blk{text-align:center}
+.sig-line{border-bottom:1px solid #444;height:36px;margin-bottom:6px;width:130px}
+.sig-name{font-size:11px;font-weight:700;color:#0d7a5f}
+.sig-ttl{font-size:10px;color:#666;margin-top:2px}
+/* ── تذييل الصفحة ── */
+.doc-ftr{display:flex;justify-content:space-between;align-items:center;padding:7px 22px;border-top:1px solid #0d7a5f33;font-size:10px;color:#888;margin:0 18px 10px}
+/* ── أزرار الطباعة ── */
+.no-print{display:flex;justify-content:center;gap:10px;padding:14px;background:#f8fafc;border-top:1px solid #e2e8f0}
+/* ── الحالات ── */
+.b-done{background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.b-pend{background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:10px;font-size:10px}
+.b-fail{background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:10px}
+/* ── طباعة ── */
+@media print{
+  .no-print{display:none!important}
+  body{margin:0}
+  .page{width:100%}
+  @page{margin:1.2cm;size:A4}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- رأس الصفحة -->
+  <div class="doc-hdr">
+    <div class="doc-hdr-r">
+      المملكة العربية السعودية<br>
+      وزارة التعليم<br>
+      الإدارة العامة للتعليم بمنطقة عسير<br>
+      ${school}
+    </div>
+    <div class="doc-hdr-c">
+      <div class="bsmala">بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيمِ</div>
+      <div style="width:50px;height:2px;background:#0d7a5f;margin:5px auto"></div>
+      <div style="font-size:10px;color:#0d7a5f;font-weight:700;margin-top:3px">وزارة التعليـم</div>
+      <div style="font-size:8px;color:#888">Ministry of Education</div>
+    </div>
+    <div class="doc-hdr-l">
+      <span class="lbl">الرقم :</span> ${opts.refNum||'...............'}<br>
+      <span class="lbl">التاريخ :</span> ${opts.date||today}<br>
+      <span class="lbl">بشأن :</span> ${opts.subject||title}
+    </div>
+  </div>
+
+  <!-- المحتوى -->
+  <div class="doc-body">
+    <div class="doc-title">${title}</div>
+    ${bodyHtml}
+    <!-- التوقيع والختم -->
+    <div class="doc-sig">
+      <div class="sig-blk">
+        ${showStamp ? stampSVG : '<div style="width:110px;height:40px"></div>'}
+      </div>
+      <div class="sig-blk">
+        <div class="sig-line"></div>
+        <div class="sig-name">${director}</div>
+        <div class="sig-ttl">مدير المدرسة</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- التذييل -->
+  <div class="doc-ftr">
+    <span>١/١</span>
+    <span>${school}</span>
+  </div>
+</div>
+
+<!-- أزرار -->
+<div class="no-print">
+  <button onclick="window.print()" style="padding:10px 30px;background:#0d7a5f;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo,sans-serif">🖨 طباعة</button>
+  <button onclick="window.close()" style="padding:10px 24px;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:13px;font-family:Cairo,sans-serif">✕ إغلاق</button>
+</div>
+</body></html>`;
+}
+
+// ── نافذة اختيار الختم (للمدير فقط) ─────────────────────────────────
+function _directorExport(exportFn) {
+  // إذا كان المستخدم معلماً → تصدير مباشر بدون ختم
+  if (currentTeacherId !== null) { exportFn(false); return; }
+  // إذا كان المدير → أظهر نافذة الخيار
+  let modal = document.getElementById('_STAMP_MODAL');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = '_STAMP_MODAL';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:center;justify-content:center';
+    modal.innerHTML = `
+      <div style="background:#fff;border-radius:18px;padding:32px 36px;max-width:420px;width:92%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.3)">
+        <div style="font-size:48px;margin-bottom:14px">🔖</div>
+        <h3 style="margin:0 0 10px;font-size:17px;color:#0a1628;font-family:Cairo,sans-serif;font-weight:900">ختم المدرسة</h3>
+        <p style="color:#64748b;font-size:13px;margin:0 0 26px;font-family:Cairo,sans-serif;line-height:1.6">هل تريد إدراج ختم المدرسة في التقرير؟</p>
+        <div style="display:flex;gap:12px;justify-content:center">
+          <button id="_STAMP_YES" style="flex:1;padding:13px;background:#0d7a5f;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif">✅ نعم، أضف الختم</button>
+          <button id="_STAMP_NO"  style="flex:1;padding:13px;background:#f1f5f9;color:#334155;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;cursor:pointer;font-family:Cairo,sans-serif">✕ بدون ختم</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if(e.target===modal) modal.style.display='none'; });
+  }
+  modal.style.display = 'flex';
+  document.getElementById('_STAMP_YES').onclick = () => { modal.style.display='none'; exportFn(true);  };
+  document.getElementById('_STAMP_NO' ).onclick = () => { modal.style.display='none'; exportFn(false); };
+}
+
+function _openDoc(html) {
+  const w = window.open('','_blank','width=960,height=860');
+  w.document.write(html);
   w.document.close();
 }
 
+// ── تصدير استمارة 1 و 2 ────────────────────────────────────────
+function exportImpPlan1() {
+  const order = IMP_DOMAINS_LIST.map(d=>d.id);
+  const grouped = {};
+  order.forEach(d=>{grouped[d]=[];});
+  DB.impPlans.forEach(p=>{ const d=p.domain||'أخرى'; if(!grouped[d]) grouped[d]=[]; grouped[d].push(p); });
+  let rows = '';
+  Object.entries(grouped).forEach(([domain,items])=>{
+    if(!items.length) return;
+    const info = _impDomInfo(domain);
+    rows += `<tr><td colspan="7" style="background:${info.color};color:#fff;text-align:center;padding:9px 14px;font-size:13px;font-weight:900">◆ ${domain}</td></tr>`;
+    items.forEach((p,i)=>{
+      rows += `<tr style="background:${i%2===0?info.bg:'#fff'}">
+        <td style="font-weight:700;border-right:4px solid ${info.color};padding:8px">${p.title||'—'}</td>
+        <td style="padding:8px">${p.target||'—'}</td>
+        <td style="padding:8px">${(p.actions||'—').replace(/\n/g,'<br>')}</td>
+        <td style="padding:8px">${p.methods||'—'}</td>
+        <td style="text-align:center;padding:8px;white-space:nowrap">${p.deadline||'—'}</td>
+        <td style="padding:8px">${p.resp||'—'}</td>
+        <td style="text-align:center;padding:8px">
+          <div style="background:#e2e8f0;border-radius:4px;height:7px;width:70px;margin:0 auto 3px">
+            <div style="background:${info.color};width:${p.pct||0}%;height:7px;border-radius:4px"></div>
+          </div>
+          <span style="font-size:11px;font-weight:700;color:${info.color}">${p.pct||0}%</span>
+        </td>
+      </tr>`;
+    });
+  });
+  if(!rows) rows='<tr><td colspan="7" style="text-align:center;color:#999;padding:24px">لا توجد بيانات</td></tr>';
+  const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8">
+<title>استمارة بناء خطة التحسين</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Cairo',Arial,sans-serif;background:#fff;color:#111;direction:rtl;font-size:12px}
+.page{width:210mm;margin:0 auto;padding:12mm 14mm}
+.hdr{text-align:center;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #1e3a5f}
+.hdr-title{font-size:11px;color:#555;margin-bottom:3px}
+.hdr-school{font-size:16px;font-weight:900;color:#1e3a5f;margin-bottom:3px}
+.hdr-form{font-size:13px;font-weight:700;color:#1e3a5f;background:#dbeafe;display:inline-block;padding:4px 18px;border-radius:20px;margin-top:4px}
+.meta{display:flex;justify-content:center;gap:20px;font-size:11px;color:#555;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{background:#1e3a5f;color:#fff;padding:8px 7px;font-size:11px;font-weight:700;text-align:center;border:1px solid #1e3a5f}
+td{border:1px solid #b8cfe8;vertical-align:top}
+.no-print{display:flex;justify-content:center;gap:10px;padding:14px;background:#f8fafc;border-top:1px solid #e2e8f0;margin-top:14px}
+@media print{.no-print{display:none!important}body{margin:0}.page{width:100%}@page{margin:1cm;size:A4 landscape}}
+</style></head><body>
+<div class="page">
+  <div class="hdr">
+    <div class="hdr-title">المملكة العربية السعودية — وزارة التعليم — الإدارة العامة للتعليم بمنطقة عسير</div>
+    <div class="hdr-school">ثانوية الأندلس بترقش</div>
+    <div class="hdr-form">استمارة المدرسة (1) — بناء خطة التحسين في المجالات الإشرافية</div>
+  </div>
+  <div class="meta">
+    <span>العام الدراسي: ${DB.opPlan?.year||'1447هـ'}</span>
+    <span>|</span>
+    <span>رقم الوحدة: ${document.getElementById('imp-wnum')?.value||'—'}</span>
+    <span>|</span>
+    <span>نسبة الأداء: ${document.getElementById('imp-perf-pct')?.value||'—'}%</span>
+  </div>
+  <table>
+    <thead><tr>
+      <th style="width:13%">العملية المراد تحسينها</th>
+      <th>وصف الاحتياج</th>
+      <th>إجراءات التحسين</th>
+      <th style="width:12%">أساليب وطرق التحسين</th>
+      <th style="width:10%">مدة الإنجاز</th>
+      <th style="width:12%">التنفيذ والمسؤولية</th>
+      <th style="width:8%">نسبة الإنجاز</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+</div>
+<div class="no-print">
+  <button onclick="window.print()" style="padding:10px 30px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo,sans-serif">🖨 طباعة</button>
+  <button onclick="window.close()" style="padding:10px 24px;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:13px;font-family:Cairo,sans-serif">✕ إغلاق</button>
+</div>
+</body></html>`;
+  _openDoc(html);
+}
+
 function exportImpPlan2() {
-  const statusIcon = s => s==='مكتمل'?'✅':s==='لم ينجز'?'❌':'🔄';
-  const rows = DB.impExec.map(r=>`<tr><td>${r.domain||'—'}</td><td>${r.title||'—'}</td><td>${r.notes||'—'}</td><td style="text-align:center">${statusIcon(r.status)}</td><td style="text-align:center">${r.pct||0}%</td><td>${r.status||'—'}</td><td>${r.committee||'—'}</td><td>${r.supervisor||'—'}</td><td>${r.reason||'—'}</td></tr>`).join('') || '<tr><td colspan="9" style="text-align:center;color:#999">لا توجد بيانات</td></tr>';
-  const w = window.open('','_blank','width=1200,height=800');
-  w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>استمارة 2 - تنفيذ خطة التحسين</title><style>body{font-family:'Tajawal',Arial,sans-serif;margin:0;padding:16px;font-size:11px;color:#111}h2{text-align:center;color:#0d6b3e;margin:0 0 4px}p.sub{text-align:center;color:#555;margin:0 0 12px;font-size:10px}table{width:100%;border-collapse:collapse}th{background:#0d6b3e;color:#fff;padding:8px 6px;font-size:10px}td{padding:7px 6px;border:1px solid #ddd;vertical-align:top}tr:nth-child(even)td{background:#f0fdf4}@media print{@page{margin:1cm}button{display:none}}</style></head><body>
-  <h2>استمارة تنفيذ خطة التحسين (استمارة 2)</h2><p class="sub">المدرسة: ${DB.opPlan?.schoolName||'—'} | العام الدراسي: ${DB.opPlan?.year||'—'}</p>
-  <table><thead><tr><th>المجال</th><th>العملية</th><th>الإجراء المنفذ</th><th>تم/لم يتم</th><th>نسبة الإنجاز</th><th>حالة الإنجاز</th><th>اللجنة</th><th>مشرف التميز</th><th>أسباب عدم الإنجاز</th></tr></thead><tbody>${rows}</tbody></table>
-  <div style="text-align:center;margin-top:16px"><button onclick="window.print()" style="padding:8px 24px;background:#0d6b3e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">🖨 طباعة</button></div>
-  </body></html>`);
-  w.document.close();
+  const order = IMP_DOMAINS_LIST.map(d=>d.id);
+  const grouped = {};
+  order.forEach(d=>{grouped[d]=[];});
+  DB.impExec.forEach(r=>{ const d=r.domain||'أخرى'; if(!grouped[d]) grouped[d]=[]; grouped[d].push(r); });
+  let rows = '';
+  Object.entries(grouped).forEach(([domain,items])=>{
+    if(!items.length) return;
+    const info = _impDomInfo(domain);
+    rows += `<tr><td colspan="7" style="background:${info.color};color:#fff;text-align:center;padding:9px 14px;font-size:13px;font-weight:900">◆ ${domain}</td></tr>`;
+    items.forEach((r,i)=>{
+      const stBg = r.status==='مكتمل'?'#dcfce7':r.status==='لم ينجز'?'#fee2e2':'#fef9c3';
+      const stClr= r.status==='مكتمل'?'#166534':r.status==='لم ينجز'?'#991b1b':'#854d0e';
+      rows += `<tr style="background:${i%2===0?info.bg:'#fff'}">
+        <td style="font-weight:700;border-right:4px solid ${info.color};padding:8px">${r.title||'—'}</td>
+        <td style="padding:8px">${(r.notes||'—').replace(/\n/g,'<br>')}</td>
+        <td style="text-align:center;padding:8px;white-space:nowrap">${r.date||'—'}</td>
+        <td style="padding:8px">${r.committee||'—'}</td>
+        <td style="padding:8px">${r.supervisor||'—'}</td>
+        <td style="text-align:center;padding:8px"><span style="padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;background:${stBg};color:${stClr}">${r.status||'—'}</span></td>
+        <td style="text-align:center;padding:8px">
+          <div style="background:#e2e8f0;border-radius:4px;height:7px;width:70px;margin:0 auto 3px">
+            <div style="background:${info.color};width:${r.pct||0}%;height:7px;border-radius:4px"></div>
+          </div>
+          <span style="font-size:11px;font-weight:700;color:${info.color}">${r.pct||0}%</span>
+        </td>
+      </tr>`;
+    });
+  });
+  if(!rows) rows='<tr><td colspan="7" style="text-align:center;color:#999;padding:24px">لا توجد بيانات</td></tr>';
+  const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8">
+<title>استمارة تنفيذ خطة التحسين</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Cairo',Arial,sans-serif;background:#fff;color:#111;direction:rtl;font-size:12px}
+.page{width:210mm;margin:0 auto;padding:12mm 14mm}
+.hdr{text-align:center;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #166534}
+.hdr-title{font-size:11px;color:#555;margin-bottom:3px}
+.hdr-school{font-size:16px;font-weight:900;color:#166534;margin-bottom:3px}
+.hdr-form{font-size:13px;font-weight:700;color:#166534;background:#dcfce7;display:inline-block;padding:4px 18px;border-radius:20px;margin-top:4px}
+.meta{display:flex;justify-content:center;gap:20px;font-size:11px;color:#555;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{background:#166534;color:#fff;padding:8px 7px;font-size:11px;font-weight:700;text-align:center;border:1px solid #166534}
+td{border:1px solid #bbf7d0;vertical-align:top}
+.no-print{display:flex;justify-content:center;gap:10px;padding:14px;background:#f8fafc;border-top:1px solid #e2e8f0;margin-top:14px}
+@media print{.no-print{display:none!important}body{margin:0}.page{width:100%}@page{margin:1cm;size:A4 landscape}}
+</style></head><body>
+<div class="page">
+  <div class="hdr">
+    <div class="hdr-title">المملكة العربية السعودية — وزارة التعليم — الإدارة العامة للتعليم بمنطقة عسير</div>
+    <div class="hdr-school">ثانوية الأندلس بترقش</div>
+    <div class="hdr-form">استمارة المدرسة (2) — تنفيذ خطة التحسين في المجالات الإشرافية</div>
+  </div>
+  <div class="meta">
+    <span>العام الدراسي: ${DB.opPlan?.year||'1447هـ'}</span>
+    <span>|</span>
+    <span>تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA-u-nu-latn')}</span>
+  </div>
+  <table>
+    <thead><tr>
+      <th style="width:13%">العملية المراد تحسينها</th>
+      <th>الإجراءات المنفذة</th>
+      <th style="width:10%">تاريخ التنفيذ</th>
+      <th style="width:12%">لجان المدرسة</th>
+      <th style="width:12%">مشرف التميز</th>
+      <th style="width:9%">حالة الإنجاز</th>
+      <th style="width:8%">نسبة الإنجاز</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+</div>
+<div class="no-print">
+  <button onclick="window.print()" style="padding:10px 30px;background:#166534;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo,sans-serif">🖨 طباعة</button>
+  <button onclick="window.close()" style="padding:10px 24px;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:13px;font-family:Cairo,sans-serif">✕ إغلاق</button>
+</div>
+</body></html>`;
+  _openDoc(html);
 }
 
 function prtImpPlan() { window.print(); }
@@ -8174,13 +8298,23 @@ function renderProfDevLjnah() {
 function prtProfDev() { window.print(); }
 function exportProfDevHTML() {
   const list = DB.profdev||[];
-  const w = window.open('','_blank');
-  w.document.write(`<html><head><meta charset="UTF-8"><title>التطوير المهني</title><style>body{font-family:Arial;direction:rtl;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;font-size:11px}th{background:#065f46;color:#fff}</style></head><body>
-    <h2>طلبات التطوير المهني</h2>
-    <table><thead><tr><th>المعلم</th><th>نوع النشاط</th><th>عنوان النشاط</th><th>التاريخ</th><th>الساعات</th><th>الحالة</th></tr></thead><tbody>
-    ${list.map(r=>`<tr><td>${r.teacherName||r.teacherId||''}</td><td>${r.type||''}</td><td>${r.title||''}</td><td>${r.date||''}</td><td>${r.hours||''}</td><td>${r.status||''}</td></tr>`).join('')}
-    </tbody></table></body></html>`);
-  w.document.close(); w.print();
+  _directorExport(showStamp => {
+    const rows = list.map(r=>`<tr>
+      <td style="font-weight:700;border-right:3px solid #0d7a5f">${r.teacherName||r.teacherId||'—'}</td>
+      <td>${r.type||'—'}</td>
+      <td>${r.title||'—'}</td>
+      <td style="text-align:center">${r.date||'—'}</td>
+      <td style="text-align:center">${r.hours||'—'}</td>
+      <td style="text-align:center"><span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:${r.status==='مكتمل'?'#dcfce7':r.status==='جارٍ'?'#fef9c3':'#f1f5f9'};color:${r.status==='مكتمل'?'#166534':r.status==='جارٍ'?'#854d0e':'#475569'}">${r.status||'—'}</span></td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:14px">لا توجد بيانات</td></tr>';
+    const body = `
+      <p style="text-align:center;font-size:11px;color:#555;margin-bottom:12px">العام الدراسي: ${DB.opPlan?.year||'1447هـ'} &nbsp;|&nbsp; الإجمالي: ${list.length} نشاط</p>
+      <table>
+        <thead><tr><th>المعلم</th><th>نوع النشاط</th><th>عنوان النشاط</th><th>التاريخ</th><th>الساعات</th><th>الحالة</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    _openDoc(_officialDoc('سجل التطوير المهني', body, {showStamp, subject:'التطوير المهني للمعلمين'}));
+  });
 }
 
 // ══════════════════════════════════════════
@@ -8252,13 +8386,23 @@ function deletePLCSession(id) {
 function prtPLC() { window.print(); }
 function exportPLCHTML() {
   const list = DB.plcSessions||[];
-  const w = window.open('','_blank');
-  w.document.write(`<html><head><meta charset="UTF-8"><title>مجتمعات التعلم المهنية</title><style>body{font-family:Arial;direction:rtl;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;font-size:11px}th{background:#065f46;color:#fff}</style></head><body>
-    <h2>سجل جلسات مجتمعات التعلم المهنية</h2>
-    <table><thead><tr><th>اسم المجتمع</th><th>التاريخ</th><th>الرئيس</th><th>الحضور</th><th>الأهداف</th><th>التوصيات</th></tr></thead><tbody>
-    ${list.map(s=>`<tr><td>${s.name||''}</td><td>${s.date||''}</td><td>${s.head||''}</td><td>${s.count||''}</td><td>${s.goals||''}</td><td>${s.recommendations||''}</td></tr>`).join('')}
-    </tbody></table></body></html>`);
-  w.document.close(); w.print();
+  _directorExport(showStamp => {
+    const rows = list.map(s=>`<tr>
+      <td style="font-weight:700;border-right:3px solid #0d7a5f">${s.name||'—'}</td>
+      <td style="text-align:center">${s.date||'—'}</td>
+      <td>${s.head||'—'}</td>
+      <td style="text-align:center">${s.count||'—'}</td>
+      <td>${s.goals||'—'}</td>
+      <td>${s.recommendations||'—'}</td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:14px">لا توجد جلسات مسجلة</td></tr>';
+    const body = `
+      <p style="text-align:center;font-size:11px;color:#555;margin-bottom:12px">العام الدراسي: ${DB.opPlan?.year||'1447هـ'} &nbsp;|&nbsp; الإجمالي: ${list.length} جلسة</p>
+      <table>
+        <thead><tr><th>اسم المجتمع</th><th>التاريخ</th><th>الرئيس</th><th>الحضور</th><th>الأهداف</th><th>التوصيات</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    _openDoc(_officialDoc('سجل جلسات مجتمعات التعلم المهنية', body, {showStamp, subject:'مجتمعات التعلم المهنية'}));
+  });
 }
 
 // ══════════════════════════════════════════
@@ -8386,13 +8530,30 @@ function prtVisit() { window.print(); }
 
 function exportVisitHTML() {
   const all = (DB.classVisits||[]).slice().reverse();
-  const w = window.open('','_blank');
-  w.document.write(`<html><head><meta charset="UTF-8"><title>الزيارات الصفية</title><style>body{font-family:Arial;direction:rtl;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;font-size:11px}th{background:#065f46;color:#fff}</style></head><body>
-    <h2>سجل الزيارات الصفية</h2>
-    <table><thead><tr><th>المعلم</th><th>المادة</th><th>الصف</th><th>التاريخ</th><th>الحصة</th><th>المجموع</th><th>التقدير</th><th>نقاط القوة</th><th>مجالات التطوير</th></tr></thead><tbody>
-    ${all.map(v=>`<tr><td>${v.teacherName||''}</td><td>${v.subject||''}</td><td>${v.cls||''}</td><td>${v.date||''}</td><td>${v.period||''}</td><td>${v.total}/100</td><td>${v.total>=90?'ممتاز':v.total>=80?'جيد جداً':v.total>=70?'جيد':v.total>=60?'مقبول':'يحتاج تطوير'}</td><td>${v.strengths||''}</td><td>${v.improvements||''}</td></tr>`).join('')}
-    </tbody></table></body></html>`);
-  w.document.close(); w.print();
+  _directorExport(showStamp => {
+    const rows = all.map(v => {
+      const grade = v.total>=90?'ممتاز':v.total>=80?'جيد جداً':v.total>=70?'جيد':v.total>=60?'مقبول':'يحتاج تطوير';
+      const gc = v.total>=90?'#dcfce7':v.total>=80?'#dbeafe':v.total>=70?'#fef9c3':'#fee2e2';
+      const tc = v.total>=90?'#166534':v.total>=80?'#1e3a5f':v.total>=70?'#854d0e':'#991b1b';
+      return `<tr>
+        <td style="font-weight:700;border-right:3px solid #0d7a5f">${v.teacherName||'—'}</td>
+        <td>${v.subject||'—'}</td><td>${v.cls||'—'}</td>
+        <td style="text-align:center">${v.date||'—'}</td>
+        <td style="text-align:center">${v.period||'—'}</td>
+        <td style="text-align:center;font-weight:800">${v.total}/100</td>
+        <td style="text-align:center"><span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:${gc};color:${tc}">${grade}</span></td>
+        <td>${v.strengths||'—'}</td>
+        <td>${v.improvements||'—'}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="9" style="text-align:center;color:#999;padding:14px">لا توجد زيارات مسجلة</td></tr>';
+    const body = `
+      <p style="text-align:center;font-size:11px;color:#555;margin-bottom:12px">العام الدراسي: ${DB.opPlan?.year||'1447هـ'} &nbsp;|&nbsp; الإجمالي: ${all.length} زيارة</p>
+      <table>
+        <thead><tr><th>المعلم</th><th>المادة</th><th>الصف</th><th>التاريخ</th><th>الحصة</th><th>المجموع</th><th>التقدير</th><th>نقاط القوة</th><th>مجالات التطوير</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    _openDoc(_officialDoc('سجل الزيارات الصفية', body, {showStamp, subject:'الزيارات الصفية للمعلمين'}));
+  });
 }
 
 // ══════════════════════════════════════════
@@ -8463,20 +8624,26 @@ function prtGradesPage() { window.print(); }
 function exportGradesHTMLReport() {
   const grades = DB.grades||[];
   if (!grades.length) { toast('لا توجد بيانات', false); return; }
-  const w = window.open('','_blank');
-  w.document.write(`<html><head><meta charset="UTF-8"><title>تقرير التحصيل الدراسي</title>
-    <style>body{font-family:Arial;direction:rtl;padding:20px}h2{color:#065f46}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:6px;font-size:11px}th{background:#065f46;color:#fff}.section{margin-bottom:20px;page-break-inside:avoid}</style></head><body>
-    <h2>تقرير التحصيل الدراسي</h2>
-    <p>تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')}</p>
-    ${grades.map(g=>`
-      <div class="section">
-        <h3>الصف: ${g.cls||''} — المادة: ${g.subject||''}</h3>
-        <table><thead><tr><th>#</th><th>اسم الطالب</th><th>الدرجة</th><th>الدرجة الكاملة</th><th>النسبة</th></tr></thead><tbody>
-        ${(g.rows||[]).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name||''}</td><td>${r.score||''}</td><td>${r.fullScore||''}</td><td>${r.fullScore?((r.score/r.fullScore)*100).toFixed(1)+'%':''}</td></tr>`).join('')}
-        </tbody></table>
-      </div>`).join('')}
-    </body></html>`);
-  w.document.close(); w.print();
+  _directorExport(showStamp => {
+    const sections = grades.map(g => `
+      <div style="margin-bottom:18px">
+        <div style="font-size:12px;font-weight:900;color:#0d7a5f;border-right:3px solid #0d7a5f;padding:4px 8px;background:#f0fdf9;border-radius:4px;margin-bottom:8px">الصف: ${g.cls||''} — المادة: ${g.subject||''}</div>
+        <table>
+          <thead><tr><th style="width:40px">#</th><th>اسم الطالب</th><th style="width:70px">الدرجة</th><th style="width:80px">الدرجة الكاملة</th><th style="width:70px">النسبة</th></tr></thead>
+          <tbody>${(g.rows||[]).map((r,i)=>`<tr style="background:${i%2===0?'#fff':'#f0fdf9'}">
+            <td style="text-align:center">${i+1}</td>
+            <td>${r.name||''}</td>
+            <td style="text-align:center;font-weight:700">${r.score||''}</td>
+            <td style="text-align:center">${r.fullScore||''}</td>
+            <td style="text-align:center">${r.fullScore?((r.score/r.fullScore)*100).toFixed(1)+'%':''}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>`).join('');
+    const body = `
+      <p style="text-align:center;font-size:11px;color:#555;margin-bottom:12px">تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')}</p>
+      ${sections}`;
+    _openDoc(_officialDoc('تقرير التحصيل الدراسي', body, {showStamp, subject:'نتائج التحصيل الدراسي'}));
+  });
 }
 
 // ══════════════════════════════════════════
