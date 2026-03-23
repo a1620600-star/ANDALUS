@@ -5110,6 +5110,7 @@ function addPerfWitness(tid, elId) {
   const pd = _perfDataOf(t);
   if (!pd[elId]) pd[elId] = [];
   const e = PERF_ELEMENTS.find(x => x.id == elId);
+  if (!e) { toast('عنصر تقييم غير صحيح', false); return; }
   if ((pd[elId].filter(w=>w&&w.text&&w.text.trim()).length) >= e.w) { toast('وصلت الحد الأقصى لهذا العنصر', false); return; }
   pd[elId].push({text, date: new Date().toISOString().split('T')[0], rel: validateWitness(text, e)});
   if (!t.perfStatus || t.perfStatus==='') t.perfStatus = 'draft';
@@ -5654,7 +5655,7 @@ function toggleCharter(id) {
 function showCSign() {
   const name = prompt('أدخل اسم المعلم المراد تسجيل توقيعه:');
   if (!name) return;
-  const t = DB.teachers.find(x => x.name.includes(name));
+  const t = DB.teachers.find(x => x.name === name) || DB.teachers.find(x => x.name.includes(name));
   if (!t) { toast('لم يُعثر على المعلم', false); return; }
   if (!DB.charter.includes(t.id)) DB.charter.push(t.id);
   saveAllData(); renderCharter();
@@ -7585,8 +7586,10 @@ function openEvalAndNotify() {
   if (t) {
     const msg=encodeURIComponent('السلام عليكم،\nتم فتح باب تقييم الأداء الوظيفي.\nيُرجى رفع شواهد الأداء في أقرب وقت.\nإدارة ثانوية الأندلس بترقش');
     window.open(`https://wa.me/966${t.phone.replace(/^0/,'')}?text=${msg}`,'_blank');
+    toast('✅ تم فتح التقييم وإرسال الإشعار', true);
+  } else {
+    toast('✅ تم فتح التقييم (لا توجد أرقام جوال للإشعار)', true);
   }
-  toast('✅ تم فتح التقييم وإرسال الإشعار', true);
 }
 
 function closeEval() {
