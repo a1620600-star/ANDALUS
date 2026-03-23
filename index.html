@@ -7342,15 +7342,21 @@ function _officialDoc(title, bodyHtml, opts={}) {
   const today    = new Date().toLocaleDateString('ar-SA-u-nu-latn');
   const showStamp = !!opts.showStamp;
 
-  const stampSVG = `<svg width="110" height="110" viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="55" cy="55" r="52" fill="none" stroke="#0d7a5f" stroke-width="2.5"/>
-    <circle cx="55" cy="55" r="44" fill="none" stroke="#0d7a5f" stroke-width="1"/>
-    <text x="55" y="28" text-anchor="middle" font-size="7.5" font-family="Cairo,Arial" fill="#0d7a5f" font-weight="700">الإدارة العامة للتعليم</text>
-    <text x="55" y="39" text-anchor="middle" font-size="7.5" font-family="Cairo,Arial" fill="#0d7a5f" font-weight="700">بمنطقة عسير</text>
-    <text x="55" y="53" text-anchor="middle" font-size="9" font-family="Cairo,Arial" fill="#0d7a5f" font-weight="900">ثانوية الأندلس</text>
-    <text x="55" y="65" text-anchor="middle" font-size="9" font-family="Cairo,Arial" fill="#0d7a5f" font-weight="900">بترقش</text>
-    <text x="55" y="79" text-anchor="middle" font-size="7" font-family="Cairo,Arial" fill="#0d7a5f">للبنين والتعليم بمنطقة</text>
-    <text x="55" y="90" text-anchor="middle" font-size="6.5" font-family="Cairo,Arial" fill="#0d7a5f">${today}</text>
+  const stampSVG = `<svg width="280" height="190" viewBox="0 0 280 190" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <path id="topArc" d="M 264,95 A 124,80 0 0,0 16,95"/>
+      <path id="botArc" d="M 264,95 A 124,80 0 0,1 16,95"/>
+    </defs>
+    <ellipse cx="140" cy="95" rx="132" ry="88" fill="none" stroke="#1a3a8a" stroke-width="3.5"/>
+    <ellipse cx="140" cy="95" rx="124" ry="80" fill="none" stroke="#1a3a8a" stroke-width="2"/>
+    <text font-family="Cairo,Arial" font-size="12" fill="#1a3a8a" font-weight="700">
+      <textPath href="#topArc" text-anchor="middle" startOffset="50%">المملكة العربية السعودية      وزارة التربية والتعليم</textPath>
+    </text>
+    <text x="140" y="90" text-anchor="middle" font-family="Cairo,Arial" font-size="20" fill="#1a3a8a" font-weight="900">ثانوية الأندلس بترقش</text>
+    <text x="140" y="113" text-anchor="middle" font-family="Cairo,Arial" font-size="10" fill="#1a3a8a">${today}</text>
+    <text font-family="Cairo,Arial" font-size="12" fill="#1a3a8a" font-weight="700">
+      <textPath href="#botArc" text-anchor="middle" startOffset="50%">إدارة التربية والتعليم للبنين بمحافظة محايل</textPath>
+    </text>
   </svg>`;
 
   return `<!DOCTYPE html>
@@ -7433,7 +7439,7 @@ tr:nth-child(even) td{background:#f0fdf9}
     <!-- التوقيع والختم -->
     <div class="doc-sig">
       <div class="sig-blk">
-        ${showStamp ? stampSVG : '<div style="width:110px;height:40px"></div>'}
+        ${showStamp ? stampSVG : '<div style="width:280px;height:190px"></div>'}
       </div>
       <div class="sig-blk">
         <div class="sig-line"></div>
