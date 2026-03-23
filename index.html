@@ -1632,7 +1632,7 @@ body{background:#fff!important}
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:8px">
     <div class="fg" style="margin:0"><label class="fl" style="font-size:9px">اسم المدرسة</label><input class="fc fc-sm" id="imp-school-name" value="الأندلس"></div>
     <div class="fg" style="margin:0"><label class="fl" style="font-size:9px">المرحلة</label><input class="fc fc-sm" id="imp-stage" value="الثانوية"></div>
-    <div class="fg" style="margin:0"><label class="fl" style="font-size:9px">الرقم الوزاري</label><input class="fc fc-sm" id="imp-wnum" value="M3970316"></div>
+    <div class="fg" style="margin:0"><label class="fl" style="font-size:9px">الرقم الوزاري</label><input class="fc fc-sm" id="imp-wnum" value="3970316"></div>
     <div class="fg" style="margin:0"><label class="fl" style="font-size:9px">نوع المبنى</label>
       <select class="fc fc-sm" id="imp-btype"><option selected>حكومي</option><option>مستأجر</option></select></div>
     <div class="fg" style="margin:0"><label class="fl" style="font-size:9px">استقلالية المبنى</label>
@@ -1644,9 +1644,9 @@ body{background:#fff!important}
     <div class="fg" style="margin:0"><label class="fl" style="font-size:9px">استقلالية الإدارة</label>
       <select class="fc fc-sm" id="imp-admin-indep"><option selected>مستقلة</option><option>مشتركة</option></select></div>
     <div class="fg" style="margin:0"><label class="fl" style="font-size:9px">مستوى الأداء العام %</label>
-      <input class="fc fc-sm" id="imp-perf-pct" value="65%"></div>
-    <div class="fg" style="margin:0"><label class="fl" style="font-size:9px">مستوى نواتج التعلم %</label>
-      <input class="fc fc-sm" id="imp-outcomes-pct" value="59.75%"></div>
+      <input class="fc fc-sm" id="imp-perf-pct" value="64%"></div>
+    <div class="fg" style="margin:0"><label class="fl" style="font-size:9px">مستوى الأنشطة المدرسية %</label>
+      <input class="fc fc-sm" id="imp-outcomes-pct" value="60%"></div>
     <div class="fg" style="margin:0"><label class="fl" style="font-size:9px">مدير المدرسة</label>
       <input class="fc fc-sm" id="imp-director" value="عبدالعزيز عبده حديش"></div>
   </div>
@@ -1703,13 +1703,11 @@ body{background:#fff!important}
     <div style="flex:1"></div>
     <select class="fc fc-sm" id="imp1-dom-filter" style="width:auto;font-size:11px" onchange="renderImpBuildTable()">
       <option value="">كل المجالات</option>
-      <option value="التدريس والتعلم">التدريس والتعلم</option>
-      <option value="المناخ التعليمي">المناخ التعليمي</option>
+      <option value="التدريس">التدريس</option>
       <option value="نواتج التعلم">نواتج التعلم</option>
-      <option value="التوجيه والإرشاد">التوجيه والإرشاد</option>
+      <option value="التوجيه الطلابي">التوجيه الطلابي</option>
       <option value="النشاط الطلابي">النشاط الطلابي</option>
       <option value="التطوير المهني">التطوير المهني</option>
-      <option value="الشراكة المجتمعية">الشراكة المجتمعية</option>
     </select>
   </div>
 
@@ -1725,13 +1723,11 @@ body{background:#fff!important}
       <div class="fg" style="margin:0"><label class="fl">المجال الإشرافي *</label>
         <select class="fc fc-sm" id="IMP-DOM">
           <option value="">-- المجال --</option>
-          <option value="التدريس والتعلم">التدريس والتعلم</option>
-          <option value="المناخ التعليمي">المناخ التعليمي</option>
+          <option value="التدريس">التدريس</option>
           <option value="نواتج التعلم">نواتج التعلم</option>
-          <option value="التوجيه والإرشاد">التوجيه والإرشاد</option>
+          <option value="التوجيه الطلابي">التوجيه الطلابي</option>
           <option value="النشاط الطلابي">النشاط الطلابي</option>
           <option value="التطوير المهني">التطوير المهني</option>
-          <option value="الشراكة المجتمعية">الشراكة المجتمعية</option>
         </select>
       </div>
       <div class="fg" style="margin:0;grid-column:span 2"><label class="fl">العملية المراد تحسينها *</label>
@@ -1767,20 +1763,19 @@ body{background:#fff!important}
     <table style="width:100%;border-collapse:collapse;min-width:960px">
       <thead>
         <tr style="background:linear-gradient(135deg,#0a1628,#1e3a5f);color:#fff">
-          <th style="padding:9px 8px;font-size:9px;font-weight:700;text-align:center;width:90px">المجال</th>
-          <th style="padding:9px 8px;font-size:9px;font-weight:700;text-align:right;width:120px">العملية المراد تحسينها</th>
+          <th style="padding:9px 8px;font-size:9px;font-weight:700;text-align:right;width:130px">العملية المراد تحسينها</th>
           <th style="padding:9px 8px;font-size:9px;font-weight:700;text-align:right">وصف الاحتياج</th>
           <th style="padding:9px 8px;font-size:9px;font-weight:700;text-align:right">إجراءات التحسين</th>
-          <th style="padding:9px 8px;font-size:9px;font-weight:700;text-align:right;width:100px">الأساليب</th>
-          <th style="padding:9px 8px;font-size:9px;font-weight:700;text-align:center;width:85px">مدة الإنجاز</th>
-          <th style="padding:9px 8px;font-size:9px;font-weight:700;text-align:right;width:85px">المسؤول</th>
+          <th style="padding:9px 8px;font-size:9px;font-weight:700;text-align:right;width:110px">أساليب وطرق التحسين</th>
+          <th style="padding:9px 8px;font-size:9px;font-weight:700;text-align:center;width:90px">مدة الإنجاز</th>
+          <th style="padding:9px 8px;font-size:9px;font-weight:700;text-align:right;width:100px">التنفيذ والمسؤولية</th>
           <th style="padding:9px 8px;font-size:9px;font-weight:700;text-align:center;width:70px">نسبة الإنجاز</th>
           <th style="padding:9px 8px;font-size:9px;font-weight:700;text-align:center;width:55px">الشواهد</th>
           <th style="padding:9px 8px;font-size:9px;font-weight:700;text-align:center;width:45px">حذف</th>
         </tr>
       </thead>
       <tbody id="IMP-BUILD-LIST">
-        <tr><td colspan="10" style="padding:20px;text-align:center;color:var(--tx3)">اضغط "+ إضافة عملية" أو "البيانات الرسمية"</td></tr>
+        <tr><td colspan="9" style="padding:20px;text-align:center;color:var(--tx3)">اضغط "+ إضافة عملية" أو "البيانات الرسمية"</td></tr>
       </tbody>
     </table>
   </div>
@@ -1798,13 +1793,11 @@ body{background:#fff!important}
     <div style="flex:1"></div>
     <select class="fc fc-sm" id="imp2-dom-filter" style="width:auto;font-size:11px" onchange="renderImpExecTable()">
       <option value="">كل المجالات</option>
-      <option value="التدريس والتعلم">التدريس والتعلم</option>
-      <option value="المناخ التعليمي">المناخ التعليمي</option>
+      <option value="التدريس">التدريس</option>
       <option value="نواتج التعلم">نواتج التعلم</option>
-      <option value="التوجيه والإرشاد">التوجيه والإرشاد</option>
+      <option value="التوجيه الطلابي">التوجيه الطلابي</option>
       <option value="النشاط الطلابي">النشاط الطلابي</option>
       <option value="التطوير المهني">التطوير المهني</option>
-      <option value="الشراكة المجتمعية">الشراكة المجتمعية</option>
     </select>
   </div>
 
@@ -1820,13 +1813,11 @@ body{background:#fff!important}
       <div class="fg" style="margin:0"><label class="fl">المجال الإشرافي *</label>
         <select class="fc fc-sm" id="IMP-EXEC-DOM">
           <option value="">-- المجال --</option>
-          <option value="التدريس والتعلم">التدريس والتعلم</option>
-          <option value="المناخ التعليمي">المناخ التعليمي</option>
+          <option value="التدريس">التدريس</option>
           <option value="نواتج التعلم">نواتج التعلم</option>
-          <option value="التوجيه والإرشاد">التوجيه والإرشاد</option>
+          <option value="التوجيه الطلابي">التوجيه الطلابي</option>
           <option value="النشاط الطلابي">النشاط الطلابي</option>
           <option value="التطوير المهني">التطوير المهني</option>
-          <option value="الشراكة المجتمعية">الشراكة المجتمعية</option>
         </select>
       </div>
       <div class="fg" style="margin:0;grid-column:span 2"><label class="fl">العملية المراد تحسينها *</label>
@@ -1900,13 +1891,11 @@ body{background:#fff!important}
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
       <select class="fc fc-sm" id="ev-domain-filter" style="width:auto" onchange="renderImpEvidence()">
         <option value="">جميع المجالات</option>
-        <option value="التدريس والتعلم">التدريس والتعلم</option>
-        <option value="المناخ التعليمي">المناخ التعليمي</option>
+        <option value="التدريس">التدريس</option>
         <option value="نواتج التعلم">نواتج التعلم</option>
-        <option value="التوجيه والإرشاد">التوجيه والإرشاد</option>
+        <option value="التوجيه الطلابي">التوجيه الطلابي</option>
         <option value="النشاط الطلابي">النشاط الطلابي</option>
         <option value="التطوير المهني">التطوير المهني</option>
-        <option value="الشراكة المجتمعية">الشراكة المجتمعية</option>
       </select>
     </div>
     <div id="IMP-EVIDENCE-LIST">
@@ -6410,13 +6399,11 @@ function delOpInit(i) {
 // ══════════════════════════════════════════
 
 const IMP_DOMAINS_LIST = [
-  {id:'التدريس',           color:'#1e3a5f', bg:'#dbeafe'},
-  {id:'نواتج التعلم',      color:'#166534', bg:'#dcfce7'},
-  {id:'التوجيه والإرشاد',  color:'#5b21b6', bg:'#ede9fe'},
-  {id:'النشاط الطلابي',   color:'#92400e', bg:'#fef3c7'},
-  {id:'التطوير المهني',   color:'#991b1b', bg:'#fee2e2'},
-  {id:'الشراكة المجتمعية',color:'#0e7490', bg:'#cffafe'},
-  {id:'المناخ التعليمي',  color:'#854d0e', bg:'#fef9c3'},
+  {id:'التدريس',          color:'#1e3a5f', bg:'#dbeafe'},
+  {id:'نواتج التعلم',     color:'#166534', bg:'#dcfce7'},
+  {id:'التوجيه الطلابي', color:'#5b21b6', bg:'#ede9fe'},
+  {id:'النشاط الطلابي',  color:'#92400e', bg:'#fef3c7'},
+  {id:'التطوير المهني',  color:'#991b1b', bg:'#fee2e2'},
 ];
 function _impDomInfo(d) {
   return IMP_DOMAINS_LIST.find(x=>x.id===d)||{color:'var(--d2)',bg:'#e0e7ff'};
@@ -6479,28 +6466,45 @@ function renderImpBuildTable(data) {
   if (!tb) return;
   const rows = data || DB.impPlans;
   const statEl = document.getElementById('imp-stat-build'); if(statEl) statEl.textContent = DB.impPlans.length;
-  if (!rows.length) { tb.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:18px;color:var(--tx3)">لا توجد مبادرات — اضغط "+ إضافة عملية" أو "البيانات الرسمية"</td></tr>'; return; }
-  const dc = {'تعليمي':'var(--d2)','إداري':'var(--g1)','بيئي':'var(--a2)','مجتمعي':'var(--s1)','التدريس والتعلم':'var(--d2)','المناخ التعليمي':'var(--s2)','نواتج التعلم':'var(--g1)','التوجيه والإرشاد':'var(--a2)','النشاط الطلابي':'var(--r2)','التطوير المهني':'var(--s1)','الشراكة المجتمعية':'#7c3aed'};
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:18px;color:var(--tx3)">لا توجد مبادرات — اضغط "+ إضافة عملية" أو "البيانات الرسمية"</td></tr>'; return; }
   const evidCount = id => ((DB.impPlanEvid||{})[id]||[]).length;
-  tb.innerHTML = rows.map(p => `<tr>
-    <td style="text-align:center;padding:7px"><span class="badge" style="background:${(dc[p.domain]||'var(--d2)')}22;color:${dc[p.domain]||'var(--d2)'};font-size:9px">${p.domain||'—'}</span></td>
-    <td style="padding:7px"><b style="font-size:11px">${p.title||'—'}</b></td>
-    <td style="padding:7px;font-size:10px;color:var(--tx2)">${p.target||'—'}</td>
-    <td style="padding:7px;font-size:10px">${p.actions||'—'}</td>
-    <td style="padding:7px;font-size:10px">${p.methods||'—'}</td>
-    <td style="padding:7px;font-size:10px;text-align:center">${p.deadline||'—'}</td>
-    <td style="padding:7px;font-size:10px">${p.resp||'—'}</td>
-    <td style="text-align:center;padding:7px">
-      <div style="display:flex;align-items:center;justify-content:center;gap:3px">
-        <div style="width:42px;height:6px;background:var(--brd);border-radius:3px;overflow:hidden"><div style="width:${p.pct||0}%;height:100%;background:var(--g1);border-radius:3px"></div></div>
-        <span style="font-size:9px;color:var(--tx2)">${p.pct||0}%</span>
-      </div>
-    </td>
-    <td style="text-align:center;padding:7px">
-      <button class="ab" title="إضافة شاهد" onclick="openImpEvidModal('plan',${p.id})" style="font-size:13px;background:${evidCount(p.id)?'rgba(13,107,62,.1)':'rgba(0,0,0,.05)'};color:${evidCount(p.id)?'var(--g1)':'var(--tx3)'}">📎${evidCount(p.id)?`<sup style="font-size:8px;color:var(--g1)">${evidCount(p.id)}</sup>`:''}</button>
-    </td>
-    <td style="text-align:center;padding:7px"><button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delImpPlan(${p.id})">🗑</button></td>
-  </tr>`).join('');
+  // Group rows by domain in IMP_DOMAINS_LIST order
+  const order = IMP_DOMAINS_LIST.map(d=>d.id);
+  const grouped = {};
+  order.forEach(d=>{grouped[d]=[];});
+  rows.forEach(p=>{ const d=p.domain||'أخرى'; if(!grouped[d]) grouped[d]=[]; grouped[d].push(p); });
+  let html='';
+  Object.entries(grouped).forEach(([domain,items])=>{
+    if(!items.length) return;
+    const info=_impDomInfo(domain);
+    html+=`<tr>
+      <td colspan="9" style="background:${info.color};color:#fff;padding:9px 14px;font-weight:900;font-size:11px;text-align:center;letter-spacing:.5px;border-bottom:2px solid ${info.color}">
+        ◆ ${domain}
+      </td>
+    </tr>`;
+    items.forEach((p,i)=>{
+      const bg = i%2===0 ? info.bg : '#fff';
+      html+=`<tr style="background:${bg};border-right:4px solid ${info.color}">
+        <td style="padding:8px 10px;font-size:10px;font-weight:700;border-bottom:1px solid ${info.color}22">${p.title||'—'}</td>
+        <td style="padding:8px 10px;font-size:10px;color:var(--tx2);border-bottom:1px solid ${info.color}22">${p.target||'—'}</td>
+        <td style="padding:8px 10px;font-size:10px;border-bottom:1px solid ${info.color}22">${(p.actions||'—').replace(/\n/g,'<br>')}</td>
+        <td style="padding:8px 10px;font-size:10px;border-bottom:1px solid ${info.color}22">${p.methods||'—'}</td>
+        <td style="padding:8px 10px;font-size:10px;text-align:center;white-space:nowrap;border-bottom:1px solid ${info.color}22">${p.deadline||'—'}</td>
+        <td style="padding:8px 10px;font-size:10px;border-bottom:1px solid ${info.color}22">${p.resp||'—'}</td>
+        <td style="text-align:center;padding:8px 10px;border-bottom:1px solid ${info.color}22">
+          <div style="display:flex;align-items:center;justify-content:center;gap:3px">
+            <div style="width:42px;height:6px;background:var(--brd);border-radius:3px;overflow:hidden"><div style="width:${p.pct||0}%;height:100%;background:${info.color};border-radius:3px"></div></div>
+            <span style="font-size:9px;color:var(--tx2);font-weight:700">${p.pct||0}%</span>
+          </div>
+        </td>
+        <td style="text-align:center;padding:8px;border-bottom:1px solid ${info.color}22">
+          <button class="ab" title="إضافة شاهد" onclick="openImpEvidModal('plan',${p.id})" style="font-size:13px;background:${evidCount(p.id)?'rgba(13,107,62,.1)':'rgba(0,0,0,.05)'};color:${evidCount(p.id)?'var(--g1)':'var(--tx3)'}">📎${evidCount(p.id)?`<sup style="font-size:8px;color:var(--g1)">${evidCount(p.id)}</sup>`:''}</button>
+        </td>
+        <td style="text-align:center;padding:8px;border-bottom:1px solid ${info.color}22"><button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delImpPlan(${p.id})">🗑</button></td>
+      </tr>`;
+    });
+  });
+  tb.innerHTML = html;
 }
 
 function renderImpExecTable() {
@@ -6642,22 +6646,87 @@ function filterImpDomain(btn, dom) {
     b.style.background = 'rgba(255,255,255,.2)'; b.style.color = '#fff';
   });
   if (btn) { btn.style.background = 'rgba(255,255,255,.9)'; btn.style.color = 'var(--d1)'; }
-  const data = (!dom || dom==='all') ? DB.impPlans : DB.impPlans.filter(p => {
-    const domMap = {teaching:'تعليمي',outcomes:'تعليمي',guidance:'إداري',activity:'مجتمعي',professional:'إداري'};
-    return p.domain === dom || p.domain === domMap[dom];
-  });
+  const data = (!dom || dom==='all') ? DB.impPlans : DB.impPlans.filter(p => p.domain === dom);
   renderImpBuildTable(data);
 }
 
 function loadDefaultImpData() {
   const t = Date.now();
   DB.impPlans.push(
-    {id:t+1,domain:'التدريس والتعلم',   title:'تطوير استراتيجيات التدريس الحديث',  resp:'لجنة التطوير المهني', target:'رفع مؤشر التحصيل 10%',      actions:'عقد ورش تدريبية، توفير مصادر رقمية', methods:'التعلم التعاوني، التعلم المدمج', deadline:'2026-04-30', pct:40},
-    {id:t+2,domain:'المناخ التعليمي',   title:'تفعيل نظام الدوام الإلكتروني',      resp:'الوكيل الإداري',     target:'ضمان الانضباط الكامل',       actions:'تركيب بصمة إلكترونية، إشعارات فورية', methods:'المتابعة اليومية',              deadline:'2026-03-31', pct:70},
-    {id:t+3,domain:'نواتج التعلم',      title:'مشروع المدرسة الخضراء',             resp:'لجنة الأنشطة',       target:'تقليل مخلفات الورق 30%',     actions:'حملات توعية، تدوير النفايات',         methods:'المشاريع البيئية',              deadline:'2026-05-15', pct:25},
-    {id:t+4,domain:'الشراكة المجتمعية', title:'برنامج التواصل مع أولياء الأمور',  resp:'المرشد الطلابي',     target:'رفع نسبة التواصل 80%',       actions:'اجتماعات دورية، تطبيق تواصل',         methods:'الزيارات الميدانية',            deadline:'2026-04-15', pct:60}
+    // ── التدريس ──
+    {id:t+1, domain:'التدريس', title:'تخطيط التدريس',
+      target:'التخطيط للدروس وتصميمها بشكل فعال وهادف عبر منصة مدرستي',
+      actions:'• متابعة التحضير الإلكتروني عبر منصة مدرستي بشكل يومي وفق نماذج المدرسة\n• متابعة جميع جوانب إعداد الدرس',
+      methods:'متابعة التحضير الإلكتروني عبر منصة مدرستي يومياً وفق سجل المتابعة',
+      deadline:'1447/1/28 — متابعة مستمرة', resp:'مدير المدرسة — وكيل الشؤون التعليمية', pct:0},
+    {id:t+2, domain:'التدريس', title:'تنفيذ التدريس',
+      target:'عدم تجهيز الحصص الدراسية بوسائل التعليم الحديثة — توزيع المعلمين بالفرص التعليمية التي توفرها منصة مدرستي',
+      actions:'• توزيع المعلمين بالفرص التعليمية التي توفرها منصة مدرستي\n• سجل زيارات يضاف إلى ملف الإنجاز الإلكتروني\n• الاستفادة من مصادر التعلم وقاعات المجهزة بالمدرسة',
+      methods:'قراءة موجهة',
+      deadline:'1447/5/4', resp:'حسن زايد الهميري', pct:0},
+    {id:t+3, domain:'التدريس', title:'تقويم التدريس',
+      target:'الاستفادة من مصادر التعلم وقاعات المجهزة بالمدرسة — عدم تفاعل بعض الطلاب مع حصص التعلم الإلكتروني',
+      actions:'• استطلاع جزء من وقت الحصة الدراسية لعرض ومناقشة التعلم الإلكتروني في سجل المتابعة\n• خصص درجات تحضيرية لتحفيز الطلاب على المتابعة الإلكترونية',
+      methods:'خصص درجات تحضيرية للحصص الإلكترونية',
+      deadline:'الأسبوع الثاني — 1447/1/8-12', resp:'أمين مصادر التعلم — وكيل الشؤون التعليمية', pct:0},
+    {id:t+4, domain:'التدريس', title:'وجود بعض ممارسات التدريس التي لا تنمي مهارات التفكير العليا',
+      target:'وجود بعض الممارسات التدريسية التي لا تنمي مهارات التفكير العليا وعمليات التعلم الذاتي',
+      actions:'• دورة تدريبية في التخطيط للتدريس عبر المعهد الوطني للتطوير المهني\n• تفعيل مجتمعات التعلم المهنية البيئات التنظيمية والمرحلية\n• تفعيل الزيارات الابتدائية بين معلمي التخصصات المختلفة\n• التنسيق مع أمين مصادر التعلم — المشاريع البحثية',
+      methods:'الزيارات الابتدائية التبادلية — المشاريع البحثية',
+      deadline:'الأسبوع الثاني — 1447/1/8-12', resp:'مدير المدرسة — لجنة التميز — مجتمعات التعلم المهنية', pct:0},
+
+    // ── نواتج التعلم ──
+    {id:t+5, domain:'نواتج التعلم', title:'تحسين مستوى اختبار القدرات (بنسبة 50%)',
+      target:'تحسين مستوى الطلاب المتحققين من القدرات بنسبة 50%',
+      actions:'• إعداد اختبار قبلي محاكي لاختبارات القدرات (كمي — لفظي)\n• تحليل نتائج الاختبار لمعرفة نقاط ضعف الصف\n• تصنيف نقاط الضعف وتحديد الأسباب\n• تقديم دورات وورش عمل (استراتيجيات الحل — إدارة الوقت — مفاتيح الحل)\n• تكليفات بمهام أدائية لتعزيز المهارات المكتسبة والمستهدفة\n• تحليل الاختبار البعدي وتقديم التغذية الراجعة',
+      methods:'اختبارات محاكية قبلية وبعدية — ورش عمل — مشافهات تدريبية',
+      deadline:'الأسبوع التاسع — 1447/2/20-27', resp:'لجنة التميز — لجنة التحصيل الدراسي — اللجنة الإدارية', pct:0},
+    {id:t+6, domain:'نواتج التعلم', title:'تحسين نتائج الاختبار الدراسي والعلمي (بنسبة 15%)',
+      target:'تحسين نتائج الاختبار الدراسي والعلمي للمتعلمين بنسبة 15%',
+      actions:'• تنفيذ اختبار قبلي شامل محاكي للاختبار التحصيلي\n• تحليل نتائج الاختبار لمعرفة نقاط ضعف الصف والأسباب\n• ورش عمل تدريبية لمعالجة نقاط الضعف\n• تفعيل استراتيجيات التعلم الذاتي لتعزيز مهارات التفكير العليا\n• اختبارات محاكية دورية لمتابعة التقدم',
+      methods:'اختبارات محاكية — ورش تدريبية — تغذية راجعة مستمرة',
+      deadline:'بداية الفصل الثاني — 1447/1/12', resp:'لجنة التحصيل الدراسي — جميع المعلمين', pct:0},
+    {id:t+7, domain:'نواتج التعلم', title:'تحسين نتائج الاختبارات العلمية للصف الأول الثانوي',
+      target:'توظيف العمليات الأساسية لتطبيق المهارات الأساسية ومهارات التفكير العليا',
+      actions:'• توظيف العمليات الأساسية لتطبيق المهارات\n• استخدام التعلم الذاتي الذاتي الذاتي\n• استراتيجيات القراءة والاستكشاف والتلخيص',
+      methods:'عمليات مستمرة — زيارات صفية دورية',
+      deadline:'عملية مستمرة', resp:'اللجنة الإدارية — جميع المعلمين', pct:0},
+
+    // ── التوجيه الطلابي ──
+    {id:t+8, domain:'التوجيه الطلابي', title:'تعزيز تفعيل البرامج الداعمة للقيم الإسلامية والهوية الوطنية',
+      target:'تعزيز تفعيل البرامج التي تعزز القيم الإسلامية والهوية الوطنية ورفع شواهدها',
+      actions:'• تكوين فريق طلابي للمشاركة في الإذاعات المدرسية لدعم القيم الإسلامية وتعزيز الانتماء\n• التعزيز الإيجابي لمكانة الطالب القدوة\n• تسمية القاعات الصفية بقدوات وطنية بارزة\n• توجيه الطلاب للأعمال التطوعية التي تعكس القيم الإسلامية والوطنية\n• إنشاء صفحات إلكترونية للمناسبات الوطنية تتيح المشاركة والتعبير\n• استغلال المواقف اليومية لإيضاح الموقف الإسلامي المعتدل',
+      methods:'الإذاعات المدرسية — الندوات والمحاضرات — ورش العمل — المسابقات النوعية — منصات التواصل المعتمدة',
+      deadline:'عام دراسي', resp:'التوجيه الطلابي — وكيل شؤون الطلاب', pct:0},
+    {id:t+9, domain:'التوجيه الطلابي', title:'تنفيذ البرامج الوزارية الجدولة لدعم السلوك الإيجابي',
+      target:'تعزيز تفعيل البرامج التي تدعم السلوك الإيجابي ورفع شواهدها',
+      actions:'• تنظيم مسابقة (الإيجابية في المدرسة) بالتعاون مع النشاط الطلابي والمعلمين\n• عقد ورش عمل وقائية للتحذير من السلوك السلبي (العنف — التنمر)\n• توثيق جميع الأساليب المتبعة ورقياً وإلكترونياً في ملف إنجاز التوجيه',
+      methods:'الإذاعات المدرسية — الندوات — المسابقات',
+      deadline:'عام دراسي', resp:'التوجيه الطلابي — وكيل شؤون الطلاب', pct:0},
+    {id:t+10, domain:'التوجيه الطلابي', title:'الحد من الغياب المتكرر',
+      target:'الحد من الغياب المتكرر',
+      actions:'• معرفة أسباب الغياب\n• تعزيز التواصل الفعال مع أولياء الأمور عبر حسابات المدرسة الرسمية (واتساب — منصة مدرستي)\n• تكريم الطلاب المنتظمين كنموذج للانضباط المدرسي\n• تنظيم جلسات توجيهية لمساعدة الطلاب كثيري الغياب\n• رفع تقارير الجلسات لوكيل شؤون الطلاب لاتخاذ الإجراءات اللازمة حسب اللوائح',
+      methods:'إعداد استبانة إلكترونية — تحليل سجل الغياب — التواصل المباشر مع أولياء الأمور',
+      deadline:'عملية مستمرة', resp:'جميع المعلمين في المدرسة — التوجيه الطلابي — اللجنة الإدارية', pct:0},
+
+    // ── النشاط الطلابي ──
+    {id:t+11, domain:'النشاط الطلابي', title:'تنفيذ البرامج والأنشطة الصفية وغير الصفية الإثرائية',
+      target:'احتياج المتعلمين لبرامج إثرائية وأنشطة صفية وغير صفية تنمي القدرات والمواهب وتساهم في تحسين نواتج التعلم بشكل عام',
+      actions:'• استبانة لجمع المعلومات عن احتياجات المتعلمين واهتماماتهم\n• قائمة بالأنشطة الإثرائية الصفية التي تدعم احتياجات المتعلمين وتنمي مواهبهم وقدراتهم\n• برامج وأنشطة غير صفية تدعم التعلم\n• ربط الأنشطة بالأهداف التعليمية\n• أنشطة إلكترونية تدعم المهارات الرقمية لدى المتعلمين\n• برامج إثرائية وأنشطة صفية وغير صفية تنمي المواهب وتساهم في تحسين نواتج التعلم',
+      methods:'تصميم استبانة مقابلات — إعداد قائمة الأنشطة — المسابقات والأنشطة النوعية — عقود الشراكات المجتمعية',
+      deadline:'1447/8/6 — 1447/12/25', resp:'رائد النشاط — منسق الموهوبين — التوجيه الطلابي — وكيل شؤون الطلاب — المعلمون', pct:0},
+
+    // ── التطوير المهني ──
+    {id:t+12, domain:'التطوير المهني', title:'رفع كفاءة أداء المعلم في التخطيط والتنفيذ والتقويم',
+      target:'تطوير عمليات التدريس لرفع نواتج التعلم',
+      actions:'• تنظيم مجدول لدورات تدريبية رسمية ذات ارتباط بالاحتياج\n• تنظيم داخلي للعمليات التنفيذية المهنية',
+      methods:'• إتمام الدورات التدريبية والحصول على شهاداتها\n• الدروس التطبيقية (1)\n• الزيارات التبادلية (2)\n• جلسة التعلم المهني (3)\n• قراءات موجهة\n• ورش عمل\n• مواد مرئية',
+      deadline:'1447/3/20 — 1447/12/25', resp:'مدير المدرسة — مشرف دعم التميز — لجنة التميز — المعلمون', pct:0}
   );
-  saveAllData(); renderImpBuildTable(); toast('تم تحميل البيانات النموذجية', true);
+  saveAllData(); renderImpBuildTable();
+  _renderImpDomStats('IMP1-DOMAIN-STATS', DB.impPlans, 'build');
+  const sb=document.getElementById('imp-stat-build'); if(sb) sb.textContent=DB.impPlans.length;
+  toast('تم تحميل البيانات الرسمية لخطة التحسين', true);
 }
 
 function loadDefaultImpExecData() {
