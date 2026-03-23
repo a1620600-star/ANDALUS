@@ -4926,8 +4926,8 @@ function swtab(el, grp, tab) {
   const pg = el.closest('.page') || document;
   pg.querySelectorAll('.tbtn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  pg.querySelectorAll('[id^="'+grp+'"]').forEach(d => d.style.display = 'none');
-  const t = document.getElementById(tab);
+  pg.querySelectorAll('.tc, .tab-c').forEach(d => d.style.display = 'none');
+  const t = document.getElementById(grp + '-' + tab);
   if (t) t.style.display = 'block';
 }
 function addCustomSubject() {
