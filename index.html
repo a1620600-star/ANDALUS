@@ -3814,12 +3814,27 @@ try {
     }
     // ترحيل: إذا كان الرمز القديم 1234 يُستبدل بـ A2009
     if (DB.pin === '1234') { DB.pin = 'A2009'; }
+    // ترحيل الختم من DB القديم إلى مفتاح مستقل
+    if (DB._customStamp && !localStorage.getItem('ANDALUS_STAMP')) {
+      try { localStorage.setItem('ANDALUS_STAMP', DB._customStamp); } catch(e2) {}
+    }
   }
+} catch(e) {}
+// تحميل الختم من مفتاحه المستقل (أو الاحتفاظ بما في DB القديم كاحتياط)
+try {
+  const _s = localStorage.getItem('ANDALUS_STAMP');
+  if (_s) DB._customStamp = _s;
 } catch(e) {}
 
 function saveAllData(silent) {
   try {
-    localStorage.setItem('ANDALUS_V2', JSON.stringify(DB));
+    // حفظ الختم في مفتاح مستقل لتفادي تضخم DB الرئيسي
+    if (DB._customStamp) {
+      try { localStorage.setItem('ANDALUS_STAMP', DB._customStamp); } catch(e2) {}
+    }
+    const toSave = Object.assign({}, DB);
+    delete toSave._customStamp; // لا نحفظه داخل DB الرئيسي
+    localStorage.setItem('ANDALUS_V2', JSON.stringify(toSave));
     if (!silent) toast('تم الحفظ بنجاح', true);
     else _showAutoSaveIndicator();
   } catch(e) { if (!silent) toast('خطأ في الحفظ', false); }
@@ -3872,6 +3887,13 @@ function loadAllData() {
         DB.teachers = JSON.parse(JSON.stringify(DEFAULT_DB.teachers));
         DB.dbVersion = DEFAULT_DB.dbVersion;
       }
+      // تحميل الختم من مفتاحه المستقل
+      try {
+        const stamp = localStorage.getItem('ANDALUS_STAMP');
+        if (stamp) DB._customStamp = stamp;
+        else delete DB._customStamp;
+      } catch(e2) {}
+      _refreshStampPreview();
       toast('تم التحميل', true);
     } else toast('لا توجد بيانات محفوظة', false);
   } catch(e) { toast('خطأ في التحميل', false); }
@@ -3886,6 +3908,7 @@ function checkSaveInfo() {
 function clearAllData() {
   if (confirm('تحذير: سيتم مسح جميع البيانات بشكل نهائي ولا يمكن التراجع.\nهل أنت متأكد؟')) {
     localStorage.removeItem('ANDALUS_V2');
+    localStorage.removeItem('ANDALUS_STAMP');
     DB = JSON.parse(JSON.stringify(DEFAULT_DB));
     toast('تم مسح جميع البيانات', true);
   }
@@ -9948,6 +9971,7 @@ function uploadStampImage(e) {
 
 function removeStampImage() {
   delete DB._customStamp;
+  try { localStorage.removeItem('ANDALUS_STAMP'); } catch(e) {}
   saveAllData();
   _refreshStampPreview();
   toast('تم إزالة الختم', true);
