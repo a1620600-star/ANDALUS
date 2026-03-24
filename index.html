@@ -3664,7 +3664,7 @@ body{background:#fff!important}
 
 <!-- External libraries -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
 
 <script>
 // =============================================
@@ -5156,8 +5156,12 @@ function handleImportRow(input, row) {
 
   // Excel — use SheetJS to parse binary format
   if (file.name.match(/\.xlsx?$/i)) {
+    if (typeof XLSX === 'undefined') {
+      toast('مكتبة قراءة Excel لم تُحمَّل — تأكد من اتصالك بالإنترنت ثم أعد تحميل الصفحة', false);
+      return;
+    }
     const cnt = document.getElementById('irow-'+row+'-cnt');
-    if (cnt) cnt.textContent = 'جارٍ قراءة الاختبار التحصيلي.xlsx...';
+    if (cnt) cnt.textContent = 'جارٍ قراءة ' + file.name + '...';
     const reader = new FileReader();
     reader.onload = function(e) {
       try {
