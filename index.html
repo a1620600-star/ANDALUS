@@ -3713,7 +3713,7 @@ body{background:#fff!important}
 
 // ── قاعدة البيانات ──
 const DEFAULT_DB = {
-  dbVersion: 3,
+  dbVersion: 4,
   pin: 'A2009',
   teachers: [
     {id:1,  name:'ابراهيم عامر شامي راجح',                        idNum:'1024902320', phone:'0502616279', subject:'فيزياء',                          classes:[], perf:80},
@@ -3741,19 +3741,8 @@ const DEFAULT_DB = {
     {id:23, name:'مسفر حسن أحمد آل المجنب عسيري',                 idNum:'1062132376', phone:'0598542221', subject:'اللغة العربية',                   classes:[], perf:80},
     {id:24, name:'يحيى بن شار بن أحمد البارقي',                   idNum:'1054837701', phone:'0534001216', subject:'تربية إسلامية',                   classes:[], perf:80}
   ],
-  waiting: [
-    {id:1, date:'١٤٤٦/٧/١',  day:'الأحد',    cls:'A1', sub:'رياضيات',  time:'٠٨:١٥', teacher:'أحمد الزهراني'},
-    {id:2, date:'١٤٤٦/٧/١',  day:'الأحد',    cls:'B2', sub:'كيمياء',   time:'٠٩:٣٠', teacher:'عبدالرحمن الغامدي'},
-    {id:3, date:'١٤٤٦/٧/٢',  day:'الاثنين',  cls:'C1', sub:'فيزياء',   time:'١١:٠٠', teacher:'محمد القرني'},
-    {id:4, date:'١٤٤٦/٧/٣',  day:'الثلاثاء', cls:'A3', sub:'لغة عربية',time:'٠٨:٤٥', teacher:'سعد الشهري'},
-    {id:5, date:'١٤٤٦/٧/٤',  day:'الأربعاء', cls:'B4', sub:'حاسب آلي', time:'١٠:١٥', teacher:'عمر المدني'}
-  ],
-  supervision: [
-    {id:1, date:'١٤٤٦/٧/١', teacher:'أحمد الزهراني',    subject:'رياضيات',  cls:'A1', notes:'أداء ممتاز — تفاعل طلابي عالٍ ومتنوع'},
-    {id:2, date:'١٤٤٦/٧/٢', teacher:'محمد القرني',       subject:'فيزياء',   cls:'B3', notes:'يحتاج تعزيز استخدام التقنيات الحديثة في التدريس'},
-    {id:3, date:'١٤٤٦/٧/٣', teacher:'سعد الشهري',        subject:'لغة عربية',cls:'A2', notes:'توظيف ممتاز لاستراتيجيات التعلم النشط'},
-    {id:4, date:'١٤٤٦/٧/٤', teacher:'تركي النفيسة',      subject:'حاسب آلي', cls:'C3', notes:'أداء متميز في توظيف التقنية التعليمية'}
-  ],
+  waiting: [],
+  supervision: [],
   superGroups: {
     approved: false,
     'الأحد':    [],
@@ -3764,19 +3753,9 @@ const DEFAULT_DB = {
   },
   grades: [],
   perf: [],
-  tasks: [
-    {id:1, teacher:'أحمد الزهراني',    task:'رئاسة لجنة التطوير المهني',       start:'2026-03-01', dur:'فصل دراسي', status:'جارٍ',   approved:true},
-    {id:2, teacher:'محمد القرني',       task:'تنسيق فعاليات الأسبوع العلمي',    start:'2026-03-10', dur:'أسبوع',      status:'منتظر', approved:false},
-    {id:3, teacher:'عمر المدني',        task:'إعداد تقرير التقنية الفصلي',      start:'2026-03-15', dur:'أسبوعان',   status:'جارٍ',   approved:true},
-    {id:4, teacher:'تركي النفيسة',      task:'التدريب على منصة مدرستي',         start:'2026-03-20', dur:'أسبوع',      status:'منتظر', approved:false}
-  ],
+  tasks: [],
   charter: [1,3,5,7,8,9,10,12,14,16,18,19,20,23,26],
-  committees: [
-    {id:1, name:'لجنة التطوير المهني',       head:'أحمد الزهراني',       tasks:'متابعة خطط التنمية المهنية للمعلمين وتطوير أدائهم التدريسي',         members:[1,3,5,8],    meetings:[]},
-    {id:2, name:'لجنة الاختبارات والقياس',   head:'طلال الغامدي',        tasks:'الإشراف على تنظيم الاختبارات الفصلية والنهائية وضمان جودتها',       members:[14,2,16,7],  meetings:[]},
-    {id:3, name:'لجنة الأنشطة الطلابية',     head:'عبدالكريم الحمودي',   tasks:'تنظيم الأنشطة الطلابية اللاصفية وتعزيز المهارات القيادية لدى الطلاب', members:[26,25,9,21], meetings:[]},
-    {id:4, name:'لجنة تقنية المعلومات',      head:'تركي النفيسة',        tasks:'توظيف تقنية المعلومات في العملية التعليمية والإدارية المدرسية',       members:[20,8,18,15], meetings:[]}
-  ],
+  committees: [],
   messages: [],
   impPlans: [],
   impExec: [],
@@ -3811,6 +3790,11 @@ try {
     if (!parsed.dbVersion || parsed.dbVersion !== DEFAULT_DB.dbVersion) {
       DB.teachers = JSON.parse(JSON.stringify(DEFAULT_DB.teachers));
       DB.dbVersion = DEFAULT_DB.dbVersion;
+      // حذف السجلات التجريبية (معرّفاتها أعداد صغيرة < مليون)
+      DB.waiting    = (DB.waiting    ||[]).filter(r => typeof r.id==='number' && r.id > 1000000);
+      DB.supervision= (DB.supervision||[]).filter(r => typeof r.id==='number' && r.id > 1000000);
+      DB.tasks      = (DB.tasks      ||[]).filter(r => typeof r.id==='number' && r.id > 1000000);
+      DB.committees = (DB.committees ||[]).filter(r => typeof r.id==='number' && r.id > 1000000);
     }
     // ترحيل: إذا كان الرمز القديم 1234 يُستبدل بـ A2009
     if (DB.pin === '1234') { DB.pin = 'A2009'; }
@@ -3830,7 +3814,9 @@ function saveAllData(silent) {
   try {
     // حفظ الختم في مفتاح مستقل لتفادي تضخم DB الرئيسي
     if (DB._customStamp) {
-      try { localStorage.setItem('ANDALUS_STAMP', DB._customStamp); } catch(e2) {}
+      try { localStorage.setItem('ANDALUS_STAMP', DB._customStamp); } catch(e2) {
+        if (!silent) toast('⚠️ تعذّر حفظ الختم - سيختفي عند إعادة تحميل الصفحة', false);
+      }
     }
     const toSave = Object.assign({}, DB);
     delete toSave._customStamp; // لا نحفظه داخل DB الرئيسي
@@ -3886,6 +3872,11 @@ function loadAllData() {
       if (!parsed.dbVersion || parsed.dbVersion !== DEFAULT_DB.dbVersion) {
         DB.teachers = JSON.parse(JSON.stringify(DEFAULT_DB.teachers));
         DB.dbVersion = DEFAULT_DB.dbVersion;
+        // حذف السجلات التجريبية (معرّفاتها أعداد صغيرة < مليون)
+        DB.waiting    = (DB.waiting    ||[]).filter(r => typeof r.id==='number' && r.id > 1000000);
+        DB.supervision= (DB.supervision||[]).filter(r => typeof r.id==='number' && r.id > 1000000);
+        DB.tasks      = (DB.tasks      ||[]).filter(r => typeof r.id==='number' && r.id > 1000000);
+        DB.committees = (DB.committees ||[]).filter(r => typeof r.id==='number' && r.id > 1000000);
       }
       // تحميل الختم من مفتاحه المستقل
       try {
@@ -9960,10 +9951,24 @@ function uploadStampImage(e) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = function(ev) {
-    DB._customStamp = ev.target.result;
-    saveAllData();
-    _refreshStampPreview();
-    toast('✅ تم حفظ ختم المدرسة', true);
+    const img = new Image();
+    img.onload = function() {
+      // تصغير الختم للحد الأقصى 400×400 لتوفير مساحة التخزين
+      const MAX = 400;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      DB._customStamp = canvas.toDataURL('image/png', 0.85);
+      saveAllData();
+      _refreshStampPreview();
+      toast('✅ تم حفظ ختم المدرسة', true);
+    };
+    img.src = ev.target.result;
   };
   reader.readAsDataURL(file);
   e.target.value = '';
