@@ -50,7 +50,7 @@ body{font-family:Cairo,sans-serif;background:var(--bg);color:var(--tx1);directio
 .lb-clr{width:100%;padding:8px;background:transparent;border:1.5px solid var(--brd2);border-radius:8px;font-family:Cairo,sans-serif;font-size:11px;font-weight:600;cursor:pointer;color:var(--tx2);margin-bottom:10px}
 .lb-hint{text-align:center;font-size:11px;color:var(--tx3);margin-bottom:14px}
 .lb-hint b{color:var(--d2);letter-spacing:3px}
-.lb-mode-wrap{display:flex;gap:6px;margin-bottom:10px}
+.lb-mode-wrap{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
 .lb-mode-btn{flex:1;padding:8px;background:var(--surf3);border:1.5px solid var(--brd);border-radius:8px;font-family:Cairo,sans-serif;font-size:12px;font-weight:700;cursor:pointer;color:var(--tx2);transition:all .2s}
 .lb-mode-btn.active{background:linear-gradient(135deg,var(--d1),var(--d2));color:#fff;border-color:var(--d1)}
 .lb-mode-hint{text-align:center;font-size:10px;color:var(--tx3);margin-bottom:8px;margin-top:-4px}
@@ -394,6 +394,10 @@ body{background:#fff!important}
     <div class="lb-mode-wrap">
       <button id="mode-admin" class="lb-mode-btn active" onclick="setLoginMode('admin')">مدير المدرسة</button>
       <button id="mode-teacher" class="lb-mode-btn" onclick="setLoginMode('teacher')">معلم</button>
+      <button id="mode-guidance" class="lb-mode-btn" onclick="setLoginMode('guidance')">موجه طلابي</button>
+      <button id="mode-activity" class="lb-mode-btn" onclick="setLoginMode('activity')">رائد النشاط</button>
+      <button id="mode-library" class="lb-mode-btn" onclick="setLoginMode('library')">أمين المصادر</button>
+      <button id="mode-lab" class="lb-mode-btn" onclick="setLoginMode('lab')">محضر المختبر</button>
     </div>
     <p class="lb-mode-hint" id="login-hint">أدخل رمز دخول المدير</p>
     <div class="lb-disp" id="DISP">&nbsp;</div>
@@ -3955,23 +3959,35 @@ function importBackup(e) {
 
 // ── لوحة مفاتيح الدخول ──
 let kpStr = '';
-let loginMode = 'admin'; // 'admin' | 'teacher'
-let currentRole = null;  // 'admin' | 'teacher'
+let loginMode = 'admin'; // 'admin' | 'teacher' | 'guidance' | 'activity' | 'library' | 'lab'
+let currentRole = null;  // 'admin' | 'teacher' | 'guidance' | 'activity' | 'library' | 'lab'
 let currentTeacherId = null;
 
-const TEACHER_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf'];
-const TEACHER_ALLOWED_NAV   = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf'];
+const TEACHER_ALLOWED_PAGES  = ['plan-term','plan-week','profdev','plc','perf'];
+const TEACHER_ALLOWED_NAV    = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf'];
+const GUIDANCE_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf','guidance','plan-imp'];
+const GUIDANCE_ALLOWED_NAV   = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-guidance','n-plan-imp'];
+const ACTIVITY_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf','activity','plan-imp'];
+const ACTIVITY_ALLOWED_NAV   = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-activity','n-plan-imp'];
+const LIBRARY_ALLOWED_PAGES  = ['plan-term','plan-week','profdev','plc','perf','library'];
+const LIBRARY_ALLOWED_NAV    = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-library'];
+const LAB_ALLOWED_PAGES      = ['plan-term','plan-week','profdev','plc','perf','lab'];
+const LAB_ALLOWED_NAV        = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-lab'];
+const ROLE_ALLOWED_PAGES = { teacher: TEACHER_ALLOWED_PAGES, guidance: GUIDANCE_ALLOWED_PAGES, activity: ACTIVITY_ALLOWED_PAGES, library: LIBRARY_ALLOWED_PAGES, lab: LAB_ALLOWED_PAGES };
+const ROLE_ALLOWED_NAV   = { teacher: TEACHER_ALLOWED_NAV,   guidance: GUIDANCE_ALLOWED_NAV,   activity: ACTIVITY_ALLOWED_NAV,   library: LIBRARY_ALLOWED_NAV,   lab: LAB_ALLOWED_NAV };
 
+const LOGIN_MODE_LABELS = { admin:'أدخل رمز دخول المدير', teacher:'أدخل رقم الهوية الوطنية (10 أرقام)', guidance:'أدخل رقم هوية الموجه الطلابي', activity:'أدخل رقم هوية رائد النشاط', library:'أدخل رقم هوية أمين المصادر', lab:'أدخل رقم هوية محضر المختبر' };
 function setLoginMode(mode) {
   loginMode = mode;
   kpStr = '';
   updateDisp();
   const le = document.getElementById('LE');
   if (le) le.textContent = '';
-  document.getElementById('mode-admin').classList.toggle('active', mode === 'admin');
-  document.getElementById('mode-teacher').classList.toggle('active', mode === 'teacher');
+  ['admin','teacher','guidance','activity','library','lab'].forEach(m => {
+    const btn = document.getElementById('mode-'+m); if (btn) btn.classList.toggle('active', mode === m);
+  });
   const hint = document.getElementById('login-hint');
-  if (hint) hint.textContent = mode === 'admin' ? 'أدخل رمز دخول المدير' : 'أدخل رقم الهوية الوطنية (10 أرقام)';
+  if (hint) hint.textContent = LOGIN_MODE_LABELS[mode] || 'أدخل رقم الهوية الوطنية';
   const kpArea = document.getElementById('KP');
   const dispArea = document.getElementById('DISP');
   const clrBtn = document.querySelector('.lb-clr');
@@ -4035,18 +4051,29 @@ function doLogin() {
       updateDisp();
     }
   } else {
+    // أدوار الموظفين المتخصصين + المعلم — كلها تدخل برقم الهوية
+    const STAFF_ROLE_KEYS = { guidance:['guidance_1','guidance_2'], activity:['activity_1'], library:['library_1'], lab:['lab_1'] };
     const teacher = (DB.teachers || []).find(t => String(t.idNum) === entered);
-    if (teacher) {
-      currentRole = 'teacher';
-      currentTeacherId = teacher.id;
-      document.getElementById('LS').style.display = 'none';
-      document.getElementById('APP').style.display = 'block';
-      initApp();
-    } else {
+    if (!teacher) {
       if (le) { le.textContent = 'رقم الهوية غير موجود في النظام'; le.style.color = 'var(--r2)'; }
-      kpStr = '';
-      updateDisp();
+      kpStr = ''; updateDisp(); return;
     }
+    // تحديد الدور: إذا دخل من زر متخصص تُحقق أن رقمه في DB.staff للدور المطلوب
+    let detectedRole = loginMode === 'teacher' ? 'teacher' : loginMode;
+    if (detectedRole !== 'teacher' && detectedRole !== 'admin') {
+      const keys = STAFF_ROLE_KEYS[detectedRole] || [];
+      const inStaff = keys.some(k => DB.staff && String(DB.staff[k]) === String(teacher.id));
+      if (!inStaff) {
+        // الرقم موجود لكن لم يُعيَّن في هذا الدور — أبلغ المستخدم
+        if (le) { le.textContent = 'لم يتم تعيينك في هذا الدور من قِبَل المدير'; le.style.color = 'var(--r2)'; }
+        kpStr = ''; updateDisp(); return;
+      }
+    }
+    currentRole = detectedRole;
+    currentTeacherId = teacher.id;
+    document.getElementById('LS').style.display = 'none';
+    document.getElementById('APP').style.display = 'block';
+    initApp();
   }
 }
 
@@ -4063,23 +4090,24 @@ function doLogout() {
 }
 
 // ── التهيئة ──
+const ROLE_START_PAGE = { teacher:'plan-term', guidance:'guidance', activity:'activity', library:'library', lab:'lab' };
 function initApp() {
   applyRoleNav();
   setDate();
   populateTeacherSelects();
   renderNotifs();
-  if (currentRole === 'teacher') {
-    gp('plan-term');
-  } else {
+  if (currentRole === 'admin') {
     gp('dash');
+  } else {
+    gp(ROLE_START_PAGE[currentRole] || 'plan-term');
   }
 }
 
 function applyRoleNav() {
   if (currentRole === 'admin') {
     document.querySelectorAll('.ni, .ns-t').forEach(el => el.style.display = '');
-  } else if (currentRole === 'teacher') {
-    const allowed = new Set(TEACHER_ALLOWED_NAV);
+  } else {
+    const allowed = new Set(ROLE_ALLOWED_NAV[currentRole] || TEACHER_ALLOWED_NAV);
     document.querySelectorAll('.ni').forEach(el => {
       el.style.display = allowed.has(el.id) ? '' : 'none';
     });
@@ -4143,7 +4171,11 @@ function updateDashClock() {
 
 // ── التنقل بين الصفحات ──
 function gp(id) {
-  if (currentRole === 'teacher' && !TEACHER_ALLOWED_PAGES.includes(id)) return;
+  // حماية الوصول حسب الدور
+  if (currentRole !== 'admin') {
+    const allowed = ROLE_ALLOWED_PAGES[currentRole] || TEACHER_ALLOWED_PAGES;
+    if (!allowed.includes(id)) return;
+  }
   saveAllData(true); // حفظ تلقائي عند مغادرة أي صفحة
   document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
   const pg = document.getElementById('page-' + id);
@@ -4156,20 +4188,20 @@ function gp(id) {
   if (id === 'wait') renderWait();
   if (id === 'super') renderSuper();
   if (id === 'grades') renderGrades();
-  if (id === 'perf') { renderPerf(); if (currentRole === 'teacher' && currentTeacherId) setTimeout(() => showPerfCard(currentTeacherId), 80); }
+  if (id === 'perf') { renderPerf(); if (currentRole !== 'admin' && currentTeacherId) setTimeout(() => showPerfCard(currentTeacherId), 80); }
   if (id === 'teachers') renderTeachers();
   if (id === 'tasks') renderTasks();
   if (id === 'charter') renderCharter();
   if (id === 'committees') renderComm();
   if (id === 'messages') renderMessages();
-  if (id === 'plan-imp') renderImp();
+  if (id === 'plan-imp') { renderImp(); _applyImpRoleFilter(); }
   if (id === 'plan-term') renderTermPlan();
   if (id === 'plan-week') renderWeekPlan();
   if (id === 'schedule') renderSchedule();
-  if (id === 'guidance') renderGuidancePage();
-  if (id === 'activity') renderActivityPage();
-  if (id === 'library') renderLibraryPage();
-  if (id === 'lab') renderLabPage();
+  if (id === 'guidance') { renderGuidancePage(); _applySpecialStaffPageUI('guidance'); }
+  if (id === 'activity') { renderActivityPage(); _applySpecialStaffPageUI('activity'); }
+  if (id === 'library') { renderLibraryPage(); _applySpecialStaffPageUI('library'); }
+  if (id === 'lab') { renderLabPage(); _applySpecialStaffPageUI('lab'); }
   if (id === 'remedial') renderRemedial();
   if (id === 'plan-op') renderOpPlan();
   if (id === 'madrasati') renderMadrasati();
@@ -4177,6 +4209,38 @@ function gp(id) {
   if (id === 'plc') renderPLCPage();
   if (id === 'visits') renderVisitsPage();
   if (id === 'settings') _refreshStampPreview();
+}
+
+// إخفاء/إظهار عناصر المدير في صفحات الموظفين المتخصصين
+function _applySpecialStaffPageUI(section) {
+  const isStaff = currentRole === section;
+  const page = document.getElementById('page-'+section);
+  if (!page) return;
+  // قوائم تعيين الموظف — للمدير فقط
+  const staffSelIds = { guidance:['guidance-staff-sel-1','guidance-staff-sel-2'], activity:['activity-staff-sel'], library:['library-staff-sel'], lab:['lab-staff-sel'] };
+  (staffSelIds[section]||[]).forEach(id => { const el=document.getElementById(id); if(el) el.style.display = isStaff ? 'none' : ''; });
+  // أزرار دخول المسؤول في رأس الصفحة (غير ضرورية عند الدخول من حسابه)
+  const loginFnMap = { guidance:'showGuidanceLogin', activity:'showActivityLogin', library:'showLibraryLogin', lab:'showLabLogin' };
+  const fn = loginFnMap[section];
+  if (fn && isStaff) {
+    page.querySelectorAll(`[onclick*="${fn}"]`).forEach(btn => btn.style.display = 'none');
+  } else if (fn) {
+    page.querySelectorAll(`[onclick*="${fn}"]`).forEach(btn => btn.style.display = '');
+  }
+}
+
+// تصفية خطة التحسين لتعرض مجال الموجه أو رائد النشاط فقط
+function _applyImpRoleFilter() {
+  const domainMap = { guidance:'التوجيه الطلابي', activity:'النشاط الطلابي' };
+  const domain = domainMap[currentRole];
+  if (!domain) return; // للمعلم العادي والمدير: لا تصفية
+  ['imp1-dom-filter','imp2-dom-filter'].forEach(selId => {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    sel.value = domain;
+    sel.dispatchEvent(new Event('change'));
+    sel.disabled = true;
+  });
 }
 
 // ── الشريط الجانبي ──
