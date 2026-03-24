@@ -4572,13 +4572,19 @@ function _teacherOptions(selected) {
 function addWaitPeriodRow() {
   const tbody = document.getElementById('WPERIODS');
   if (!tbody) return;
-  const rowNum = tbody.children.length + 1;
+  const rowNum = Math.min(tbody.children.length + 1, 7);
   const clsOpts = ['A1','A2','A3','A4','B1','B2','B3','B4','C1','C2','C3','C4'].map(c=>`<option value="${c}">${c}</option>`).join('');
+  const periodOpts = [1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${n===rowNum?'selected':''}>الحصة ${n}</option>`).join('');
+  const dlId = 'sub-dl-' + Date.now();
+  const subjectsHtml = ['رياضيات','فيزياء','كيمياء','أحياء','علوم','لغة عربية','لغة إنجليزية','تربية إسلامية','حاسب آلي','تربية بدنية','تاريخ','جغرافيا','اجتماعيات','فنون'].map(s=>`<option value="${s}">`).join('');
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td><input type="number" min="1" max="8" value="${rowNum}" style="width:55px;text-align:center" placeholder="رقم"></td>
+    <td><select style="width:90px">${periodOpts}</select></td>
     <td><select style="width:70px">${clsOpts}</select></td>
-    <td><input type="text" placeholder="المادة" style="min-width:90px"></td>
+    <td>
+      <datalist id="${dlId}">${subjectsHtml}</datalist>
+      <input type="text" list="${dlId}" placeholder="اختر أو اكتب المادة" style="min-width:110px">
+    </td>
     <td><select style="min-width:130px">${_teacherOptions('')}</select></td>
     <td class="no-print"><button class="ab ad" onclick="this.closest('tr').remove()" title="حذف الصف">✕</button></td>`;
   tbody.appendChild(tr);
