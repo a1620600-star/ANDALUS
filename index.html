@@ -3664,7 +3664,27 @@ body{background:#fff!important}
 
 <!-- External libraries -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
+<script>
+// Fallback: إذا فشل تحميل مكتبة XLSX من CDN الأول، جرب CDNs أخرى
+(function() {
+  var XLSX_CDNS = [
+    'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+  ];
+  var _xlsxIdx = 0;
+  function tryLoadXLSX() {
+    if (typeof XLSX !== 'undefined') return;
+    if (_xlsxIdx >= XLSX_CDNS.length) return;
+    var s = document.createElement('script');
+    s.src = XLSX_CDNS[_xlsxIdx++];
+    s.crossOrigin = 'anonymous';
+    s.onerror = function() { setTimeout(tryLoadXLSX, 500); };
+    document.head.appendChild(s);
+  }
+  window.addEventListener('load', function() { setTimeout(tryLoadXLSX, 500); });
+})();
+</script>
 
 <script>
 // =============================================
@@ -5156,28 +5176,46 @@ function handleImportRow(input, row) {
 
   // Excel — use SheetJS to parse binary format
   if (file.name.match(/\.xlsx?$/i)) {
-    if (typeof XLSX === 'undefined') {
-      toast('مكتبة قراءة Excel لم تُحمَّل — تأكد من اتصالك بالإنترنت ثم أعد تحميل الصفحة', false);
-      return;
-    }
     const cnt = document.getElementById('irow-'+row+'-cnt');
-    if (cnt) cnt.textContent = 'جارٍ قراءة ' + file.name + '...';
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-        if (!data || data.length < 2) { toast('الملف فارغ أو لا يحتوي على بيانات', false); return; }
-        const headers = data[0].map(h => String(h).trim());
-        const dataRows = data.slice(1).map(r => r.map(c => String(c).trim())).filter(r => r[0]);
-        _finishImport(headers, dataRows);
-      } catch(err) {
-        toast('خطأ في قراءة ملف Excel: ' + err.message, false);
+    function _doParseExcel() {
+      if (typeof XLSX === 'undefined') {
+        // XLSX not loaded yet — try to load it then retry
+        if (cnt) cnt.textContent = 'جارٍ تحميل مكتبة Excel...';
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+        s.crossOrigin = 'anonymous';
+        s.onload = function() { _doParseExcel(); };
+        s.onerror = function() {
+          // try unpkg fallback
+          var s2 = document.createElement('script');
+          s2.src = 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';
+          s2.crossOrigin = 'anonymous';
+          s2.onload = function() { _doParseExcel(); };
+          s2.onerror = function() { toast('تعذّر تحميل مكتبة Excel — تأكد من اتصالك بالإنترنت', false); if(cnt) cnt.textContent = 'لا يوجد ملف'; };
+          document.head.appendChild(s2);
+        };
+        document.head.appendChild(s);
+        return;
       }
-    };
-    reader.onerror = () => toast('خطأ في قراءة الملف', false);
-    reader.readAsArrayBuffer(file);
+      if (cnt) cnt.textContent = 'جارٍ قراءة ' + file.name + '...';
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+          if (!data || data.length < 2) { toast('الملف فارغ أو لا يحتوي على بيانات', false); return; }
+          const headers = data[0].map(h => String(h).trim());
+          const dataRows = data.slice(1).map(r => r.map(c => String(c).trim())).filter(r => r[0]);
+          _finishImport(headers, dataRows);
+        } catch(err) {
+          toast('خطأ في قراءة ملف Excel: ' + err.message, false);
+        }
+      };
+      reader.onerror = () => toast('خطأ في قراءة الملف', false);
+      reader.readAsArrayBuffer(file);
+    }
+    _doParseExcel();
     return;
   }
 
@@ -5269,16 +5307,22 @@ function runFullAnalysis() {
   let allGrades = [...(DB.grades||[])];
   const levelNames = {1:'أول ثانوي', 2:'ثاني ثانوي', 3:'ثالث ثانوي'};
   Object.entries(importedRows).forEach(([row, imp]) => {
-    if (!imp) return;
+    if (!imp || imp.isPDF) return;
     const h = imp.headers;
-    const nameIdx  = h.findIndex(x=>/اسم|name/i.test(x));
-    const scoreIdx = h.findIndex(x=>/درجة|نتيجة|score|mark|grade/i.test(x));
-    const maxIdx   = h.findIndex(x=>/كامل|max|total|out/i.test(x));
+    // كشف مرن لأعمدة ملفات الوزارة والأنظمة المختلفة
+    const nameIdx  = h.findIndex(x=>/اسم|طالب|name|student/i.test(x));
+    const scoreIdx = h.findIndex(x=>/^درجة$|^الدرجة$|نتيجة|مجموع|score|mark|result|^grade$|حصل|علامة/i.test(x));
+    // fallback: أول عمود رقمي بعد الاسم
+    const scoreIdxFallback = h.findIndex((x,i) => i > Math.max(nameIdx,0) && /درجة|نتيجة|مجموع|score|mark|result|grade|حصل|علامة|رقم|عدد/i.test(x));
+    const finalScoreIdx = scoreIdx >= 0 ? scoreIdx : scoreIdxFallback;
+    const maxIdx   = h.findIndex(x=>/كامل|max|total|out|نهاية|أعلى|الكاملة/i.test(x));
     imp.rows.forEach(r => {
       const name  = nameIdx  >= 0 ? r[nameIdx]  : r[0];
-      const score = scoreIdx >= 0 ? parseFloat(r[scoreIdx]) : parseFloat(r[1]);
-      const max   = maxIdx   >= 0 ? parseFloat(r[maxIdx])   : 100;
-      if (name && !isNaN(score)) allGrades.push({ id: Date.now()+Math.random(), name, score, max: isNaN(max)?100:max, cls:'import', sub: levelNames[row]||'مستوى '+row });
+      const rawScore = finalScoreIdx >= 0 ? r[finalScoreIdx] : r[1];
+      const score = parseFloat(String(rawScore).replace(/[^\d.]/g,''));
+      const rawMax = maxIdx >= 0 ? r[maxIdx] : null;
+      const max   = rawMax != null ? (parseFloat(String(rawMax).replace(/[^\d.]/g,'')) || 100) : 100;
+      if (name && String(name).trim() && !isNaN(score) && score >= 0) allGrades.push({ id: Date.now()+Math.random(), name: String(name).trim(), score, max, cls:'import', sub: levelNames[row]||'مستوى '+row });
     });
   });
 
