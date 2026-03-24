@@ -3620,6 +3620,26 @@ body{background:#fff!important}
   </div>
 </div>
 
+<!-- ختم المدرسة -->
+<div class="card" style="margin-top:12px">
+  <div class="ch"><span class="ct"><span class="ct-dot"></span>🔖 ختم المدرسة في التقارير</span></div>
+  <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+    <div id="stamp-preview" style="width:130px;height:130px;border:2px dashed #cbd5e1;border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;background:#f8fafc">
+      <span id="stamp-preview-placeholder" style="color:#94a3b8;font-size:11px;text-align:center;font-family:Cairo,sans-serif">لا يوجد ختم</span>
+    </div>
+    <div style="flex:1;min-width:180px">
+      <p style="font-size:12px;color:var(--tx2);margin-bottom:12px;line-height:1.7">ارفع صورة ختم المدرسة ليظهر تلقائياً في جميع التقارير المُصدَّرة.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <label class="btn b-g" style="cursor:pointer;font-size:12px">
+          📤 رفع الختم
+          <input type="file" accept="image/*" onchange="uploadStampImage(event)" style="display:none">
+        </label>
+        <button class="btn bsm" onclick="removeStampImage()" style="background:rgba(185,28,28,.1);color:var(--r2);border:1.5px solid rgba(185,28,28,.3);font-size:12px">🗑 إزالة</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- SAVE/LOAD DATA PANEL -->
 
 <div class="card" style="margin-top:12px;border:2px solid #16a34a33">
@@ -3664,7 +3684,27 @@ body{background:#fff!important}
 
 <!-- External libraries -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
+<script>
+// Fallback: إذا فشل تحميل مكتبة XLSX من CDN الأول، جرب CDNs أخرى
+(function() {
+  var XLSX_CDNS = [
+    'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+  ];
+  var _xlsxIdx = 0;
+  function tryLoadXLSX() {
+    if (typeof XLSX !== 'undefined') return;
+    if (_xlsxIdx >= XLSX_CDNS.length) return;
+    var s = document.createElement('script');
+    s.src = XLSX_CDNS[_xlsxIdx++];
+    s.crossOrigin = 'anonymous';
+    s.onerror = function() { setTimeout(tryLoadXLSX, 500); };
+    document.head.appendChild(s);
+  }
+  window.addEventListener('load', function() { setTimeout(tryLoadXLSX, 500); });
+})();
+</script>
 
 <script>
 // =============================================
@@ -4109,6 +4149,7 @@ function gp(id) {
   if (id === 'profdev') renderProfDev();
   if (id === 'plc') renderPLCPage();
   if (id === 'visits') renderVisitsPage();
+  if (id === 'settings') _refreshStampPreview();
 }
 
 // ── الشريط الجانبي ──
@@ -4552,13 +4593,19 @@ function _teacherOptions(selected) {
 function addWaitPeriodRow() {
   const tbody = document.getElementById('WPERIODS');
   if (!tbody) return;
-  const rowNum = tbody.children.length + 1;
+  const rowNum = Math.min(tbody.children.length + 1, 7);
   const clsOpts = ['A1','A2','A3','A4','B1','B2','B3','B4','C1','C2','C3','C4'].map(c=>`<option value="${c}">${c}</option>`).join('');
+  const periodOpts = [1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${n===rowNum?'selected':''}>الحصة ${n}</option>`).join('');
+  const dlId = 'sub-dl-' + Date.now();
+  const subjectsHtml = ['رياضيات','فيزياء','كيمياء','أحياء','علوم','لغة عربية','لغة إنجليزية','تربية إسلامية','حاسب آلي','تربية بدنية','تاريخ','جغرافيا','اجتماعيات','فنون'].map(s=>`<option value="${s}">`).join('');
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td><input type="number" min="1" max="8" value="${rowNum}" style="width:55px;text-align:center" placeholder="رقم"></td>
+    <td><select style="width:90px">${periodOpts}</select></td>
     <td><select style="width:70px">${clsOpts}</select></td>
-    <td><input type="text" placeholder="المادة" style="min-width:90px"></td>
+    <td>
+      <datalist id="${dlId}">${subjectsHtml}</datalist>
+      <input type="text" list="${dlId}" placeholder="اختر أو اكتب المادة" style="min-width:110px">
+    </td>
     <td><select style="min-width:130px">${_teacherOptions('')}</select></td>
     <td class="no-print"><button class="ab ad" onclick="this.closest('tr').remove()" title="حذف الصف">✕</button></td>`;
   tbody.appendChild(tr);
@@ -5102,6 +5149,7 @@ function prtSuper() { window.print(); }
 
 // ── الدرجات ──
 let importedRows = {};
+let _importInProgress = {};
 let anaType = 1, chartType = 'bar', grChart;
 
 function renderGrades() {
@@ -5140,7 +5188,10 @@ function handleImportRow(input, row) {
     return;
   }
 
+  _importInProgress[row] = true;
+
   function _finishImport(headers, dataRows) {
+    _importInProgress[row] = false;
     importedRows[row] = { filename: file.name, headers, rows: dataRows };
     const cnt = document.getElementById('irow-'+row+'-cnt');
     if (cnt) cnt.textContent = dataRows.length + ' سجل — ' + file.name;
@@ -5156,28 +5207,46 @@ function handleImportRow(input, row) {
 
   // Excel — use SheetJS to parse binary format
   if (file.name.match(/\.xlsx?$/i)) {
-    if (typeof XLSX === 'undefined') {
-      toast('مكتبة قراءة Excel لم تُحمَّل — تأكد من اتصالك بالإنترنت ثم أعد تحميل الصفحة', false);
-      return;
-    }
     const cnt = document.getElementById('irow-'+row+'-cnt');
-    if (cnt) cnt.textContent = 'جارٍ قراءة ' + file.name + '...';
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-        if (!data || data.length < 2) { toast('الملف فارغ أو لا يحتوي على بيانات', false); return; }
-        const headers = data[0].map(h => String(h).trim());
-        const dataRows = data.slice(1).map(r => r.map(c => String(c).trim())).filter(r => r[0]);
-        _finishImport(headers, dataRows);
-      } catch(err) {
-        toast('خطأ في قراءة ملف Excel: ' + err.message, false);
+    function _doParseExcel() {
+      if (typeof XLSX === 'undefined') {
+        // XLSX not loaded yet — try to load it then retry
+        if (cnt) cnt.textContent = 'جارٍ تحميل مكتبة Excel...';
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+        s.crossOrigin = 'anonymous';
+        s.onload = function() { _doParseExcel(); };
+        s.onerror = function() {
+          // try unpkg fallback
+          var s2 = document.createElement('script');
+          s2.src = 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';
+          s2.crossOrigin = 'anonymous';
+          s2.onload = function() { _doParseExcel(); };
+          s2.onerror = function() { toast('تعذّر تحميل مكتبة Excel — تأكد من اتصالك بالإنترنت', false); if(cnt) cnt.textContent = 'لا يوجد ملف'; };
+          document.head.appendChild(s2);
+        };
+        document.head.appendChild(s);
+        return;
       }
-    };
-    reader.onerror = () => toast('خطأ في قراءة الملف', false);
-    reader.readAsArrayBuffer(file);
+      if (cnt) cnt.textContent = 'جارٍ قراءة ' + file.name + '...';
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+          if (!data || data.length < 2) { toast('الملف فارغ أو لا يحتوي على بيانات', false); return; }
+          const headers = data[0].map(h => String(h).trim());
+          const dataRows = data.slice(1).map(r => r.map(c => String(c).trim())).filter(r => r[0]);
+          _finishImport(headers, dataRows);
+        } catch(err) {
+          toast('خطأ في قراءة ملف Excel: ' + err.message, false);
+        }
+      };
+      reader.onerror = () => { _importInProgress[row] = false; toast('خطأ في قراءة الملف', false); };
+      reader.readAsArrayBuffer(file);
+    }
+    _doParseExcel();
     return;
   }
 
@@ -5188,12 +5257,12 @@ function handleImportRow(input, row) {
     const firstLine = text.split(/\r?\n/)[0]||'';
     const delim = firstLine.includes('\t') ? '\t' : firstLine.includes(';') ? ';' : ',';
     const lines = text.split(/\r?\n/).filter(l => l.trim());
-    if (lines.length < 2) { toast('الملف فارغ أو لا يحتوي على بيانات', false); return; }
+    if (lines.length < 2) { _importInProgress[row] = false; toast('الملف فارغ أو لا يحتوي على بيانات', false); return; }
     const headers = lines[0].split(delim).map(h => h.trim().replace(/^"|"$/g,'').replace(/^\uFEFF/,''));
     const dataRows = lines.slice(1).map(l => l.split(delim).map(c => c.trim().replace(/^"|"$/g,''))).filter(r => r[0]);
     _finishImport(headers, dataRows);
   };
-  reader.onerror = () => toast('خطأ في قراءة الملف', false);
+  reader.onerror = () => { _importInProgress[row] = false; toast('خطأ في قراءة الملف', false); };
   reader.readAsText(file, 'UTF-8');
 }
 
@@ -5261,28 +5330,41 @@ const _CHART_LABELS = ['ممتاز (90+)', 'جيد جداً (80-89)', 'جيد (7
 const _CHART_COLORS = ['#065f46','#16a34a','#d97706','#ea580c','#dc2626'];
 
 function runFullAnalysis() {
+  // تحقق أولاً إذا كان هناك ملف قيد القراءة
+  if (Object.values(_importInProgress).some(v=>v)) { toast('⏳ الملف لا يزال قيد القراءة — انتظر لحظة ثم أعد المحاولة', false); return; }
   const hasImport = Object.values(importedRows).some(r=>r);
-  if (!hasImport && !(DB.grades&&DB.grades.length)) { toast('لا توجد بيانات — استورد ملف CSV أو أدخل درجات يدوياً', false); return; }
+  if (!hasImport && !(DB.grades&&DB.grades.length)) { toast('لا توجد بيانات — استورد ملف Excel أو CSV أولاً', false); return; }
   const result = document.getElementById('ANA-RESULT');
   if (!result) return;
 
   let allGrades = [...(DB.grades||[])];
   const levelNames = {1:'أول ثانوي', 2:'ثاني ثانوي', 3:'ثالث ثانوي'};
   Object.entries(importedRows).forEach(([row, imp]) => {
-    if (!imp) return;
+    if (!imp || imp.isPDF) return;
     const h = imp.headers;
-    const nameIdx  = h.findIndex(x=>/اسم|name/i.test(x));
-    const scoreIdx = h.findIndex(x=>/درجة|نتيجة|score|mark|grade/i.test(x));
-    const maxIdx   = h.findIndex(x=>/كامل|max|total|out/i.test(x));
+    // كشف مرن لأعمدة ملفات الوزارة والأنظمة المختلفة
+    const nameIdx  = h.findIndex(x=>/اسم|طالب|name|student/i.test(x));
+    const scoreIdx = h.findIndex(x=>/^درجة$|^الدرجة$|نتيجة|مجموع|score|mark|result|^grade$|حصل|علامة/i.test(x));
+    // fallback: أول عمود رقمي بعد الاسم
+    const scoreIdxFallback = h.findIndex((x,i) => i > Math.max(nameIdx,0) && /درجة|نتيجة|مجموع|score|mark|result|grade|حصل|علامة|رقم|عدد/i.test(x));
+    const finalScoreIdx = scoreIdx >= 0 ? scoreIdx : scoreIdxFallback;
+    const maxIdx   = h.findIndex(x=>/كامل|max|total|out|نهاية|أعلى|الكاملة/i.test(x));
     imp.rows.forEach(r => {
       const name  = nameIdx  >= 0 ? r[nameIdx]  : r[0];
-      const score = scoreIdx >= 0 ? parseFloat(r[scoreIdx]) : parseFloat(r[1]);
-      const max   = maxIdx   >= 0 ? parseFloat(r[maxIdx])   : 100;
-      if (name && !isNaN(score)) allGrades.push({ id: Date.now()+Math.random(), name, score, max: isNaN(max)?100:max, cls:'import', sub: levelNames[row]||'مستوى '+row });
+      const rawScore = finalScoreIdx >= 0 ? r[finalScoreIdx] : r[1];
+      const score = parseFloat(String(rawScore).replace(/[^\d.]/g,''));
+      const rawMax = maxIdx >= 0 ? r[maxIdx] : null;
+      const max   = rawMax != null ? (parseFloat(String(rawMax).replace(/[^\d.]/g,'')) || 100) : 100;
+      if (name && String(name).trim() && !isNaN(score) && score >= 0) allGrades.push({ id: Date.now()+Math.random(), name: String(name).trim(), score, max, cls:'import', sub: levelNames[row]||'مستوى '+row });
     });
   });
 
-  if (!allGrades.length) { toast('لا توجد بيانات صالحة', false); return; }
+  if (!allGrades.length) {
+    // اجمع أسماء الأعمدة الموجودة لمساعدة المستخدم
+    const foundHeaders = Object.values(importedRows).filter(r=>r&&!r.isPDF).map(r=>r.headers.join(' | ')).join(' / ');
+    toast('لم يتم التعرف على أعمدة الدرجات في الملف' + (foundHeaders ? ' — الأعمدة المكتشفة: ' + foundHeaders : ''), false);
+    return;
+  }
   const s = _calcStats(allGrades);
   result.style.display = 'block';
   result.innerHTML = `<div class="card" style="margin-top:12px">
@@ -9849,6 +9931,45 @@ function chgPin() {
   saveAllData(); toast('✅ تم تغيير رمز الدخول بنجاح', true);
 }
 
+// ── ختم المدرسة ─────────────────────────────────────────────────
+function uploadStampImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    DB._customStamp = ev.target.result;
+    saveAllData();
+    _refreshStampPreview();
+    toast('✅ تم حفظ ختم المدرسة', true);
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function removeStampImage() {
+  delete DB._customStamp;
+  saveAllData();
+  _refreshStampPreview();
+  toast('تم إزالة الختم', true);
+}
+
+function _refreshStampPreview() {
+  const preview = document.getElementById('stamp-preview');
+  const placeholder = document.getElementById('stamp-preview-placeholder');
+  if (!preview) return;
+  const existing = preview.querySelector('img');
+  if (existing) existing.remove();
+  if (DB._customStamp) {
+    if (placeholder) placeholder.style.display = 'none';
+    const img = document.createElement('img');
+    img.src = DB._customStamp;
+    img.style.cssText = 'width:100%;height:100%;object-fit:contain';
+    preview.appendChild(img);
+  } else {
+    if (placeholder) placeholder.style.display = '';
+  }
+}
+
 // ══════════════════════════════════════════
 // تهيئة التطبيق بعد تسجيل الدخول
 // ══════════════════════════════════════════
@@ -10025,7 +10146,30 @@ function exportProfDevHTML() {
 // ══════════════════════════════════════════
 let plcEvidFiles = [];
 
+function autoFillPLCTeacher() {
+  const idEl = document.getElementById('plc-teacher-id');
+  const nameEl = document.getElementById('plc-teacher-name');
+  if (!idEl || !nameEl) return;
+  const val = idEl.value.trim();
+  if (val.length === 10) {
+    const t = (DB.teachers||[]).find(x => String(x.idNum) === val);
+    nameEl.value = t ? t.name : 'غير موجود في النظام';
+  } else {
+    nameEl.value = '';
+  }
+}
+
 function renderPLCPage() {
+  // إذا كان المعلم مسجلاً دخوله، عبّئ بياناته تلقائياً
+  if (currentRole === 'teacher' && currentTeacherId) {
+    const t = (DB.teachers||[]).find(x => x.id === currentTeacherId);
+    if (t) {
+      const idEl = document.getElementById('plc-teacher-id');
+      const nameEl = document.getElementById('plc-teacher-name');
+      if (idEl) { idEl.value = t.idNum||''; idEl.readOnly = true; }
+      if (nameEl) nameEl.value = t.name||'';
+    }
+  }
   renderPLCList();
 }
 
@@ -10036,14 +10180,18 @@ function handlePLCEvid(inp) {
 }
 
 function savePLCSession() {
-  const name = (document.getElementById('plc-name')||{}).value||'';
+  const subject = (document.getElementById('plc-subject')||{}).value||'';
   const date = (document.getElementById('plc-date')||{}).value||'';
   const goals = (document.getElementById('plc-goals')||{}).value||'';
   const recommendations = (document.getElementById('plc-recommendations')||{}).value||'';
-  if (!name||!date||!goals||!recommendations) { toast('أكمل الحقول الإلزامية', false); return; }
+  if (!subject||!date||!goals||!recommendations) { toast('أكمل الحقول الإلزامية', false); return; }
+  // بيانات المعلم
+  const teacherIdVal = (document.getElementById('plc-teacher-id')||{}).value||'';
+  const teacherNameVal = (document.getElementById('plc-teacher-name')||{}).value||'';
   if (!DB.plcSessions) DB.plcSessions=[];
   DB.plcSessions.push({
-    id: Date.now(), name, date,
+    id: Date.now(), name: subject, date,
+    teacherId: teacherIdVal, teacherName: teacherNameVal,
     head: (document.getElementById('plc-head')||{}).value||'',
     count: (document.getElementById('plc-count')||{}).value||'',
     members: (document.getElementById('plc-members')||{}).value||'',
@@ -10056,24 +10204,36 @@ function savePLCSession() {
 }
 
 function clearPLCForm() {
-  ['plc-name','plc-head','plc-count','plc-members','plc-goals','plc-summary','plc-recommendations'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['plc-head','plc-count','plc-members','plc-goals','plc-summary','plc-recommendations'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const sub = document.getElementById('plc-subject'); if(sub) sub.value='';
   plcEvidFiles=[];
   const ev=document.getElementById('plc-evid-names'); if(ev) ev.textContent='لم تُرفع شواهد بعد';
   const dt=document.getElementById('plc-date'); if(dt) dt.value='';
+  // إذا كان المعلم مسجلاً دخوله، لا تمسح بياناته
+  if (currentRole !== 'teacher') {
+    const ti = document.getElementById('plc-teacher-id'); if(ti) ti.value='';
+    const tn = document.getElementById('plc-teacher-name'); if(tn) tn.value='';
+  }
 }
 
 function renderPLCList() {
   const el = document.getElementById('PLC-LIST'); if(!el) return;
-  const list = (DB.plcSessions||[]).slice().reverse();
+  let list = (DB.plcSessions||[]).slice().reverse();
+  // المعلم يرى جلساته فقط
+  if (currentRole === 'teacher' && currentTeacherId) {
+    const t = (DB.teachers||[]).find(x => x.id === currentTeacherId);
+    if (t) list = list.filter(s => String(s.teacherId) === String(t.idNum));
+  }
   if (!list.length) { el.innerHTML='<p style="padding:14px;text-align:center;color:var(--tx3)">لا توجد جلسات مسجلة</p>'; return; }
+  const canDelete = currentRole === 'admin';
   el.innerHTML = list.map(s=>`
     <div style="padding:14px;border-bottom:1px solid var(--brd1)">
       <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;flex-wrap:wrap">
         <div>
           <b style="font-size:13px">${s.name||'—'}</b>
-          <div style="font-size:10px;color:var(--tx3);margin-top:3px">${s.date||''} ${s.head?'| رئيس المجتمع: '+s.head:''} ${s.count?'| الحضور: '+s.count:''}</div>
+          <div style="font-size:10px;color:var(--tx3);margin-top:3px">${s.date||''} ${s.teacherName?'| '+s.teacherName:''} ${s.head?'| رئيس المجتمع: '+s.head:''} ${s.count?'| الحضور: '+s.count:''}</div>
         </div>
-        <button class="btn bsm" style="background:var(--r2);color:#fff" onclick="deletePLCSession(${s.id})">حذف</button>
+        ${canDelete?`<button class="btn bsm" style="background:var(--r2);color:#fff" onclick="deletePLCSession(${s.id})">حذف</button>`:''}
       </div>
       <div style="margin-top:8px;font-size:11px;color:var(--tx2)"><b>الأهداف:</b> ${s.goals}</div>
       <div style="margin-top:4px;font-size:11px;color:var(--tx2)"><b>التوصيات:</b> ${s.recommendations}</div>
