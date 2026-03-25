@@ -833,7 +833,7 @@ body{background:#fff!important}
 </div>
 <div class="card no-print">
   <div class="ch"><span class="ct"><span class="ct-dot"></span>سجل الانتظار المحفوظ</span><span class="badge bb2" id="WCNT">0 سجل</span></div>
-  <div class="tw"><table><thead><tr><th>#</th><th>المعلم الغائب</th><th>الحصة</th><th>الصف</th><th>المادة</th><th>المعلم المنتظر</th><th>التاريخ</th><th>واتساب</th><th>حذف</th></tr></thead><tbody id="WTB"><tr><td colspan="9" style="padding:18px;color:var(--tx3)">لا توجد سجلات</td></tr></tbody></table></div>
+  <div class="tw"><table><thead><tr><th>#</th><th>المعلم الغائب</th><th>الحصة</th><th>الصف</th><th>المادة</th><th>المعلم المنتظر</th><th>التاريخ</th><th style="min-width:70px">الإقرار</th><th>واتساب</th><th>حذف</th></tr></thead><tbody id="WTB"><tr><td colspan="9" style="padding:18px;color:var(--tx3)">لا توجد سجلات</td></tr></tbody></table></div>
 </div>
 </div>
 
@@ -4342,6 +4342,8 @@ function initApp() {
     _renderCharterBanner();
     setTimeout(showRoleWelcome, 400);
   }
+  // فتح إقرار الانتظار إذا جاء المستخدم من رابط واتساب
+  _checkWaitAckParam();
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -5764,8 +5766,10 @@ function sendWaitWA(recId, periodIdx) {
   if (!rec) return;
   let msg = '';
   // سجل بالنموذج الجديد (periods)
+  const appBase = window.location.href.split('?')[0];
   if (rec.periods && rec.periods.length) {
     const p = rec.periods[periodIdx] || rec.periods[0];
+    const ackUrl = `${appBase}?wait_ack=${rec.id}&pi=${periodIdx}`;
     msg = `عزيزي المعلم / ${p.waitingTeacher||'...'}
 نقدر تعاونكم، تم تكليفكم بحصة انتظار
 التاريخ: ${rec.date} (${rec.day||''})
@@ -5773,15 +5777,21 @@ function sendWaitWA(recId, periodIdx) {
 الصف: ${p.cls||''}
 المادة: ${p.sub||''}
 نيابةً عن الزميل: ${rec.absentTeacher||''}
-الشؤون التعليمية - ثانوية الأندلس بترقش`;
+الشؤون التعليمية - ثانوية الأندلس بترقش
+
+📋 رابط إقرار الاستلام والتوقيع:
+${ackUrl}`;
   } else {
-    // سجل قديم للتوافق
+    const ackUrl = `${appBase}?wait_ack=${rec.id}&pi=0`;
     msg = `عزيزي المعلم / ${rec.teacher||'...'}
 نقدر تعاونكم، تم تكليفكم بحصة انتظار
 التاريخ: ${rec.date} (${rec.day||''})
 الصف: ${rec.cls||''}
 المادة: ${rec.sub||''}
-الشؤون التعليمية - ثانوية الأندلس بترقش`;
+الشؤون التعليمية - ثانوية الأندلس بترقش
+
+📋 رابط إقرار الاستلام والتوقيع:
+${ackUrl}`;
   }
   window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
 }
@@ -5812,6 +5822,13 @@ function filterWaitArchive() {
     if (r.periods && r.periods.length) {
       r.periods.forEach((p, pi) => {
         totalPeriods++;
+        const ackCell = p.ackSig
+          ? `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+               <img src="${p.ackSig}" style="height:22px;border:1px solid #86efac;border-radius:3px;background:#fff;padding:1px">
+               <span style="font-size:9px;color:var(--g1)">${p.ackDate||''}</span>
+             </div>`
+          : `<button class="ab" style="background:rgba(234,88,12,.1);color:var(--o2);font-size:10px;padding:3px 7px"
+               onclick="openWaitAckSign(${r.id},${pi})" title="فتح صفحة الإقرار للمعلم">✍</button>`;
         rows.push(`<tr>
           <td style="text-align:center">${totalPeriods}</td>
           <td style="font-weight:700;color:var(--r2)">${r.absentTeacher||'—'}</td>
@@ -5820,6 +5837,7 @@ function filterWaitArchive() {
           <td>${p.sub||'—'}</td>
           <td style="color:var(--g2)">${p.waitingTeacher||'—'}</td>
           <td style="text-align:center;font-size:11px">${r.date||''} ${r.day?'('+r.day+')':''}</td>
+          <td style="text-align:center">${ackCell}</td>
           <td style="text-align:center"><button class="ab" style="background:rgba(37,211,102,.1);color:#25d366" onclick="sendWaitWA(${r.id},${pi})">📱</button></td>
           <td style="text-align:center">${pi===0?`<button class="ab ad" onclick="delWR(${r.id})">🗑</button>`:'<span style="color:var(--tx3);font-size:10px">↑</span>'}</td>
         </tr>`);
@@ -5835,6 +5853,7 @@ function filterWaitArchive() {
         <td>${r.sub||'—'}</td>
         <td style="color:var(--g2)">${r.teacher||'—'}</td>
         <td style="text-align:center;font-size:11px">${r.date||''} ${r.day?'('+r.day+')':''}</td>
+        <td style="text-align:center"><span style="font-size:9px;color:var(--tx3)">—</span></td>
         <td style="text-align:center"><button class="ab" style="background:rgba(37,211,102,.1);color:#25d366" onclick="sendWaitWA(${r.id},0)">📱</button></td>
         <td style="text-align:center"><button class="ab ad" onclick="delWR(${r.id})">🗑</button></td>
       </tr>`);
@@ -5860,6 +5879,143 @@ function exportWaitArchive() {
   const a    = document.createElement('a'); a.href = url; a.download = 'سجل_الانتظار.csv'; a.click();
   URL.revokeObjectURL(url);
   toast('تم التصدير بنجاح', true);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// إقرار الانتظار بالتوقيع — يُفتح من رابط واتساب أو من الجدول مباشرة
+// ══════════════════════════════════════════════════════════════════════
+let _waitAckCanvas = null, _waitAckCtx = null, _waitAckDrawing = false;
+let _waitAckRecId  = null, _waitAckPi   = null;
+
+function openWaitAckSign(recId, pi) {
+  const rec = (DB.waiting || []).find(r => r.id == recId);
+  const p   = rec && rec.periods && rec.periods[pi];
+  if (!rec || !p) { toast('السجل غير موجود', false); return; }
+
+  _waitAckRecId = recId;
+  _waitAckPi    = pi;
+
+  let modal = document.getElementById('_WACK_MODAL');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id        = '_WACK_MODAL';
+    modal.className = 'csign-modal';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
+  }
+
+  const alreadySigned = !!p.ackSig;
+  modal.innerHTML = `
+    <div class="csign-box" style="direction:rtl;font-family:Cairo,sans-serif">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h3 style="font-size:14px;font-weight:900;color:var(--tx1);margin:0">✍ إقرار استلام حصة الانتظار</h3>
+        <button onclick="document.getElementById('_WACK_MODAL').style.display='none'"
+          style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx3)">×</button>
+      </div>
+      <!-- تفاصيل الحصة -->
+      <div style="background:var(--surf2);border-radius:10px;padding:12px;margin-bottom:14px;border-right:3px solid var(--s1)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px">
+          <div><span style="color:var(--tx3)">التاريخ: </span><b>${rec.date} (${rec.day||''})</b></div>
+          <div><span style="color:var(--tx3)">الحصة: </span><b>${p.period||'—'}</b></div>
+          <div><span style="color:var(--tx3)">الصف: </span><b>${p.cls||'—'}</b></div>
+          <div><span style="color:var(--tx3)">المادة: </span><b>${p.sub||'—'}</b></div>
+          <div><span style="color:var(--tx3)">الغائب: </span><b style="color:var(--r2)">${rec.absentTeacher||'—'}</b></div>
+          <div><span style="color:var(--tx3)">المنتظر: </span><b style="color:var(--g1)">${p.waitingTeacher||'—'}</b></div>
+        </div>
+      </div>
+      ${alreadySigned ? `
+        <div style="background:#dcfce7;border:1.5px solid #16a34a;border-radius:10px;padding:10px 14px;margin-bottom:14px;text-align:center">
+          <img src="${p.ackSig}" style="height:40px;border:1px solid #86efac;border-radius:5px;background:#fff;margin-bottom:4px;display:block;margin:0 auto 4px">
+          <div style="font-size:11px;color:#166534;font-weight:700">✓ تم الإقرار بتاريخ ${p.ackDate||''}</div>
+        </div>` : ''}
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:5px">
+          ${alreadySigned ? 'تجديد التوقيع' : 'وقّع بإصبعك أو الماوس للإقرار بالاستلام'}
+        </div>
+        <canvas id="_WACK_CV" class="csign-canvas"></canvas>
+        <button onclick="_waitAckClear()"
+          style="font-size:10px;color:var(--tx3);background:none;border:none;cursor:pointer;font-family:Cairo,sans-serif;float:left;margin-top:4px">
+          🗑 مسح
+        </button>
+      </div>
+      <div style="display:flex;gap:8px;clear:both;padding-top:4px">
+        <button onclick="_waitAckSave()"
+          style="flex:1;padding:12px;background:linear-gradient(135deg,var(--s1),var(--s2));color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">
+          ✅ تأكيد الإقرار
+        </button>
+        <button onclick="document.getElementById('_WACK_MODAL').style.display='none'"
+          style="padding:12px 16px;background:var(--surf2);color:var(--tx2);border:1.5px solid var(--brd);border-radius:10px;cursor:pointer;font-family:Cairo,sans-serif;font-size:11px">
+          لاحقاً
+        </button>
+      </div>
+    </div>`;
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => _waitAckInitCanvas()));
+}
+
+function _waitAckInitCanvas() {
+  _waitAckCanvas = document.getElementById('_WACK_CV');
+  if (!_waitAckCanvas) return;
+  _waitAckCtx  = _waitAckCanvas.getContext('2d');
+  const dpr    = window.devicePixelRatio || 1;
+  const cssW   = _waitAckCanvas.offsetWidth  || 320;
+  const cssH   = _waitAckCanvas.offsetHeight || 130;
+  _waitAckCanvas.width  = Math.floor(cssW * dpr);
+  _waitAckCanvas.height = Math.floor(cssH * dpr);
+  _waitAckCtx.scale(dpr, dpr);
+  _waitAckCtx.strokeStyle = '#0c4a6e';
+  _waitAckCtx.lineWidth   = 2.5;
+  _waitAckCtx.lineCap     = 'round';
+  _waitAckCtx.lineJoin    = 'round';
+
+  const start = e => { _waitAckDrawing=true; const r=_waitAckCanvas.getBoundingClientRect(); _waitAckCtx.beginPath(); _waitAckCtx.moveTo(e.clientX-r.left, e.clientY-r.top); };
+  const move  = e => { if(!_waitAckDrawing)return; const r=_waitAckCanvas.getBoundingClientRect(); _waitAckCtx.lineTo(e.clientX-r.left, e.clientY-r.top); _waitAckCtx.stroke(); };
+  const end   = () => { _waitAckDrawing = false; };
+
+  _waitAckCanvas.addEventListener('mousedown',   start);
+  _waitAckCanvas.addEventListener('mousemove',   move);
+  _waitAckCanvas.addEventListener('mouseup',     end);
+  _waitAckCanvas.addEventListener('mouseleave',  end);
+  _waitAckCanvas.addEventListener('touchstart',  e => { e.preventDefault(); start(e.touches[0]); }, {passive:false});
+  _waitAckCanvas.addEventListener('touchmove',   e => { e.preventDefault(); move(e.touches[0]); },  {passive:false});
+  _waitAckCanvas.addEventListener('touchend',    end);
+  _waitAckCanvas.addEventListener('touchcancel', end);
+}
+
+function _waitAckClear() {
+  if (!_waitAckCtx || !_waitAckCanvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  _waitAckCtx.clearRect(0, 0, _waitAckCanvas.width/dpr, _waitAckCanvas.height/dpr);
+}
+
+function _waitAckSave() {
+  if (!_waitAckCanvas || _waitAckRecId === null) return;
+  const data      = _waitAckCtx.getImageData(0, 0, _waitAckCanvas.width, _waitAckCanvas.height).data;
+  const hasDrawing = data.some((v, i) => i % 4 === 3 && v > 0);
+  if (!hasDrawing) { toast('ارسم توقيعك أولاً', false); return; }
+
+  const rec = (DB.waiting || []).find(r => r.id == _waitAckRecId);
+  if (!rec || !rec.periods || !rec.periods[_waitAckPi]) { toast('السجل غير موجود', false); return; }
+
+  rec.periods[_waitAckPi].ackSig  = _waitAckCanvas.toDataURL('image/png');
+  rec.periods[_waitAckPi].ackDate = new Date().toLocaleDateString('ar-SA-u-nu-latn');
+  saveAllData();
+  document.getElementById('_WACK_MODAL').style.display = 'none';
+  filterWaitArchive();
+  toast(`✅ تم تسجيل إقرار الاستلام بتاريخ ${rec.periods[_waitAckPi].ackDate}`, true);
+
+  // مسح معامل الـ URL لمنع إعادة الفتح
+  if (window.history && window.history.replaceState)
+    window.history.replaceState({}, '', window.location.pathname);
+}
+
+// فتح تلقائي من رابط واتساب — يُستدعى من initApp
+function _checkWaitAckParam() {
+  const params   = new URLSearchParams(window.location.search);
+  const waitAckId = params.get('wait_ack');
+  if (!waitAckId) return;
+  const pi = parseInt(params.get('pi') || '0');
+  setTimeout(() => openWaitAckSign(parseInt(waitAckId), pi), 700);
 }
 
 function prtWait() {
@@ -8398,16 +8554,30 @@ function renderCharter() {
   }
   tb.innerHTML = DB.teachers.map((t, i) => {
     const isSigned = signedIds.includes(t.id);
+    const sigData  = (DB.charterSigs || []).find(s => s.id === t.id);
+    const sigDate  = sigData?.date || (isSigned ? '—' : '');
     return `<tr>
       <td style="text-align:center">${i+1}</td>
       <td><b>${t.name}</b></td>
       <td style="text-align:center">${t.subject||'—'}</td>
-      <td style="text-align:center">${isSigned ? new Date().toLocaleDateString('ar-SA') : '—'}</td>
       <td style="text-align:center">
-        <button class="btn bsm" style="background:${isSigned?'linear-gradient(135deg,var(--g1),var(--g2))':'var(--surf3)'};color:${isSigned?'#fff':'var(--tx2)'};min-width:80px"
-          onclick="toggleCharter(${t.id})">
-          ${isSigned ? '✓ موقّع' : 'توقيع'}
-        </button>
+        ${isSigned && sigData?.sigImg
+          ? `<div style="display:flex;align-items:center;justify-content:center;gap:6px">
+               <img src="${sigData.sigImg}" style="height:28px;border:1px solid #86efac;border-radius:4px;background:#fff;padding:1px" title="التوقيع الرقمي">
+               <span style="font-size:10px;color:var(--tx3)">${sigDate}</span>
+             </div>`
+          : `<span style="font-size:11px;color:var(--tx3)">${sigDate || '—'}</span>`
+        }
+      </td>
+      <td style="text-align:center">
+        <div style="display:flex;align-items:center;justify-content:center;gap:4px">
+          <button class="btn bsm" style="background:${isSigned?'linear-gradient(135deg,var(--g1),var(--g2))':'var(--surf3)'};color:${isSigned?'#fff':'var(--tx2)'};min-width:70px"
+            onclick="toggleCharter(${t.id})">
+            ${isSigned ? '✓ موقّع' : 'توقيع'}
+          </button>
+          ${isSigned ? `<button class="btn bsm" style="background:rgba(220,38,38,.1);color:var(--r2);padding:4px 7px" title="حذف التوقيع"
+            onclick="deleteCharterSig(${t.id})">🗑</button>` : ''}
+        </div>
       </td>
     </tr>`;
   }).join('');
@@ -8415,10 +8585,31 @@ function renderCharter() {
 
 function toggleCharter(id) {
   const idx = DB.charter.indexOf(id);
-  if (idx >= 0) DB.charter.splice(idx, 1);
-  else DB.charter.push(id);
+  if (idx >= 0) {
+    DB.charter.splice(idx, 1);
+    DB.charterSigs = (DB.charterSigs || []).filter(s => s.id !== id);
+  } else {
+    DB.charter.push(id);
+    // تسجيل التاريخ فقط بدون صورة توقيع (للتسجيل اليدوي من المدير)
+    if (!DB.charterSigs) DB.charterSigs = [];
+    if (!DB.charterSigs.find(s => s.id === id)) {
+      DB.charterSigs.push({ id, date: new Date().toLocaleDateString('ar-SA-u-nu-latn') });
+    }
+  }
   saveAllData();
   renderCharter();
+}
+
+function deleteCharterSig(id) {
+  const t = DB.teachers.find(x => x.id === id);
+  if (!confirm(`هل تريد حذف توقيع ${t ? t.name : 'المعلم'} من ميثاق المهنة؟`)) return;
+  DB.charter     = (DB.charter     || []).filter(x => x !== id);
+  DB.charterSigs = (DB.charterSigs || []).filter(s => s.id !== id);
+  saveAllData();
+  renderCharter();
+  toast(`تم حذف توقيع ${t ? t.name : ''}`, true);
+  // تحديث الشارة لو كان المعلم مسجلاً دخوله حالياً
+  if (currentTeacherId === id) _renderCharterBanner();
 }
 
 // ══════════════════════════════════════════
