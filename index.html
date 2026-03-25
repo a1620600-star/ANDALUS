@@ -8059,14 +8059,17 @@ function filterMsgArchive(q) {
   wrap.innerHTML = data.map(m => `
     <div style="background:var(--surf2);border:1.5px solid var(--brd);border-radius:10px;padding:12px;margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <span style="font-weight:800;font-size:11px;color:var(--d2)">${m.to||'الكل'}</span>
+        <div>
+          <span style="font-weight:800;font-size:11px;color:var(--d2)">${m.type==='صادر'?'إلى: ':m.type==='وارد'?'من: ':(m.type==='wa'||m.type==='SMS')?'المستلم: ':''}${m.to||'الكل'}</span>
+          ${m.subject?`<div style="font-size:10px;color:var(--tx3);margin-top:2px">📌 ${m.subject}</div>`:''}
+        </div>
         <div style="display:flex;gap:5px;align-items:center">
-          <span class="badge" style="background:${m.type==='wa'?'rgba(37,211,102,.15)':m.type==='report'?'rgba(30,58,95,.1)':'rgba(8,145,178,.1)'};color:${m.type==='wa'?'#16a34a':m.type==='report'?'var(--d2)':'var(--s2)'}">${m.type==='wa'?'واتساب':m.type==='report'?'تقرير':'SMS'}</span>
+          <span class="badge" style="background:${m.type==='wa'?'rgba(37,211,102,.15)':m.type==='صادر'?'rgba(30,58,95,.12)':m.type==='وارد'?'rgba(13,122,95,.12)':m.type==='report'?'rgba(30,58,95,.1)':'rgba(8,145,178,.1)'};color:${m.type==='wa'?'#16a34a':m.type==='صادر'?'var(--d2)':m.type==='وارد'?'#0d7a5f':m.type==='report'?'var(--d2)':'var(--s2)'}">${m.type==='wa'?'📱 واتساب':m.type==='صادر'?'📤 صادر':m.type==='وارد'?'📥 وارد':m.type==='report'?'تقرير':'SMS'}${m.corrNum?' #'+m.corrNum:''}</span>
           <span style="font-size:10px;color:var(--tx3)">${m.date||''}</span>
           <button class="ab ad" onclick="delMsg(${m.id})">🗑</button>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--tx1);line-height:1.7">${m.body||''}</div>
+      <div style="font-size:11px;color:var(--tx1);line-height:1.7;white-space:pre-wrap">${m.body||''}</div>
     </div>`).join('');
 }
 
@@ -9935,17 +9938,32 @@ function _doRemedialInquiry() {
     const teacher = (DB.teachers||[]).find(t => t.name === teacherName);
     if (!DB.remedialInquiries) DB.remedialInquiries = [];
     const inqId = Date.now();
+    const inqDate = new Date().toLocaleDateString('ar-SA-u-nu-latn');
+    const corrNum = DB.remedialInquiries.length + 1; // رقم المراسلة
     DB.remedialInquiries.push({
       id: inqId,
+      corrNum: corrNum,
       teacherId: teacher ? teacher.id : null,
       teacherName: teacherName || '—',
       teacherPhone: teacher ? (teacher.phone||'') : '',
       cls: cls,
-      date: new Date().toLocaleDateString('ar-SA-u-nu-latn'),
+      date: inqDate,
       status: 'pending',
       teacherReasons: '',
       teacherPlan: '',
       replyDate: null
+    });
+    // ── أرشفة صادر في أرشيف المراسلات ──
+    if (!DB.messages) DB.messages = [];
+    DB.messages.push({
+      id: inqId,
+      corrNum: corrNum,
+      type: 'صادر',
+      to: teacherName || '—',
+      subject: `استعلام عن مستوى التحصيل — ${cls}`,
+      body: `استعلام رسمي صادر من إدارة ثانوية الأندلس بترقش\nإلى الأستاذ / ${teacherName||'—'}\nبشأن: مستوى التحصيل الدراسي لطلاب ${cls}\n\nيُرجى الرد بأسباب التدني والخطة العلاجية المقترحة لرفع مستوى الطلاب وتحقيق الهدف العلاجي.`,
+      date: inqDate,
+      refId: inqId
     });
     saveAllData(true);
     renderRemedialInquiries();
@@ -10042,20 +10060,30 @@ function renderRemedialInquiries() {
     const waMsg = encodeURIComponent(`السلام عليكم ورحمة الله وبركاته\nالأستاذ / ${inq.teacherName}\n\nتذكير: لديك خطاب في نظام ثانوية الأندلس بترقش يحتاج للرد عاجلاً.\n\nرابط النظام:\n${siteUrl}\n\nنشكر تعاونكم والله الموفق\nإدارة ثانوية الأندلس بترقش`);
     const waUrl = `https://wa.me/${phone}?text=${waMsg}`;
     return `<div style="border:1.5px solid ${isPending?'#f59e0b':'#16a34a'};border-radius:10px;padding:14px;margin-bottom:10px;background:${isPending?'#fffbeb':'#f0fdf4'}">
+      <!-- صادر -->
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+        <span style="padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(30,58,95,.1);color:var(--d2)">📤 صادر${inq.corrNum?' #'+inq.corrNum:''}</span>
+        <span style="font-size:10px;color:#64748b">${inq.date}</span>
+      </div>
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
         <div>
-          <div style="font-weight:800;font-size:12px;color:#0a1628">${inq.teacherName}</div>
-          <div style="font-size:10px;color:#64748b;margin-top:2px">الصف: ${inq.cls} | الإرسال: ${inq.date}</div>
+          <div style="font-weight:800;font-size:12px;color:#0a1628">إلى: ${inq.teacherName}</div>
+          <div style="font-size:10px;color:#64748b;margin-top:2px">📌 استعلام عن مستوى التحصيل — ${inq.cls}</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
           <span style="padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:${isPending?'#fef9c3':'#dcfce7'};color:${isPending?'#92400e':'#166534'}">${isPending?'⏳ بانتظار الرد':'✅ تم الرد'}</span>
           ${isPending && phone ? `<a href="${waUrl}" target="_blank" style="padding:4px 10px;background:#25D366;color:#fff;border-radius:8px;font-size:10px;font-weight:700;text-decoration:none">📱 تذكير</a>` : ''}
         </div>
       </div>
-      ${!isPending ? `<div style="margin-top:10px;font-size:11px;background:#fff;border-radius:8px;padding:10px;border:1px solid #bbf7d0">
-        <div style="font-weight:700;color:#16a34a;margin-bottom:6px">رد المعلم — ${inq.replyDate||''}</div>
-        <div><b>أسباب التدني:</b> ${inq.teacherReasons||'—'}</div>
-        <div style="margin-top:4px"><b>الخطة العلاجية:</b> ${inq.teacherPlan||'—'}</div>
+      <!-- وارد (الرد) -->
+      ${!isPending ? `<div style="margin-top:10px;padding:10px;border-radius:8px;background:#fff;border:1.5px solid #bbf7d0">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+          <span style="padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(13,122,95,.1);color:#0d7a5f">📥 وارد${inq.corrNum?' #'+inq.corrNum:''}</span>
+          <span style="font-size:10px;color:#64748b">${inq.replyDate||''}</span>
+        </div>
+        <div style="font-size:11px"><b>من:</b> ${inq.teacherName}</div>
+        <div style="font-size:11px;margin-top:5px"><b>أسباب التدني:</b><br><span style="color:#0a1628;line-height:1.7">${inq.teacherReasons||'—'}</span></div>
+        <div style="font-size:11px;margin-top:5px"><b>الخطة العلاجية:</b><br><span style="color:#0a1628;line-height:1.7">${inq.teacherPlan||'—'}</span></div>
       </div>` : ''}
     </div>`;
   }).join('');
@@ -10103,6 +10131,18 @@ function submitInquiryReply(id) {
   inq.replyDate      = new Date().toLocaleDateString('ar-SA-u-nu-latn');
   if (!DB.remedialInqNotifs) DB.remedialInqNotifs = [];
   DB.remedialInqNotifs.push({ inquiryId: id, teacherName: inq.teacherName, date: inq.replyDate, read: false });
+  // ── أرشفة وارد في أرشيف المراسلات ──
+  if (!DB.messages) DB.messages = [];
+  DB.messages.push({
+    id: Date.now(),
+    corrNum: inq.corrNum || '—',
+    type: 'وارد',
+    to: inq.teacherName,
+    subject: `رد على استعلام التحصيل — ${inq.cls}`,
+    body: `رد وارد من الأستاذ / ${inq.teacherName}\nالصف: ${inq.cls} | التاريخ: ${inq.replyDate}\n\nأسباب التدني:\n${reasons}\n\nالخطة العلاجية المقترحة:\n${plan}`,
+    date: inq.replyDate,
+    refId: id
+  });
   saveAllData();
   toast('✅ تم إرسال ردك للإدارة بنجاح', true);
   _renderTeacherInquiries();
