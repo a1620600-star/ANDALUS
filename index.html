@@ -1179,6 +1179,7 @@ body{background:#fff!important}
   <button class="tbtn active" onclick="swtab(this,'rem','rem1')">الطلاب المحتاجون</button>
   <button class="tbtn" onclick="swtab(this,'rem','rem2')">الخطط المُعدّة</button>
   <button class="tbtn" onclick="swtab(this,'rem','rem3')">🗄 الأرشيف</button>
+  <button class="tbtn" id="rem-tab-inq" onclick="swtab(this,'rem','rem4')">📨 الاستعلامات <span id="rem-inq-badge" style="display:none;background:#ef4444;color:#fff;border-radius:50%;padding:0 5px;font-size:9px;font-weight:800;margin-right:3px;vertical-align:middle">0</span></button>
 </div>
 <div class="tc active" id="rem-rem1">
 <div class="card" style="margin-bottom:12px">
@@ -1192,6 +1193,7 @@ body{background:#fff!important}
 </div>
 </div>
 <div class="tc" id="rem-rem2">
+<div id="REM-TEACHER-INQUIRIES"></div>
 <!-- دخول المعلم لإضافة خطة علاجية -->
 <div class="card" style="margin-bottom:12px;border:1.5px solid rgba(220,38,38,.2);background:rgba(220,38,38,.02)">
   <div class="ch"><span class="ct" style="color:var(--r2)"><span class="ct-dot" style="background:var(--r2)"></span>دخول المعلم — إضافة خطة علاجية</span></div>
@@ -1273,6 +1275,17 @@ body{background:#fff!important}
   <div id="REM-ARCHIVE"><p style="padding:14px;text-align:center;color:var(--tx3)">لا توجد سجلات مؤرشفة — اضغط "أرشفة" من الرأس</p></div>
 </div>
 </div><!-- end rem3 -->
+
+<!-- TAB 4: INQUIRIES & REPLIES -->
+<div class="tc" id="rem-rem4">
+<div class="card">
+  <div class="ch">
+    <span class="ct"><span class="ct-dot"></span>الاستعلامات المُرسلة والردود الواردة</span>
+    <span id="rem-inq-pending-count" class="badge br2" style="background:var(--a1);color:var(--a2)">0 معلّق</span>
+  </div>
+  <div id="REM-INQUIRIES"><p style="padding:18px;text-align:center;color:var(--tx3)">لم يتم إرسال أي استعلام بعد</p></div>
+</div>
+</div><!-- end rem4 -->
 
 </div><!-- end page-remedial -->
 
@@ -3794,7 +3807,9 @@ const DEFAULT_DB = {
   classVisits: [],
   gradesArchive: [],
   remedialArchive: [],
-  teacherReports: []
+  teacherReports: [],
+  remedialInquiries: [],
+  remedialInqNotifs: []
 };
 
 let DB = JSON.parse(JSON.stringify(DEFAULT_DB));
@@ -4304,6 +4319,23 @@ function renderNotifs() {
     if (myRevNotifs.length) {
       notifs.push({icon:'📝', msg:`لديك ملاحظات من المدير على بطاقة أدائك — انقر للاطلاع`, color:'#7c3aed',
         action: `document.getElementById('NP').classList.remove('show');gp('perf');setTimeout(()=>{ const t=DB.teachers.find(x=>x.id==currentTeacherId); if(t) showPerfCard(t.id); },120)`});
+    }
+    // إشعارات استعلامات التحصيل للمعلم
+    const pendInq = (DB.remedialInquiries||[]).filter(i => i.teacherId === currentTeacherId && i.status === 'pending');
+    if (pendInq.length) {
+      notifs.push({icon:'📋', msg:`لديك ${pendInq.length === 1 ? 'استعلام' : pendInq.length + ' استعلامات'} من الإدارة بشأن التحصيل — انقر للرد`, color:'#f59e0b',
+        action: `document.getElementById('NP').classList.remove('show');gp('remedial')`});
+    }
+  }
+  // إشعارات ردود المعلمين للمدير
+  if (currentRole === 'admin') {
+    const newReplies = (DB.remedialInqNotifs||[]).filter(n => !n.read);
+    if (newReplies.length === 1) {
+      notifs.push({icon:'📨', msg:`المعلم ${newReplies[0].teacherName} رد على استعلام مستوى التحصيل — انقر للاطلاع`, color:'#0d7a5f',
+        action: `document.getElementById('NP').classList.remove('show');gp('remedial');setTimeout(()=>{const tabs=document.querySelectorAll('#page-remedial .tbtn');if(tabs[3])tabs[3].click();},200);(DB.remedialInqNotifs||[]).forEach(n=>n.read=true);saveAllData(true)`});
+    } else if (newReplies.length > 1) {
+      notifs.push({icon:'📨', msg:`${newReplies.length} ردود جديدة على استعلامات التحصيل من المعلمين — انقر للاطلاع`, color:'#0d7a5f',
+        action: `document.getElementById('NP').classList.remove('show');gp('remedial');setTimeout(()=>{const tabs=document.querySelectorAll('#page-remedial .tbtn');if(tabs[3])tabs[3].click();},200);(DB.remedialInqNotifs||[]).forEach(n=>n.read=true);saveAllData(true)`});
     }
   }
   if (!notifs.length) {
@@ -9778,6 +9810,8 @@ function renderRemedial() {
       </div>
       ${r.plan?`<div style="margin-top:8px;font-size:11px;color:var(--tx2)"><b>الخطة:</b> ${r.plan}</div>`:''}
     </div>`).join('');
+  renderRemedialInquiries();
+  _renderTeacherInquiries();
 }
 
 // ── دخول المعلم لإضافة خطة علاجية ──────────────────────────────────
@@ -9846,6 +9880,24 @@ function _doRemedialInquiry() {
   const cls = document.getElementById('_inq_cls')?.value.trim() || '—';
   document.getElementById('_REM_INQ_MODAL').style.display = 'none';
   _directorExport(showStamp => {
+    // حفظ الاستعلام في قاعدة البيانات
+    const teacher = (DB.teachers||[]).find(t => t.name === teacherName);
+    if (!DB.remedialInquiries) DB.remedialInquiries = [];
+    const inqId = Date.now();
+    DB.remedialInquiries.push({
+      id: inqId,
+      teacherId: teacher ? teacher.id : null,
+      teacherName: teacherName || '—',
+      teacherPhone: teacher ? (teacher.phone||'') : '',
+      cls: cls,
+      date: new Date().toLocaleDateString('ar-SA-u-nu-latn'),
+      status: 'pending',
+      teacherReasons: '',
+      teacherPlan: '',
+      replyDate: null
+    });
+    saveAllData(true);
+    renderRemedialInquiries();
     const today = new Date().toLocaleDateString('ar-SA-u-nu-latn');
     const body = `
       <div style="border:1.5px solid #0d7a5f;border-radius:10px;padding:18px 22px;margin-bottom:16px;background:#f0fdf9">
@@ -9883,7 +9935,127 @@ function _doRemedialInquiry() {
         <div style="height:50px"></div>
       </div>`;
     _openDoc(_officialDoc('استعلام عن مستوى التحصيل الدراسي', body, {showStamp}));
+    // عرض نافذة إرسال الواتساب
+    setTimeout(() => _showWAInquiryPrompt(teacher, cls), 400);
   });
+}
+
+function _showWAInquiryPrompt(teacher, cls) {
+  if (!teacher || !teacher.phone) return;
+  const phone = teacher.phone.replace(/^0/, '966').replace(/\s/g, '');
+  const siteUrl = window.location.origin + window.location.pathname;
+  const waMsg = encodeURIComponent(
+    `السلام عليكم ورحمة الله وبركاته\nالأستاذ / ${teacher.name}\n\nلديك خطاب رسمي في نظام ثانوية الأندلس بترقش يحتاج منك للرد عاجلاً.\n\nبعد تحليل نتائج طلاب الصف (${cls}) تبيّن وجود تدنٍّ في المستوى التحصيلي، لذا نرجو منك:\n\n• إدخال أسباب التدني\n• رفع الخطة العلاجية المقترحة لتحقيق الهدف العلاجي\n\nيرجى الدخول على النظام من الرابط:\n${siteUrl}\n\nنشكر تعاونكم والله الموفق\nإدارة ثانوية الأندلس بترقش`
+  );
+  const waUrl = `https://wa.me/${phone}?text=${waMsg}`;
+  const m = document.createElement('div');
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center';
+  m.innerHTML = `<div style="background:#fff;border-radius:18px;padding:30px 34px;max-width:420px;width:93%;text-align:center;font-family:Cairo,sans-serif;direction:rtl;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="font-size:44px;margin-bottom:12px">📱</div>
+    <h3 style="font-size:16px;font-weight:900;color:#0a1628;margin:0 0 8px">إرسال إشعار واتساب</h3>
+    <p style="font-size:12px;color:#475569;margin:0 0 4px">هل تريد إرسال رسالة واتساب للأستاذ</p>
+    <p style="font-size:13px;font-weight:800;color:#0d7a5f;margin:0 0 6px">${teacher.name}</p>
+    <p style="font-size:11px;color:#94a3b8;margin:0 0 22px;line-height:1.6">سيتم إبلاغه بوجود خطاب يحتاج للرد عاجلاً مع رابط مباشر للنظام وطلب رفع الخطة العلاجية</p>
+    <div style="display:flex;gap:10px">
+      <a href="${waUrl}" target="_blank" onclick="this.closest('[style*=fixed]').remove()" style="flex:1;padding:13px;background:#25D366;color:#fff;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        إرسال واتساب
+      </a>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;padding:13px;background:#f1f5f9;color:#334155;border:1.5px solid #cbd5e1;border-radius:10px;font-size:13px;cursor:pointer;font-family:Cairo,sans-serif">لاحقاً</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click', e => { if (e.target === m) m.remove(); });
+}
+
+// ── عرض تبويب الاستعلامات (للمدير) ─────────────────────────────────
+function renderRemedialInquiries() {
+  const wrap = document.getElementById('REM-INQUIRIES');
+  const list = DB.remedialInquiries || [];
+  const pending = list.filter(i => i.status === 'pending').length;
+
+  // تحديث badge التبويب
+  const badge = document.getElementById('rem-inq-badge');
+  if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline-flex' : 'none'; }
+  const cntEl = document.getElementById('rem-inq-pending-count');
+  if (cntEl) cntEl.textContent = pending + ' معلّق';
+
+  if (!wrap) return;
+  if (!list.length) { wrap.innerHTML = '<p style="padding:18px;text-align:center;color:var(--tx3)">لم يتم إرسال أي استعلام بعد</p>'; return; }
+
+  const siteUrl = window.location.origin + window.location.pathname;
+  wrap.innerHTML = [...list].reverse().map(inq => {
+    const isPending = inq.status === 'pending';
+    const t = (DB.teachers||[]).find(x => x.id === inq.teacherId);
+    const phone = t?.phone ? t.phone.replace(/^0/,'966').replace(/\s/g,'') : '';
+    const waMsg = encodeURIComponent(`السلام عليكم ورحمة الله وبركاته\nالأستاذ / ${inq.teacherName}\n\nتذكير: لديك خطاب في نظام ثانوية الأندلس بترقش يحتاج للرد عاجلاً.\n\nرابط النظام:\n${siteUrl}\n\nنشكر تعاونكم والله الموفق\nإدارة ثانوية الأندلس بترقش`);
+    const waUrl = `https://wa.me/${phone}?text=${waMsg}`;
+    return `<div style="border:1.5px solid ${isPending?'#f59e0b':'#16a34a'};border-radius:10px;padding:14px;margin-bottom:10px;background:${isPending?'#fffbeb':'#f0fdf4'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+        <div>
+          <div style="font-weight:800;font-size:12px;color:#0a1628">${inq.teacherName}</div>
+          <div style="font-size:10px;color:#64748b;margin-top:2px">الصف: ${inq.cls} | الإرسال: ${inq.date}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <span style="padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:${isPending?'#fef9c3':'#dcfce7'};color:${isPending?'#92400e':'#166534'}">${isPending?'⏳ بانتظار الرد':'✅ تم الرد'}</span>
+          ${isPending && phone ? `<a href="${waUrl}" target="_blank" style="padding:4px 10px;background:#25D366;color:#fff;border-radius:8px;font-size:10px;font-weight:700;text-decoration:none">📱 تذكير</a>` : ''}
+        </div>
+      </div>
+      ${!isPending ? `<div style="margin-top:10px;font-size:11px;background:#fff;border-radius:8px;padding:10px;border:1px solid #bbf7d0">
+        <div style="font-weight:700;color:#16a34a;margin-bottom:6px">رد المعلم — ${inq.replyDate||''}</div>
+        <div><b>أسباب التدني:</b> ${inq.teacherReasons||'—'}</div>
+        <div style="margin-top:4px"><b>الخطة العلاجية:</b> ${inq.teacherPlan||'—'}</div>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── عرض الاستعلامات المعلّقة للمعلم في تبويب الخطط ────────────────
+function _renderTeacherInquiries() {
+  const wrap = document.getElementById('REM-TEACHER-INQUIRIES');
+  if (!wrap) return;
+  if (currentRole !== 'teacher' || !currentTeacherId) { wrap.innerHTML = ''; return; }
+  const pending = (DB.remedialInquiries||[]).filter(i => i.teacherId === currentTeacherId && i.status === 'pending');
+  if (!pending.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `<div class="card" style="margin-bottom:12px;border:2px solid #f59e0b;background:#fffbeb">
+    <div class="ch"><span class="ct" style="color:#92400e"><span class="ct-dot" style="background:#f59e0b"></span>📋 استعلامات من الإدارة — تحتاج ردك (${pending.length})</span></div>
+    ${pending.map(inq => `<div style="border:1px solid #fcd34d;border-radius:8px;padding:14px;margin-bottom:10px;background:#fff">
+      <div style="font-size:12px;font-weight:800;color:#92400e;margin-bottom:8px">استعلام عن مستوى التحصيل — الصف: ${inq.cls} — التاريخ: ${inq.date}</div>
+      <p style="font-size:11px;color:#0a1628;margin:0 0 12px;line-height:1.8">
+        تم تحليل نتائج طلاب الصف <b>${inq.cls}</b> وتبيّن وجود تدنٍّ في المستوى التحصيلي.<br>
+        يرجى إدخال أسباب التدني ورفع الخطة العلاجية المقترحة لتحقيق الهدف العلاجي ومتابعتها.
+      </p>
+      <div class="fg" style="margin-bottom:8px">
+        <label style="font-size:11px;font-weight:700;display:block;margin-bottom:4px;color:#92400e">أسباب التدني *</label>
+        <textarea class="fc" id="inq-reasons-${inq.id}" rows="2" placeholder="أدخل أسباب تدني التحصيل..."></textarea>
+      </div>
+      <div class="fg" style="margin-bottom:12px">
+        <label style="font-size:11px;font-weight:700;display:block;margin-bottom:4px;color:#0d7a5f">الخطة العلاجية المقترحة *</label>
+        <textarea class="fc" id="inq-plan-${inq.id}" rows="3" placeholder="أدخل تفاصيل الخطة العلاجية وكيفية متابعتها..."></textarea>
+      </div>
+      <button class="btn b-g" onclick="submitInquiryReply(${inq.id})" style="font-size:12px">✅ إرسال الرد للإدارة</button>
+    </div>`).join('')}
+  </div>`;
+}
+
+// ── إرسال رد المعلم على الاستعلام ───────────────────────────────────
+function submitInquiryReply(id) {
+  const inq = (DB.remedialInquiries||[]).find(i => i.id === id);
+  if (!inq) return;
+  const reasons = document.getElementById(`inq-reasons-${id}`)?.value.trim();
+  const plan    = document.getElementById(`inq-plan-${id}`)?.value.trim();
+  if (!reasons) { toast('يرجى إدخال أسباب التدني', false); return; }
+  if (!plan)    { toast('يرجى إدخال الخطة العلاجية', false); return; }
+  inq.teacherReasons = reasons;
+  inq.teacherPlan    = plan;
+  inq.status         = 'replied';
+  inq.replyDate      = new Date().toLocaleDateString('ar-SA-u-nu-latn');
+  if (!DB.remedialInqNotifs) DB.remedialInqNotifs = [];
+  DB.remedialInqNotifs.push({ inquiryId: id, teacherName: inq.teacherName, date: inq.replyDate, read: false });
+  saveAllData();
+  toast('✅ تم إرسال ردك للإدارة بنجاح', true);
+  _renderTeacherInquiries();
+  renderRemedialInquiries();
 }
 
 function toggleRemedialForm() {
