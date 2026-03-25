@@ -397,6 +397,19 @@ body{background:#fff!important}
 .csign-modal{position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:99995;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
 .csign-box{background:var(--surf);border-radius:18px;max-width:460px;width:100%;padding:24px;box-shadow:0 20px 50px rgba(10,22,40,.3);animation:wlcIn .3s ease}
 .csign-canvas{width:100%;height:130px;border:2.5px dashed var(--brd);border-radius:10px;cursor:crosshair;background:#fff;display:block;touch-action:none}
+/* ATTENDANCE SYSTEM */
+.att-badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap}
+.att-present{background:#dcfce7;color:#166534}
+.att-absent{background:#fee2e2;color:#991b1b}
+.att-late{background:#fef9c3;color:#854d0e}
+.att-pending{background:#f1f5f9;color:#475569}
+.att-excused{background:#dbeafe;color:#1e40af}
+.att-early{background:#fce7f3;color:#9d174d}
+.att-import-zone{border:2.5px dashed var(--brd);border-radius:14px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surf2)}
+.att-import-zone:hover,.att-import-zone.drag{background:rgba(30,58,95,.07);border-color:var(--d1)}
+.att-excuse-modal{position:fixed;inset:0;background:rgba(10,22,40,.65);z-index:99992;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)}
+.att-excuse-box{background:var(--surf);border-radius:18px;max-width:450px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;animation:wlcIn .3s ease;direction:rtl;font-family:Cairo,sans-serif}
+.att-notif-bar{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;background:#fef9c3;border:1.5px solid #ca8a04;border-radius:12px;margin-bottom:14px}
 /* SIDEBAR ACCORDION */
 .sb-grp{margin-bottom:2px}
 .sb-grp-hd{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:7px 9px;border-radius:9px;cursor:pointer;color:var(--tx2);font-size:11px;font-weight:800;letter-spacing:.3px;user-select:none;-webkit-tap-highlight-color:transparent;transition:background .15s,color .15s}
@@ -604,6 +617,10 @@ body{background:#fff!important}
       </div>
       <div class="ni" id="n-schedule" onclick="gp('schedule')">
         <span class="ni-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>الجدول المدرسي
+      </div>
+      <div class="ni" id="n-attendance" onclick="gp('attendance')">
+        <span class="ni-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg></span>تقارير حضوري
+        <span id="nb-attendance" style="display:none;background:var(--r2);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:800;align-items:center;justify-content:center;margin-right:auto">!</span>
       </div>
     </div>
   </div>
@@ -1294,8 +1311,205 @@ body{background:#fff!important}
 
 </div>
 
-<!-- REMEDIAL PAGE (in sidebar) -->
+<!-- ATTENDANCE PAGE -->
+<div class="page" id="page-attendance">
+<div class="ph">
+  <div class="ph-l">
+    <h2><span class="phi" style="background:linear-gradient(135deg,#0f172a,#1e3a5f)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/></svg>
+    </span>تقارير حضوري</h2>
+    <p>استيراد وتصنيف سجلات الحضور من نظام حضوري — ربط بالأداء الوظيفي</p>
+  </div>
+  <div class="ph-r no-print">
+    <button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button>
+    <button class="btn bsm" style="background:linear-gradient(135deg,#1e3a5f,#0891b2);color:#fff" onclick="openAttImport()">استيراد من حضوري</button>
+    <button class="btn b-gh bsm" onclick="exportAttReport()">تصدير تقرير</button>
+  </div>
+</div>
 
+<!-- تبويبات الصفحة -->
+<div class="tabs no-print">
+  <button class="tbtn active" onclick="swtab(this,'att','att1')">سجلات الغياب</button>
+  <button class="tbtn" onclick="swtab(this,'att','att2')">أرشيف الاستيراد</button>
+</div>
+
+<!-- تبويب 1: سجلات الغياب -->
+<div class="tab-content active" id="att-att1">
+
+<!-- إحصاءات سريعة -->
+<div class="g4" id="ATT-STATS" style="margin-bottom:14px"></div>
+
+<!-- فلاتر البحث -->
+<div class="card no-print" style="margin-bottom:10px">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <input type="text" class="fc fc-sm" id="att-search" placeholder="بحث باسم المعلم..." style="flex:1;min-width:140px" oninput="renderAttTable()">
+    <select class="fc fc-sm" id="att-filter-type" style="width:auto" onchange="renderAttTable()">
+      <option value="">جميع الأنواع</option>
+      <option value="unexcused">غياب بدون عذر</option>
+      <option value="emergency">إجازة اضطرارية</option>
+      <option value="medical">إجازة طبية</option>
+      <option value="companion">إجازة مرافقة</option>
+      <option value="official">مهمة رسمية</option>
+      <option value="annual">إجازة سنوية</option>
+      <option value="bereavement">وفاة ذوي القربى</option>
+      <option value="secondment">أمر إيفاد</option>
+      <option value="late">تأخر</option>
+      <option value="early_leave">خروج مبكر</option>
+      <option value="pending">قيد المراجعة</option>
+    </select>
+    <select class="fc fc-sm" id="att-filter-teacher" style="width:auto" onchange="renderAttTable()">
+      <option value="">جميع المعلمين</option>
+    </select>
+    <select class="fc fc-sm" id="att-filter-perf" style="width:auto" onchange="renderAttTable()">
+      <option value="">الجميع</option>
+      <option value="1">يؤثر على الأداء</option>
+      <option value="0">لا يؤثر على الأداء</option>
+    </select>
+    <button class="btn bsm" style="background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff" onclick="exportAttReport()">تصدير تقرير</button>
+  </div>
+</div>
+
+<!-- جدول الحضور والغياب -->
+<div class="card">
+  <div class="ch">
+    <span class="ct"><span class="ct-dot"></span>سجلات الحضور والغياب</span>
+    <span class="badge bb2" id="ATT-CNT">0 سجل</span>
+  </div>
+  <div id="ATT-EMPTY" style="padding:36px;text-align:center;color:var(--tx3);display:none">
+    <div style="font-size:28px;margin-bottom:10px">📂</div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:6px">لا توجد سجلات حضور بعد</div>
+    <div style="font-size:11px;margin-bottom:14px">استورد ملف Excel من نظام حضوري للبدء</div>
+    <button class="btn" style="background:linear-gradient(135deg,#1e3a5f,#0891b2);color:#fff" onclick="openAttImport()">استيراد من حضوري</button>
+  </div>
+  <div class="tw" id="ATT-TABLE-WRAP" style="overflow-x:auto;display:none">
+    <table style="min-width:800px">
+      <thead>
+        <tr style="background:linear-gradient(135deg,#0f172a,#1e3a5f);color:#fff">
+          <th style="padding:8px;text-align:center">#</th>
+          <th style="padding:8px">المعلم</th>
+          <th style="padding:8px;text-align:center">التاريخ</th>
+          <th style="padding:8px;text-align:center">اليوم</th>
+          <th style="padding:8px;text-align:center">الوقت</th>
+          <th style="padding:8px">نوع الغياب</th>
+          <th style="padding:8px">العذر المقدم</th>
+          <th style="padding:8px;text-align:center">الأثر على الأداء</th>
+          <th style="padding:8px;text-align:center">إجراء</th>
+        </tr>
+      </thead>
+      <tbody id="ATT-TB"></tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /att1 -->
+
+<!-- تبويب 2: أرشيف الاستيراد -->
+<div class="tab-content" id="att-att2" style="display:none">
+<div class="card">
+  <div class="ch">
+    <span class="ct"><span class="ct-dot"></span>أرشيف عمليات الاستيراد</span>
+    <button class="btn bsm" style="background:linear-gradient(135deg,#1e3a5f,#0891b2);color:#fff" onclick="openAttImport()">استيراد جديد</button>
+  </div>
+  <div id="ATT-ARCHIVE-EMPTY" style="padding:36px;text-align:center;color:var(--tx3)">
+    <div style="font-size:28px;margin-bottom:10px">🗄</div>
+    <div style="font-size:12px;font-weight:700">لم يتم أي استيراد بعد</div>
+  </div>
+  <div id="ATT-ARCHIVE-WRAP" style="display:none;overflow-x:auto">
+    <table style="min-width:620px">
+      <thead>
+        <tr style="background:linear-gradient(135deg,#0f172a,#1e3a5f);color:#fff">
+          <th style="padding:8px;text-align:center">#</th>
+          <th style="padding:8px">اسم الملف</th>
+          <th style="padding:8px;text-align:center">تاريخ الاستيراد</th>
+          <th style="padding:8px;text-align:center">عدد السجلات</th>
+          <th style="padding:8px;text-align:center">المستورد بواسطة</th>
+          <th style="padding:8px;text-align:center">إجراء</th>
+        </tr>
+      </thead>
+      <tbody id="ATT-ARCHIVE-TB"></tbody>
+    </table>
+  </div>
+</div>
+</div><!-- /att2 -->
+
+</div>
+
+<!-- مودال الاستيراد من حضوري -->
+<div class="att-excuse-modal" id="ATT-IMPORT-MODAL" style="display:none">
+  <div class="att-excuse-box" style="max-width:520px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 style="font-size:14px;font-weight:900;color:var(--tx1);margin:0">استيراد سجل الحضور من نظام حضوري</h3>
+      <button onclick="document.getElementById('ATT-IMPORT-MODAL').style.display='none'"
+        style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx3)">×</button>
+    </div>
+    <!-- منطقة السحب والإفلات -->
+    <div class="att-import-zone" id="ATT-DROP-ZONE"
+      onclick="document.getElementById('att-file-inp').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="attHandleDrop(event)">
+      <div style="font-size:28px;margin-bottom:8px">📥</div>
+      <div style="font-size:13px;font-weight:800;color:var(--tx1);margin-bottom:4px">اسحب ملف Excel هنا أو اضغط للاختيار</div>
+      <div style="font-size:10px;color:var(--tx3)">يدعم: .xlsx — .xls — .csv (تصدير من نظام حضوري)</div>
+      <input type="file" id="att-file-inp" accept=".xlsx,.xls,.csv" style="display:none" onchange="attHandleFile(this.files[0])">
+    </div>
+    <!-- معاينة الأعمدة بعد الرفع -->
+    <div id="ATT-COL-MAP" style="display:none;margin-top:14px">
+      <div style="font-size:11px;font-weight:800;color:var(--tx2);margin-bottom:8px">تحديد الأعمدة (مطابقة تلقائية — يمكنك التعديل)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="ATT-COL-SELECTS"></div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button onclick="attDoImport()" style="flex:1;padding:11px;background:linear-gradient(135deg,#1e3a5f,#0891b2);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">تأكيد الاستيراد</button>
+        <button onclick="document.getElementById('ATT-IMPORT-MODAL').style.display='none'" style="padding:11px 16px;background:var(--surf2);color:var(--tx2);border:1.5px solid var(--brd);border-radius:10px;cursor:pointer;font-family:Cairo,sans-serif">إلغاء</button>
+      </div>
+    </div>
+    <div id="ATT-IMPORT-MSG" style="margin-top:10px;font-size:11px;font-weight:700;text-align:center"></div>
+  </div>
+</div>
+
+<!-- مودال تصنيف الغياب / تقديم العذر -->
+<div class="att-excuse-modal" id="ATT-EXCUSE-MODAL" style="display:none">
+  <div class="att-excuse-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h3 style="font-size:14px;font-weight:900;color:var(--tx1);margin:0" id="ATT-EXCUSE-TITLE">تصنيف الغياب / تقديم العذر</h3>
+      <button onclick="document.getElementById('ATT-EXCUSE-MODAL').style.display='none'"
+        style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx3)">×</button>
+    </div>
+    <!-- بيانات السجل -->
+    <div id="ATT-EXCUSE-INFO" style="background:var(--surf2);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:11px;border-right:3px solid #1e3a5f"></div>
+    <!-- نوع الغياب -->
+    <div class="fg" style="margin-bottom:10px">
+      <label class="fl">نوع الغياب / العذر *</label>
+      <select class="fc" id="att-excuse-type" onchange="attExcuseTypeChanged()">
+        <option value="">-- اختر النوع --</option>
+        <option value="unexcused">غياب بدون عذر</option>
+        <option value="emergency">إجازة اضطرارية</option>
+        <option value="medical">إجازة طبية</option>
+        <option value="companion">إجازة مرافقة</option>
+        <option value="official">مهمة رسمية</option>
+        <option value="annual">إجازة سنوية</option>
+        <option value="bereavement">وفاة ذوي القربى</option>
+        <option value="secondment">أمر إيفاد</option>
+        <option value="late">تأخر</option>
+        <option value="early_leave">خروج مبكر</option>
+        <option value="other">عذر آخر (يُكتب)</option>
+      </select>
+    </div>
+    <!-- نص العذر المكتوب (يظهر دائماً للكتابة الإضافية) -->
+    <div class="fg" style="margin-bottom:10px">
+      <label class="fl">تفاصيل العذر <span style="color:var(--tx3)">(اختياري)</span></label>
+      <textarea class="fc" id="att-excuse-text" rows="3" placeholder="أكتب تفاصيل إضافية هنا إن لزم..."></textarea>
+    </div>
+    <!-- تنبيه الأثر على الأداء -->
+    <div id="att-perf-warn" style="display:none;background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:8px 12px;font-size:11px;color:#991b1b;font-weight:700;margin-bottom:10px"></div>
+    <div id="att-perf-ok" style="display:none;background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:8px 12px;font-size:11px;color:#166534;font-weight:700;margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px">
+      <button onclick="attSaveExcuse()" style="flex:1;padding:12px;background:linear-gradient(135deg,#1e3a5f,#0891b2);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">حفظ التصنيف</button>
+      <button onclick="document.getElementById('ATT-EXCUSE-MODAL').style.display='none'" style="padding:12px 16px;background:var(--surf2);color:var(--tx2);border:1.5px solid var(--brd);border-radius:10px;cursor:pointer;font-family:Cairo,sans-serif;font-size:11px">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- REMEDIAL PAGE (in sidebar) -->
 <div class="page" id="page-remedial">
 <div class="ph">
   <div class="ph-l"><h2><span class="phi" style="background:linear-gradient(135deg,var(--r1),var(--r2))"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>الخطط العلاجية</h2><p>الطلاب المستخرجون من تحليل النتائج — مرتبطة بالعنصر العاشر من الأداء الوظيفي</p></div>
@@ -4012,7 +4226,13 @@ const DEFAULT_DB = {
   remedialArchive: [],
   teacherReports: [],
   remedialInquiries: [],
-  remedialInqNotifs: []
+  remedialInqNotifs: [],
+  attendance: [],          // سجلات الحضور والغياب المستوردة من حضوري
+  attendanceImports: [],   // أرشيف عمليات الاستيراد
+  attendanceSettings: {    // إعدادات الاحتساب
+    deductPerUnexcused: 2, // نقاط خصم لكل غياب بدون عذر
+    deductPerLate: 0.5     // نقاط خصم لكل تأخر
+  }
 };
 
 let DB = JSON.parse(JSON.stringify(DEFAULT_DB));
@@ -4182,16 +4402,16 @@ let loginMode = 'admin'; // 'admin' | 'teacher' | 'guidance' | 'activity' | 'lib
 let currentRole = null;  // 'admin' | 'teacher' | 'guidance' | 'activity' | 'library' | 'lab'
 let currentTeacherId = null;
 
-const TEACHER_ALLOWED_PAGES  = ['plan-term','plan-week','profdev','plc','perf'];
-const TEACHER_ALLOWED_NAV    = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf'];
-const GUIDANCE_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf','guidance','plan-imp'];
-const GUIDANCE_ALLOWED_NAV   = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-guidance','n-plan-imp'];
-const ACTIVITY_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf','activity','plan-imp'];
-const ACTIVITY_ALLOWED_NAV   = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-activity','n-plan-imp'];
-const LIBRARY_ALLOWED_PAGES  = ['plan-term','plan-week','profdev','plc','perf','library'];
-const LIBRARY_ALLOWED_NAV    = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-library'];
-const LAB_ALLOWED_PAGES      = ['plan-term','plan-week','profdev','plc','perf','lab'];
-const LAB_ALLOWED_NAV        = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-lab'];
+const TEACHER_ALLOWED_PAGES  = ['plan-term','plan-week','profdev','plc','perf','attendance'];
+const TEACHER_ALLOWED_NAV    = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-attendance'];
+const GUIDANCE_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf','guidance','plan-imp','attendance'];
+const GUIDANCE_ALLOWED_NAV   = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-guidance','n-plan-imp','n-attendance'];
+const ACTIVITY_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf','activity','plan-imp','attendance'];
+const ACTIVITY_ALLOWED_NAV   = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-activity','n-plan-imp','n-attendance'];
+const LIBRARY_ALLOWED_PAGES  = ['plan-term','plan-week','profdev','plc','perf','library','attendance'];
+const LIBRARY_ALLOWED_NAV    = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-library','n-attendance'];
+const LAB_ALLOWED_PAGES      = ['plan-term','plan-week','profdev','plc','perf','lab','attendance'];
+const LAB_ALLOWED_NAV        = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-lab','n-attendance'];
 const ROLE_ALLOWED_PAGES = { teacher: TEACHER_ALLOWED_PAGES, guidance: GUIDANCE_ALLOWED_PAGES, activity: ACTIVITY_ALLOWED_PAGES, library: LIBRARY_ALLOWED_PAGES, lab: LAB_ALLOWED_PAGES };
 const ROLE_ALLOWED_NAV   = { teacher: TEACHER_ALLOWED_NAV,   guidance: GUIDANCE_ALLOWED_NAV,   activity: ACTIVITY_ALLOWED_NAV,   library: LIBRARY_ALLOWED_NAV,   lab: LAB_ALLOWED_NAV };
 
@@ -4699,7 +4919,7 @@ const _NI_GROUP_MAP = {
   'n-plan-op':'grp-plans','n-plan-imp':'grp-plans','n-plan-term':'grp-plans','n-plan-week':'grp-plans',
   'n-wait':'grp-daily','n-super':'grp-daily',
   'n-grades':'grp-perf','n-remedial':'grp-perf','n-profdev':'grp-perf','n-plc':'grp-perf',
-  'n-visits':'grp-perf','n-perf':'grp-perf','n-schedule':'grp-perf',
+  'n-visits':'grp-perf','n-perf':'grp-perf','n-schedule':'grp-perf','n-attendance':'grp-perf',
   'n-guidance':'grp-activities','n-activity':'grp-activities','n-library':'grp-activities','n-lab':'grp-activities',
   'n-teachers':'grp-admin','n-charter':'grp-admin','n-messages':'grp-admin',
   'n-madrasati':'grp-admin','n-settings':'grp-admin'
@@ -4852,6 +5072,7 @@ function gp(id) {
   if (id === 'plc') renderPLCPage();
   if (id === 'visits') renderVisitsPage();
   if (id === 'settings') _refreshStampPreview();
+  if (id === 'attendance') renderAttendancePage();
 }
 
 // إخفاء/إظهار عناصر المدير في صفحات الموظفين المتخصصين
@@ -4957,6 +5178,31 @@ function renderNotifs() {
     if (pendInq.length) {
       notifs.push({icon:'📋', msg:`لديك ${pendInq.length === 1 ? 'استعلام' : pendInq.length + ' استعلامات'} من الإدارة بشأن التحصيل — انقر للرد`, color:'#f59e0b',
         action: `document.getElementById('NP').classList.remove('show');gp('remedial')`});
+    }
+  }
+  // إشعارات الغياب المعلق للمعلمين وغير المديرين (ما عدا إجازة اضطرارية)
+  if (currentRole !== 'admin' && currentTeacherId) {
+    const myName = (DB.teachers||[]).find(t=>t.id==currentTeacherId)?.name || '';
+    const myAbsences = (DB.attendance||[]).filter(r =>
+      (r.teacherId == currentTeacherId || r.teacherName === myName) &&
+      r.type !== 'emergency' && r.type === 'pending'
+    );
+    if (myAbsences.length) {
+      notifs.push({ icon:'⚠', msg:`لديك ${myAbsences.length} سجل غياب بانتظار تقديم العذر — انقر للاطلاع`, color:'var(--r2)',
+        action:`document.getElementById('NP').classList.remove('show');gp('attendance')` });
+      const nbAtt = document.getElementById('nb-attendance');
+      if (nbAtt) { nbAtt.style.display='flex'; nbAtt.textContent=myAbsences.length; }
+    } else {
+      const nbAtt = document.getElementById('nb-attendance');
+      if (nbAtt) nbAtt.style.display='none';
+    }
+  }
+  // للمدير: إشعار بسجلات الغياب قيد المراجعة
+  if (currentRole === 'admin') {
+    const pendingAbs = (DB.attendance||[]).filter(r => r.type === 'pending');
+    if (pendingAbs.length) {
+      notifs.push({ icon:'⚠', msg:`${pendingAbs.length} سجل غياب قيد المراجعة — بانتظار التصنيف`, color:'var(--a2)',
+        action:`document.getElementById('NP').classList.remove('show');gp('attendance')` });
     }
   }
   // إشعارات ردود المعلمين للمدير
@@ -6896,7 +7142,8 @@ function calcPerfPercent(t) {
     const earned = Math.min(ws.length, el.w);
     total += earned * (el.weight / el.w);
   });
-  return Math.round(total * 10) / 10;
+  const deduction = calcAttDeduction(t);
+  return Math.max(0, Math.round((total - deduction) * 10) / 10);
 }
 
 function calcPerfScore(t) {
@@ -12319,6 +12566,11 @@ function showTeacherProfile() {
   const perf = t.perf || 0;
   const perfLevel = perf>=90?'ممتاز':perf>=80?'جيد جداً':perf>=70?'جيد':perf>=60?'مقبول':'يحتاج تطوير';
   const perfColor = perf>=85?'var(--g2)':perf>=70?'var(--a2)':'var(--r2)';
+  // سجلات الحضور والغياب
+  const attRecs = (DB.attendance||[]).filter(r=>r.teacherName===t.name||String(r.teacherId)===String(t.id));
+  const attUnexcused = attRecs.filter(r=>r.type==='unexcused').length;
+  const attLate      = attRecs.filter(r=>r.type==='late'||r.type==='early_leave').length;
+  const attDeduct    = calcAttDeduction(t);
   // الزيارات الصفية
   const classVisits = (DB.classVisits||[]).filter(v=>v.teacherId==t.id);
   const avgVisitScore = classVisits.length ? Math.round(classVisits.reduce((s,v)=>s+(v.total||0),0)/classVisits.length) : 0;
@@ -12366,6 +12618,7 @@ function showTeacherProfile() {
       ${badge(classVisits.length,'الزيارات الصفية','var(--s2)','rgba(8,145,178,.08)')}
       ${badge(remedialPlans.length,'الخطط العلاجية','var(--v2)','rgba(124,58,237,.08)')}
       ${badge(failingInClass.length,'طلاب متدنون',failingInClass.length>0?'var(--r2)':'var(--g2)',failingInClass.length>0?'rgba(220,38,38,.08)':'rgba(22,163,74,.08)')}
+      ${badge(attRecs.length,'سجلات الحضوري',attRecs.length>0?'var(--a2)':'var(--g2)',attRecs.length>0?'rgba(217,119,6,.08)':'rgba(22,163,74,.08)')}
     </div>
     <div style="font-size:11px;font-weight:900;color:var(--tx2);margin-bottom:6px">تفاصيل الأنشطة</div>
     ${row('🕐','سجلات الانتظار (غياب)',absCnt+' مرة')}
@@ -12379,6 +12632,7 @@ function showTeacherProfile() {
     ${row('💡','مبادرات التحسين',initiatives.length+' مبادرة')}
     ${row('💊','الخطط العلاجية',remedialPlans.length+' خطة'+(remedialDone?' | '+remedialDone+' مكتملة':''))}
     ${failingInClass.length ? row('📉','طلاب متدنو التحصيل (صفوفه)',failingInClass.length+' طالب','<span style="color:var(--r2)">يحتاج متابعة</span>') : row('✅','طلاب متدنو التحصيل','لا يوجد')}
+    ${attRecs.length ? row('📅','سجلات حضوري',attRecs.length+' سجل'+(attUnexcused?' | غياب بدون عذر: '+attUnexcused:'')+(attLate?' | تأخر/خروج مبكر: '+attLate:'')+(attDeduct?' | خصم أداء: −'+attDeduct+' نقطة':'')) : row('✅','سجلات حضوري','لا توجد سجلات غياب')}
     ${row('⭐','الأداء الوظيفي',perf+'% — '+perfLevel,(t.perfStatus==='approved'?'✔ معتمد':''))}
   `;
 }
@@ -12893,6 +13147,502 @@ function exportGradesHTMLReport() {
       ${sections}`;
     _openDoc(_officialDoc('تقرير التحصيل الدراسي', body, {showStamp, subject:'نتائج التحصيل الدراسي'}));
   });
+}
+
+// ══════════════════════════════════════════
+// نظام تقارير حضوري — الاستيراد والتصنيف
+// ══════════════════════════════════════════
+
+const ABSENCE_TYPES = {
+  unexcused:   { label:'غياب بدون عذر',    affectsPerf:true,  deduct:'perUnexcused', badge:'att-absent' },
+  emergency:   { label:'إجازة اضطرارية',   affectsPerf:false, deduct:0,              badge:'att-excused' },
+  medical:     { label:'إجازة طبية',        affectsPerf:false, deduct:0,              badge:'att-excused' },
+  companion:   { label:'إجازة مرافقة',      affectsPerf:false, deduct:0,              badge:'att-excused' },
+  official:    { label:'مهمة رسمية',        affectsPerf:false, deduct:0,              badge:'att-present' },
+  annual:      { label:'إجازة سنوية',       affectsPerf:false, deduct:0,              badge:'att-excused' },
+  bereavement: { label:'وفاة ذوي القربى',  affectsPerf:false, deduct:0,              badge:'att-excused' },
+  secondment:  { label:'أمر إيفاد',         affectsPerf:false, deduct:0,              badge:'att-present' },
+  late:        { label:'تأخر',              affectsPerf:true,  deduct:'perLate',      badge:'att-late' },
+  early_leave: { label:'خروج مبكر',         affectsPerf:true,  deduct:'perLate',      badge:'att-early' },
+  pending:     { label:'قيد المراجعة',      affectsPerf:false, deduct:0,              badge:'att-pending' },
+  other:       { label:'عذر آخر',           affectsPerf:false, deduct:0,              badge:'att-excused' }
+};
+
+const ATT_DAY_AR = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+
+function _attTypeBadge(type) {
+  const t = ABSENCE_TYPES[type] || ABSENCE_TYPES['pending'];
+  return `<span class="att-badge ${t.badge}">${t.label}</span>`;
+}
+
+function _attAffectsPerf(type) {
+  return (ABSENCE_TYPES[type] || {}).affectsPerf === true;
+}
+
+function _attGetDeduction(rec) {
+  const cfg = DB.attendanceSettings || {};
+  const t = ABSENCE_TYPES[rec.type];
+  if (!t || !t.affectsPerf) return 0;
+  if (t.deduct === 'perUnexcused') return parseFloat(cfg.deductPerUnexcused || 2);
+  if (t.deduct === 'perLate')      return parseFloat(cfg.deductPerLate || 0.5);
+  return 0;
+}
+
+// حساب إجمالي خصم الحضور للمعلم (يُضاف على calcPerfPercent)
+function calcAttDeduction(t) {
+  if (!t) return 0;
+  const myRecs = (DB.attendance || []).filter(r =>
+    r.teacherName === t.name || String(r.teacherId) === String(t.id || t.idNum)
+  );
+  return myRecs.reduce((sum, r) => sum + _attGetDeduction(r), 0);
+}
+
+// ─── فتح مودال الاستيراد ───
+function openAttImport() {
+  document.getElementById('ATT-IMPORT-MODAL').style.display = 'flex';
+  document.getElementById('ATT-COL-MAP').style.display = 'none';
+  document.getElementById('ATT-IMPORT-MSG').textContent = '';
+  document.getElementById('att-file-inp').value = '';
+}
+
+function attHandleDrop(event) {
+  event.preventDefault();
+  document.getElementById('ATT-DROP-ZONE').classList.remove('drag');
+  const file = event.dataTransfer.files[0];
+  if (file) attHandleFile(file);
+}
+
+let _attRawRows = [];
+let _attFileName = '';
+
+function attHandleFile(file) {
+  if (!file) return;
+  _attFileName = file.name;
+  const msg = document.getElementById('ATT-IMPORT-MSG');
+  msg.style.color = 'var(--tx3)';
+  msg.textContent = 'جاري قراءة الملف...';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary', cellDates: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (!rows || rows.length < 2) {
+        msg.style.color = 'var(--r2)';
+        msg.textContent = 'الملف فارغ أو لا يحتوي على بيانات كافية';
+        return;
+      }
+      _attRawRows = rows;
+      _buildAttColMap(rows[0]);
+      msg.style.color = 'var(--g2)';
+      msg.textContent = `تم قراءة ${rows.length - 1} صف — راجع تحديد الأعمدة ثم اضغط تأكيد`;
+    } catch(err) {
+      msg.style.color = 'var(--r2)';
+      msg.textContent = 'خطأ في قراءة الملف: ' + err.message;
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// الأعمدة المطلوبة وأسماؤها الشائعة في تصدير حضوري
+const ATT_COL_DEFS = [
+  { id:'name',  label:'اسم المعلم',  keys:['اسم','name','الاسم','المعلم','موظف','employee'] },
+  { id:'date',  label:'التاريخ',     keys:['تاريخ','date','يوم','اليوم'] },
+  { id:'time',  label:'الوقت',       keys:['وقت','time','الوقت','ساعة'] },
+  { id:'type',  label:'نوع الحضور',  keys:['نوع','type','حالة','status','الغياب','حضور'] },
+  { id:'idnum', label:'رقم الهوية',  keys:['هوية','id','رقم','national','هوي'] },
+];
+
+function _buildAttColMap(header) {
+  const colMap = document.getElementById('ATT-COL-MAP');
+  const selWrap = document.getElementById('ATT-COL-SELECTS');
+  selWrap.innerHTML = '';
+  ATT_COL_DEFS.forEach(def => {
+    // حاول المطابقة التلقائية
+    let autoIdx = -1;
+    header.forEach((h, i) => {
+      if (autoIdx >= 0) return;
+      const hl = String(h).toLowerCase();
+      if (def.keys.some(k => hl.includes(k))) autoIdx = i;
+    });
+    const opts = header.map((h, i) => `<option value="${i}" ${autoIdx === i ? 'selected' : ''}>${h || '(عمود '+(i+1)+')'}</option>`).join('');
+    selWrap.innerHTML += `
+      <div>
+        <label style="font-size:10px;color:var(--tx2);display:block;margin-bottom:3px">${def.label}</label>
+        <select class="fc fc-sm" id="att-col-${def.id}" style="width:100%">
+          <option value="-1">-- غير موجود --</option>
+          ${opts}
+        </select>
+      </div>`;
+  });
+  colMap.style.display = 'block';
+}
+
+function _attGuessType(rawVal) {
+  const v = String(rawVal || '').trim();
+  if (!v || v === '—') return 'pending';
+  const vl = v.toLowerCase();
+  if (vl.includes('بدون عذر') || vl.includes('غياب') || vl.includes('absent')) return 'unexcused';
+  if (vl.includes('اضطرارية') || vl.includes('emergency')) return 'emergency';
+  if (vl.includes('طبية') || vl.includes('مرضية') || vl.includes('medical')) return 'medical';
+  if (vl.includes('مرافقة') || vl.includes('companion')) return 'companion';
+  if (vl.includes('رسمية') || vl.includes('مهمة') || vl.includes('official')) return 'official';
+  if (vl.includes('سنوية') || vl.includes('annual')) return 'annual';
+  if (vl.includes('وفاة') || vl.includes('bereavement')) return 'bereavement';
+  if (vl.includes('إيفاد') || vl.includes('ايفاد') || vl.includes('secondment')) return 'secondment';
+  if (vl.includes('تأخر') || vl.includes('تاخر') || vl.includes('late')) return 'late';
+  if (vl.includes('مبكر') || vl.includes('early')) return 'early_leave';
+  return 'pending';
+}
+
+function attDoImport() {
+  const msg = document.getElementById('ATT-IMPORT-MSG');
+  const getCol = id => parseInt(document.getElementById('att-col-' + id)?.value ?? '-1');
+  const colName  = getCol('name');
+  const colDate  = getCol('date');
+  const colTime  = getCol('time');
+  const colType  = getCol('type');
+  const colIdNum = getCol('idnum');
+
+  if (colName < 0 || colDate < 0) {
+    msg.style.color = 'var(--r2)';
+    msg.textContent = 'يجب تحديد عمود اسم المعلم والتاريخ على الأقل';
+    return;
+  }
+  if (!_attRawRows || _attRawRows.length < 2) {
+    msg.style.color = 'var(--r2)';
+    msg.textContent = 'لا توجد بيانات للاستيراد';
+    return;
+  }
+
+  const importId = Date.now();
+  let imported = 0;
+  const dataRows = _attRawRows.slice(1);
+
+  dataRows.forEach(row => {
+    const rawName = String(row[colName] || '').trim();
+    if (!rawName) return;
+    const rawDate = row[colDate];
+    let dateStr = '';
+    if (rawDate instanceof Date) {
+      dateStr = rawDate.toISOString().slice(0, 10);
+    } else if (rawDate) {
+      const d = new Date(rawDate);
+      dateStr = isNaN(d) ? String(rawDate).trim() : d.toISOString().slice(0, 10);
+    }
+    const dayName = dateStr ? ATT_DAY_AR[new Date(dateStr).getDay()] || '' : '';
+    const timeStr = colTime >= 0 ? String(row[colTime] || '').trim() : '';
+    const rawType = colType >= 0 ? String(row[colType] || '').trim() : '';
+    const idNum   = colIdNum >= 0 ? String(row[colIdNum] || '').trim() : '';
+    // ربط بالمعلم في قاعدة البيانات
+    const matchedTeacher = (DB.teachers || []).find(t =>
+      t.name === rawName ||
+      (idNum && (String(t.idNum || '') === idNum || String(t.id || '') === idNum))
+    );
+    const guessedType = _attGuessType(rawType);
+    DB.attendance.push({
+      id: importId + imported,
+      importId,
+      teacherName: rawName,
+      teacherId: matchedTeacher ? matchedTeacher.id : null,
+      date: dateStr,
+      day: dayName,
+      time: timeStr,
+      rawType,
+      type: guessedType,
+      excuseText: '',
+      affectsPerf: _attAffectsPerf(guessedType),
+      deduction: _attGetDeduction({ type: guessedType })
+    });
+    imported++;
+  });
+
+  // أرشفة عملية الاستيراد
+  DB.attendanceImports = DB.attendanceImports || [];
+  DB.attendanceImports.unshift({
+    id: importId,
+    date: new Date().toLocaleDateString('ar-SA-u-nu-latn'),
+    fileName: _attFileName,
+    count: imported,
+    importedBy: currentRole === 'admin' ? 'المدير' : (DB.teachers || []).find(t => t.id == currentTeacherId)?.name || currentRole
+  });
+
+  saveAllData();
+  document.getElementById('ATT-IMPORT-MODAL').style.display = 'none';
+  renderAttendancePage();
+  toast(`تم استيراد ${imported} سجل من "${_attFileName}" بنجاح ✓`, true);
+}
+
+// ─── رسم صفحة الحضور ───
+function renderAttendancePage() {
+  renderAttStats();
+  renderAttTable();
+  renderAttArchive();
+}
+
+function renderAttStats() {
+  const el = document.getElementById('ATT-STATS');
+  if (!el) return;
+  const recs = DB.attendance || [];
+  // نصفّي حسب المعلم الحالي إن لم يكن مديراً
+  const myRecs = currentRole === 'admin' ? recs : recs.filter(r =>
+    r.teacherId == currentTeacherId ||
+    (DB.teachers || []).find(t => t.id == currentTeacherId)?.name === r.teacherName
+  );
+  const total    = myRecs.length;
+  const unexcused = myRecs.filter(r => r.type === 'unexcused').length;
+  const pending   = myRecs.filter(r => r.type === 'pending').length;
+  const affPerf   = myRecs.filter(r => r.affectsPerf).length;
+  const mkCard = (val, lbl, bg, clr) =>
+    `<div class="sc" style="background:${bg};border:1.5px solid ${clr}33">
+       <div class="sv" style="color:${clr}">${val}</div>
+       <div class="sk">${lbl}</div>
+     </div>`;
+  el.innerHTML =
+    mkCard(total,     'إجمالي السجلات',     'rgba(30,58,95,.07)',    'var(--d1)') +
+    mkCard(unexcused, 'غياب بدون عذر',      'rgba(220,38,38,.07)',   'var(--r2)') +
+    mkCard(pending,   'قيد المراجعة',        'rgba(245,158,11,.07)',  'var(--a2)') +
+    mkCard(affPerf,   'يؤثر على الأداء',    'rgba(220,38,38,.07)',   'var(--r2)');
+}
+
+function renderAttTable() {
+  const tb      = document.getElementById('ATT-TB');
+  const empty   = document.getElementById('ATT-EMPTY');
+  const wrap    = document.getElementById('ATT-TABLE-WRAP');
+  const cntEl   = document.getElementById('ATT-CNT');
+  if (!tb) return;
+
+  const search   = (document.getElementById('att-search')?.value || '').trim().toLowerCase();
+  const fType    = document.getElementById('att-filter-type')?.value || '';
+  const fTeacher = document.getElementById('att-filter-teacher')?.value || '';
+  const fPerf    = document.getElementById('att-filter-perf')?.value;
+
+  // تحديث فلتر المعلم
+  const teacherSel = document.getElementById('att-filter-teacher');
+  if (teacherSel && teacherSel.options.length <= 1) {
+    const names = [...new Set((DB.attendance || []).map(r => r.teacherName))].sort();
+    names.forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; teacherSel.appendChild(o); });
+  }
+
+  let recs = DB.attendance || [];
+  // نصفّي حسب المعلم الحالي إن لم يكن مديراً
+  if (currentRole !== 'admin') {
+    const myName = (DB.teachers || []).find(t => t.id == currentTeacherId)?.name || '';
+    recs = recs.filter(r => r.teacherId == currentTeacherId || r.teacherName === myName);
+  }
+  if (search)   recs = recs.filter(r => r.teacherName.toLowerCase().includes(search) || (r.date || '').includes(search));
+  if (fType)    recs = recs.filter(r => r.type === fType);
+  if (fTeacher) recs = recs.filter(r => r.teacherName === fTeacher);
+  if (fPerf === '1') recs = recs.filter(r => r.affectsPerf);
+  if (fPerf === '0') recs = recs.filter(r => !r.affectsPerf);
+
+  if (!recs.length) {
+    empty.style.display = 'block';
+    wrap.style.display = 'none';
+    if (cntEl) cntEl.textContent = '0 سجل';
+    return;
+  }
+  empty.style.display = 'none';
+  wrap.style.display = 'block';
+  if (cntEl) cntEl.textContent = recs.length + ' سجل';
+
+  const isAdmin = currentRole === 'admin';
+  tb.innerHTML = recs.map((r, i) => {
+    const deduct = r.deduction || 0;
+    const perfCell = r.affectsPerf
+      ? `<span class="att-badge att-absent">−${deduct} نقطة</span>`
+      : `<span class="att-badge att-present">لا يؤثر</span>`;
+    const canEdit = isAdmin || r.teacherId == currentTeacherId;
+    const actionBtn = canEdit
+      ? `<button onclick="openAttClassify(${r.id})" style="padding:4px 10px;background:linear-gradient(135deg,#1e3a5f,#0891b2);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:10px;font-family:Cairo,sans-serif">تصنيف / عذر</button>`
+      : '—';
+    const deleteBtn = isAdmin
+      ? ` <button onclick="deleteAttRec(${r.id})" style="padding:4px 8px;background:var(--r2);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:10px;margin-right:4px;font-family:Cairo,sans-serif">حذف</button>`
+      : '';
+    return `<tr style="background:${i%2===0?'var(--surf1)':'var(--surf2)'}">
+      <td style="padding:7px;text-align:center;font-size:11px">${i+1}</td>
+      <td style="padding:7px;font-size:11px;font-weight:700">${r.teacherName}</td>
+      <td style="padding:7px;text-align:center;font-size:11px">${r.date || '—'}</td>
+      <td style="padding:7px;text-align:center;font-size:11px">${r.day || '—'}</td>
+      <td style="padding:7px;text-align:center;font-size:11px">${r.time || '—'}</td>
+      <td style="padding:7px">${_attTypeBadge(r.type)}</td>
+      <td style="padding:7px;font-size:11px;color:var(--tx2);max-width:160px">${r.excuseText || (r.rawType && r.rawType !== r.type ? '<span style="color:var(--tx3)">'+r.rawType+'</span>' : '—')}</td>
+      <td style="padding:7px;text-align:center">${perfCell}</td>
+      <td style="padding:7px;text-align:center;white-space:nowrap">${actionBtn}${deleteBtn}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAttArchive() {
+  const tb    = document.getElementById('ATT-ARCHIVE-TB');
+  const empty = document.getElementById('ATT-ARCHIVE-EMPTY');
+  const wrap  = document.getElementById('ATT-ARCHIVE-WRAP');
+  if (!tb) return;
+  const imports = DB.attendanceImports || [];
+  if (!imports.length) {
+    empty.style.display = 'block';
+    wrap.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  wrap.style.display = 'block';
+  tb.innerHTML = imports.map((imp, i) => `
+    <tr style="background:${i%2===0?'var(--surf1)':'var(--surf2)'}">
+      <td style="padding:7px;text-align:center;font-size:11px">${i+1}</td>
+      <td style="padding:7px;font-size:11px;font-weight:700">${imp.fileName || '—'}</td>
+      <td style="padding:7px;text-align:center;font-size:11px">${imp.date || '—'}</td>
+      <td style="padding:7px;text-align:center;font-size:11px"><span class="badge bb2">${imp.count} سجل</span></td>
+      <td style="padding:7px;text-align:center;font-size:11px">${imp.importedBy || '—'}</td>
+      <td style="padding:7px;text-align:center">
+        <button onclick="exportAttImportRecs(${imp.id})" style="padding:4px 10px;background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:10px;font-family:Cairo,sans-serif">تصدير</button>
+        ${currentRole==='admin'?`<button onclick="deleteAttImport(${imp.id})" style="padding:4px 8px;background:var(--r2);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:10px;margin-right:4px;font-family:Cairo,sans-serif">حذف</button>`:''}
+      </td>
+    </tr>`).join('');
+}
+
+// ─── تصنيف الغياب / تقديم العذر ───
+let _attClassifyId = null;
+
+function openAttClassify(recId) {
+  _attClassifyId = recId;
+  const rec = (DB.attendance || []).find(r => r.id === recId);
+  if (!rec) return;
+  const modal = document.getElementById('ATT-EXCUSE-MODAL');
+  const title = document.getElementById('ATT-EXCUSE-TITLE');
+  const info  = document.getElementById('ATT-EXCUSE-INFO');
+  const typeEl = document.getElementById('att-excuse-type');
+  const textEl = document.getElementById('att-excuse-text');
+
+  // بيانات السجل
+  const tName = rec.teacherName || '—';
+  info.innerHTML = `<strong>${tName}</strong> &nbsp;|&nbsp; ${rec.date || ''} ${rec.day ? '('+rec.day+')' : ''} ${rec.time ? '| '+rec.time : ''}`
+    + (rec.rawType ? `<br><span style="color:var(--tx3)">النوع الأصلي من الملف: ${rec.rawType}</span>` : '');
+
+  typeEl.value = rec.type || 'pending';
+  textEl.value = rec.excuseText || '';
+  title.textContent = currentRole === 'admin' ? 'تصنيف الغياب / تقديم العذر' : 'تقديم العذر';
+  attExcuseTypeChanged();
+  modal.style.display = 'flex';
+}
+
+function attExcuseTypeChanged() {
+  const type = document.getElementById('att-excuse-type')?.value || '';
+  const warnEl = document.getElementById('att-perf-warn');
+  const okEl   = document.getElementById('att-perf-ok');
+  const cfg    = DB.attendanceSettings || {};
+  if (!type || type === 'pending') {
+    warnEl.style.display = 'none';
+    okEl.style.display = 'none';
+    return;
+  }
+  const def = ABSENCE_TYPES[type];
+  if (def && def.affectsPerf) {
+    const pts = def.deduct === 'perUnexcused' ? (cfg.deductPerUnexcused || 2) : (cfg.deductPerLate || 0.5);
+    warnEl.style.display = 'block';
+    warnEl.textContent = `تحذير: هذا النوع يؤثر على الأداء الوظيفي بخصم ${pts} نقطة`;
+    okEl.style.display = 'none';
+  } else if (def) {
+    okEl.style.display = 'block';
+    okEl.textContent = 'هذا النوع لا يؤثر على الأداء الوظيفي';
+    warnEl.style.display = 'none';
+  }
+}
+
+function attSaveExcuse() {
+  if (!_attClassifyId) return;
+  const rec = (DB.attendance || []).find(r => r.id === _attClassifyId);
+  if (!rec) return;
+  const type  = document.getElementById('att-excuse-type')?.value || rec.type;
+  const text  = document.getElementById('att-excuse-text')?.value?.trim() || '';
+  if (!type || type === '') { toast('يرجى اختيار نوع الغياب', false); return; }
+  rec.type        = type;
+  rec.excuseText  = text;
+  rec.affectsPerf = _attAffectsPerf(type);
+  rec.deduction   = _attGetDeduction(rec);
+  saveAllData();
+  document.getElementById('ATT-EXCUSE-MODAL').style.display = 'none';
+  renderAttendancePage();
+  toast('تم حفظ تصنيف الغياب ✓', true);
+}
+
+function deleteAttRec(recId) {
+  if (!confirm('هل تريد حذف هذا السجل نهائياً؟')) return;
+  DB.attendance = (DB.attendance || []).filter(r => r.id !== recId);
+  saveAllData();
+  renderAttendancePage();
+  toast('تم حذف السجل ✓', true);
+}
+
+function deleteAttImport(importId) {
+  if (!confirm('هل تريد حذف هذا الاستيراد وجميع سجلاته المرتبطة به؟')) return;
+  DB.attendance      = (DB.attendance || []).filter(r => r.importId !== importId);
+  DB.attendanceImports = (DB.attendanceImports || []).filter(i => i.id !== importId);
+  saveAllData();
+  renderAttendancePage();
+  toast('تم حذف الاستيراد وسجلاته ✓', true);
+}
+
+// ─── تصدير تقرير الغياب ───
+function exportAttReport() {
+  const recs = currentRole === 'admin'
+    ? (DB.attendance || [])
+    : (DB.attendance || []).filter(r => r.teacherId == currentTeacherId || (DB.teachers||[]).find(t=>t.id==currentTeacherId)?.name===r.teacherName);
+
+  if (!recs.length) { toast('لا توجد سجلات للتصدير', false); return; }
+  const showStamp = !!DB.stamp;
+  const rows = recs.map((r, i) => `
+    <tr style="background:${i%2===0?'#fff':'#f8fafc'}">
+      <td style="padding:6px;text-align:center">${i+1}</td>
+      <td style="padding:6px;font-weight:700">${r.teacherName}</td>
+      <td style="padding:6px;text-align:center">${r.date||'—'}</td>
+      <td style="padding:6px;text-align:center">${r.day||'—'}</td>
+      <td style="padding:6px;text-align:center">${r.time||'—'}</td>
+      <td style="padding:6px">${(ABSENCE_TYPES[r.type]||ABSENCE_TYPES.pending).label}</td>
+      <td style="padding:6px">${r.excuseText||'—'}</td>
+      <td style="padding:6px;text-align:center">${r.affectsPerf?'نعم (−'+r.deduction+' نقطة)':'لا'}</td>
+    </tr>`).join('');
+  const body = `
+    <p style="font-size:11px;color:#555;margin-bottom:10px">تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')}</p>
+    <table>
+      <thead>
+        <tr style="background:#0f172a;color:#fff">
+          <th>#</th><th>المعلم</th><th>التاريخ</th><th>اليوم</th><th>الوقت</th>
+          <th>نوع الغياب</th><th>العذر</th><th>الأثر على الأداء</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  _openDoc(_officialDoc('تقرير الحضور والغياب — نظام حضوري', body, { showStamp, subject:'سجلات الحضور والغياب' }));
+}
+
+function exportAttImportRecs(importId) {
+  const recs = (DB.attendance || []).filter(r => r.importId === importId);
+  if (!recs.length) { toast('لا توجد سجلات لهذا الاستيراد', false); return; }
+  const imp = (DB.attendanceImports || []).find(i => i.id === importId);
+  const showStamp = !!DB.stamp;
+  const rows = recs.map((r, i) => `
+    <tr style="background:${i%2===0?'#fff':'#f8fafc'}">
+      <td style="padding:6px;text-align:center">${i+1}</td>
+      <td style="padding:6px;font-weight:700">${r.teacherName}</td>
+      <td style="padding:6px;text-align:center">${r.date||'—'}</td>
+      <td style="padding:6px;text-align:center">${r.day||'—'}</td>
+      <td style="padding:6px">${(ABSENCE_TYPES[r.type]||ABSENCE_TYPES.pending).label}</td>
+      <td style="padding:6px">${r.excuseText||'—'}</td>
+      <td style="padding:6px;text-align:center">${r.affectsPerf?'نعم':'لا'}</td>
+    </tr>`).join('');
+  const body = `
+    <p style="font-size:11px;color:#555;margin-bottom:10px">الملف: ${imp?.fileName||'—'} — تاريخ الاستيراد: ${imp?.date||'—'}</p>
+    <table>
+      <thead>
+        <tr style="background:#0f172a;color:#fff">
+          <th>#</th><th>المعلم</th><th>التاريخ</th><th>اليوم</th>
+          <th>نوع الغياب</th><th>العذر</th><th>يؤثر على الأداء</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  _openDoc(_officialDoc('سجلات الاستيراد — ' + (imp?.fileName||''), body, { showStamp, subject:'سجلات الحضور المستوردة' }));
 }
 
 // ══════════════════════════════════════════
