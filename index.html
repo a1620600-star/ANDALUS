@@ -4553,29 +4553,40 @@ function openCharterSign() {
       </div>
     </div>`;
   modal.style.display = 'flex';
-  setTimeout(() => _csignInitCanvas(), 50);
+  // نستخدم rAF مزدوج لضمان رسم المودال كاملاً قبل تهيئة Canvas
+  requestAnimationFrame(() => requestAnimationFrame(() => _csignInitCanvas()));
 }
 
 function _csignInitCanvas() {
   _csignCanvas = document.getElementById('_CSIGN_CV');
   if (!_csignCanvas) return;
   _csignCtx = _csignCanvas.getContext('2d');
-  // ضبط الأبعاد الحقيقية
-  _csignCanvas.width  = _csignCanvas.offsetWidth;
-  _csignCanvas.height = _csignCanvas.offsetHeight || 130;
+
+  // ── دعم شاشات Retina / High-DPI (iPhone 3x، Android 2x-3x) ──
+  const dpr  = window.devicePixelRatio || 1;
+  const cssW = _csignCanvas.offsetWidth  || _csignCanvas.parentElement?.clientWidth || 320;
+  const cssH = _csignCanvas.offsetHeight || 130;
+
+  _csignCanvas.width  = Math.floor(cssW * dpr);
+  _csignCanvas.height = Math.floor(cssH * dpr);
+  // تحجيم السياق حتى تبقى إحداثيات الرسم بوحدة CSS pixels
+  _csignCtx.scale(dpr, dpr);
+
   _csignCtx.strokeStyle = '#0d7a5f';
   _csignCtx.lineWidth   = 2.5;
   _csignCtx.lineCap     = 'round';
   _csignCtx.lineJoin    = 'round';
-  // Mouse events
+
+  // Mouse events (سطح المكتب)
   _csignCanvas.addEventListener('mousedown',  _csignStart);
   _csignCanvas.addEventListener('mousemove',  _csignMove);
   _csignCanvas.addEventListener('mouseup',    _csignEnd);
   _csignCanvas.addEventListener('mouseleave', _csignEnd);
-  // Touch events
-  _csignCanvas.addEventListener('touchstart', e => { e.preventDefault(); _csignStart(e.touches[0]); }, {passive:false});
-  _csignCanvas.addEventListener('touchmove',  e => { e.preventDefault(); _csignMove(e.touches[0]); }, {passive:false});
-  _csignCanvas.addEventListener('touchend',   _csignEnd);
+  // Touch events — {passive:false} ضروري لمنع تمرير الصفحة أثناء الرسم
+  _csignCanvas.addEventListener('touchstart',  e => { e.preventDefault(); _csignStart(e.touches[0]); }, {passive:false});
+  _csignCanvas.addEventListener('touchmove',   e => { e.preventDefault(); _csignMove(e.touches[0]); }, {passive:false});
+  _csignCanvas.addEventListener('touchend',    _csignEnd);
+  _csignCanvas.addEventListener('touchcancel', _csignEnd);
 }
 function _csignStart(e) {
   _csignDrawing = true;
@@ -4591,7 +4602,10 @@ function _csignMove(e) {
 }
 function _csignEnd() { _csignDrawing = false; }
 function _csignClear() {
-  if (_csignCtx && _csignCanvas) _csignCtx.clearRect(0,0,_csignCanvas.width,_csignCanvas.height);
+  if (!_csignCtx || !_csignCanvas) return;
+  // نمسح بوحدة CSS pixels (السياق مُقيَّس بالفعل بـ dpr)
+  const dpr = window.devicePixelRatio || 1;
+  _csignCtx.clearRect(0, 0, _csignCanvas.width / dpr, _csignCanvas.height / dpr);
 }
 
 function _csignSave(teacherId) {
