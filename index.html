@@ -5714,11 +5714,11 @@ function renderDash() {
       dmSuper.textContent = sg ? 'قيد التوزيع' : '—';
     }
   }
-  // نسبة الأداء الوظيفي
+  // نسبة الأداء الوظيفي (بناءً على الشواهد الفعلية فقط)
   const dmPerf = document.getElementById('dm-perf');
   if (dmPerf) {
     const total = DB.teachers.length;
-    const evaluated = DB.teachers.filter(t => (t.perf||0) > 0).length;
+    const evaluated = DB.teachers.filter(t => calcPerfPercent(t) > 0).length;
     dmPerf.textContent = total ? Math.round(evaluated/total*100) + '%' : '0%';
   }
   // نسبة توقيع ميثاق المهنة
@@ -6201,7 +6201,7 @@ function renderAJA() {
   if (!wrap) return;
 
   const total    = DB.teachers.length || 0;
-  const evaluated= DB.teachers.filter(t => (t.perf||0) > 0).length;
+  const evaluated= DB.teachers.filter(t => calcPerfPercent(t) > 0).length;
   const perfPct  = total ? Math.round(evaluated/total*100) : 0;
   const signed   = (DB.charter||[]).length;
   const charterPct = total ? Math.round(signed/total*100) : 0;
