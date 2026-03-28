@@ -5714,12 +5714,12 @@ function renderDash() {
       dmSuper.textContent = sg ? 'قيد التوزيع' : '—';
     }
   }
-  // نسبة الأداء الوظيفي (بناءً على الشواهد الفعلية فقط)
+  // نسبة الأداء الوظيفي — متوسط نسب الشواهد الفعلية لجميع المعلمين
   const dmPerf = document.getElementById('dm-perf');
   if (dmPerf) {
     const total = DB.teachers.length;
-    const evaluated = DB.teachers.filter(t => calcPerfPercent(t) > 0).length;
-    dmPerf.textContent = total ? Math.round(evaluated/total*100) + '%' : '0%';
+    const avg = total ? Math.round(DB.teachers.reduce((s,t)=>s+calcPerfPercent(t),0)/total*10)/10 : 0;
+    dmPerf.textContent = avg + '%';
   }
   // نسبة توقيع ميثاق المهنة
   const dmCh = document.getElementById('dm-ch');
@@ -6201,8 +6201,7 @@ function renderAJA() {
   if (!wrap) return;
 
   const total    = DB.teachers.length || 0;
-  const evaluated= DB.teachers.filter(t => calcPerfPercent(t) > 0).length;
-  const perfPct  = total ? Math.round(evaluated/total*100) : 0;
+  const perfPct  = total ? Math.round(DB.teachers.reduce((s,t)=>s+calcPerfPercent(t),0)/total*10)/10 : 0;
   const signed   = (DB.charter||[]).length;
   const charterPct = total ? Math.round(signed/total*100) : 0;
   const waitCnt  = DB.waiting.length || 0;
@@ -7855,11 +7854,33 @@ function renderPerf() {
       if (lbl) lbl.textContent = complete ? 'اكتملت شواهدك' : 'شاهد متبقٍ';
     }
   } else {
-    if (pmAll) { pmAll.style.fontSize = ''; pmAll.textContent = DB.teachers.length; const lbl = pmAll.nextElementSibling; if (lbl) lbl.textContent = 'إجمالي المعلمين'; }
-    const approved = DB.teachers.filter(t => t.perfStatus === 'approved').length;
-    const pending  = DB.teachers.filter(t => t.perfStatus === 'pending').length;
-    if (pmDone) { pmDone.textContent = approved; const lbl = pmDone.nextElementSibling; if (lbl) lbl.textContent = 'اكتملت شواهدهم'; }
-    if (pmPend) { pmPend.textContent = pending > 0 ? pending + ' طلب اعتماد' : (DB.teachers.length - approved); const lbl = pmPend.nextElementSibling; if (lbl) lbl.textContent = 'لم يكملوا'; }
+    const total2 = DB.teachers.length;
+    if (pmAll) { pmAll.style.fontSize = ''; pmAll.textContent = total2; const lbl = pmAll.nextElementSibling; if (lbl) lbl.textContent = 'إجمالي المعلمين'; }
+    const completed2 = DB.teachers.filter(t => isPerfComplete(t)).length;
+    const incomplete2 = total2 - completed2;
+    const avgPct = total2 ? Math.round(DB.teachers.reduce((s,t)=>s+calcPerfPercent(t),0)/total2*10)/10 : 0;
+    if (pmDone) { pmDone.textContent = completed2; const lbl = pmDone.nextElementSibling; if (lbl) lbl.textContent = 'اكتملت شواهدهم'; }
+    if (pmPend) { pmPend.textContent = incomplete2; const lbl = pmPend.nextElementSibling; if (lbl) lbl.textContent = incomplete2 > 0 ? '⚠️ لم يكملوا' : 'الكل مكتمل'; }
+    // شريط النسبة الكلية
+    let sumBar = document.getElementById('perf-avg-bar');
+    if (!sumBar) {
+      sumBar = document.createElement('div');
+      sumBar.id = 'perf-avg-bar';
+      sumBar.style.cssText = 'margin-bottom:12px;padding:12px 16px;background:linear-gradient(135deg,var(--d1),#0a1628);border-radius:12px;color:#fff;direction:rtl';
+      const perfPage = document.getElementById('page-perf');
+      const firstCard = perfPage ? perfPage.querySelector('.g4') : null;
+      if (firstCard && firstCard.nextElementSibling) firstCard.parentNode.insertBefore(sumBar, firstCard.nextElementSibling);
+    }
+    const barColor = avgPct>=80?'#16a34a':avgPct>=60?'#d97706':'#dc2626';
+    sumBar.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700">نسبة الإنجاز الكلية لملفات الأداء</span>
+        <span style="font-size:22px;font-weight:900;color:${barColor}">${avgPct}%</span>
+      </div>
+      <div style="background:rgba(255,255,255,.15);border-radius:6px;height:10px">
+        <div style="background:${barColor};width:${avgPct}%;height:10px;border-radius:6px;transition:.5s"></div>
+      </div>
+      ${incomplete2>0?`<div style="margin-top:8px;font-size:11px;color:#fbbf24">⚠️ ${incomplete2} معلم لم يكمل شواهده — راجع الجدول أدناه</div>`:'<div style="margin-top:8px;font-size:11px;color:#6ee7b7">✅ جميع المعلمين أكملوا شواهدهم</div>'}`;
   }
   if (pmStat) pmStat.textContent = DB.evalOpen ? 'مفتوح' : 'مغلق';
 
@@ -7888,15 +7909,17 @@ function renderPerf() {
     const sc = calcPerfScore(t);
     const ws = countPerfWitnesses(t);
     const si = statusInfo(t.perfStatus);
+    const incomplete = !isTeacher && !isPerfComplete(t);
     const ci = (!isTeacher && t.cooperationLevel) ? coopLevelInfo(t.cooperationLevel) : null;
     const coopBadge = !isTeacher
       ? (ci
           ? `<span title="${ci.label}${t.cooperationNote ? ': ' + t.cooperationNote : ''}" onclick="setCoopLevel(${t.id})" style="cursor:pointer;margin-right:6px;font-size:15px">${ci.icon}</span>`
           : `<span title="تعيين مستوى التعاون" onclick="setCoopLevel(${t.id})" style="cursor:pointer;opacity:.3;font-size:12px;margin-right:4px">⊕</span>`)
       : '';
-    return `<tr>
+    return `<tr style="${incomplete?'background:rgba(220,38,38,.04)':''}">
       <td style="text-align:center;padding:8px;border-bottom:1px solid var(--brd)">${i+1}</td>
-      <td style="padding:8px;border-bottom:1px solid var(--brd);font-weight:700">${coopBadge}${t.name}</td>
+      <td style="padding:8px;border-bottom:1px solid var(--brd);font-weight:700">${coopBadge}${t.name}${incomplete?` <span title="لم يكمل شواهده" style="display:inline-block;background:#dc2626;color:#fff;border-radius:10px;font-size:9px;padding:1px 6px;margin-right:4px;font-weight:700">⚠️ غير مكتمل</span>`:''}
+      </td>
       <td style="padding:8px;border-bottom:1px solid var(--brd)">${t.subject||'—'}</td>
       <td style="text-align:center;padding:8px;border-bottom:1px solid var(--brd)">
         <span style="font-size:12px;font-weight:700;color:var(--d2)">${ws}/${maxWs}</span>
