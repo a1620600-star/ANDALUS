@@ -13320,7 +13320,8 @@ function populateTeacherSelects() {
   const opts='<option value="">-- اختر المعلم --</option>'+DB.teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   ['MR','tk-tch','wp-teacher','sch-teacher','mt-single-teacher',
    'guidance-staff-sel-1','guidance-staff-sel-2',
-   'activity-staff-sel','library-staff-sel','lab-staff-sel','dash-teacher-sel'].forEach(id=>{
+   'activity-staff-sel','library-staff-sel','lab-staff-sel',
+   'gifted-staff-sel','health-staff-sel','dash-teacher-sel'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.innerHTML=opts;
   });
   // Restore saved staff selections
