@@ -3123,6 +3123,7 @@ body{background:#fff!important}
     <button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button>
     <button class="btn b-gh bsm" onclick="exportTeachersCSV()">📄 تصدير CSV</button>
     <button class="btn b-gh bsm" onclick="prtTchs()">🖨 تقرير</button>
+    <button class="btn bsm" style="background:linear-gradient(135deg,#92400e,#b45309);color:#fff" onclick="restoreTeachersBak()">⟳ استرجاع نسخة احتياطية</button>
     <button class="btn b-d bsm" onclick="showTF()">+ إضافة معلم</button>
   </div>
 </div>
@@ -4692,6 +4693,7 @@ function saveAllData(silent) {
     delete toSave._customStamp; // لا نحفظه داخل DB الرئيسي
     delete toSave._schoolLogo;  // محفوظ في ANDALUS_LOGO
     delete toSave._ownerPhoto;  // محفوظ في ANDALUS_OWNER_PHOTO
+    toSave._lastSaved = Date.now(); // طابع زمني لمقارنة الإصدارات
     localStorage.setItem('ANDALUS_V2', JSON.stringify(toSave));
     if (!silent) toast('تم الحفظ بنجاح ☁️', true);
     else _showAutoSaveIndicator();
@@ -9063,13 +9065,34 @@ function saveT() {
   }
   document.getElementById('TF').style.display = 'none';
   saveAllData();
+  // نسخة احتياطية مستقلة لقائمة المعلمين
+  try { localStorage.setItem('ANDALUS_TEACHERS_BAK', JSON.stringify({ts: Date.now(), teachers: DB.teachers})); } catch(e) {}
   renderTeachers();
+}
+
+function restoreTeachersBak() {
+  try {
+    var bak = JSON.parse(localStorage.getItem('ANDALUS_TEACHERS_BAK') || 'null');
+    if (!bak || !bak.teachers || !bak.teachers.length) {
+      toast('لا توجد نسخة احتياطية محفوظة', false); return;
+    }
+    var d = new Date(bak.ts);
+    var msg = 'النسخة الاحتياطية تحتوي على ' + bak.teachers.length + ' معلم\n'
+            + 'تاريخ الحفظ: ' + d.toLocaleString('ar-SA') + '\n\n'
+            + 'هل تريد استرجاعها؟ سيتم استبدال القائمة الحالية (' + DB.teachers.length + ' معلم)';
+    if (!confirm(msg)) return;
+    DB.teachers = bak.teachers;
+    saveAllData();
+    renderTeachers();
+    toast('✅ تم استرجاع ' + bak.teachers.length + ' معلم', true);
+  } catch(e) { toast('خطأ في الاسترجاع', false); }
 }
 
 function delTeacher(id) {
   if (!confirm('هل تريد حذف هذا المعلم نهائياً؟')) return;
   DB.teachers = DB.teachers.filter(t => t.id !== id);
   saveAllData();
+  try { localStorage.setItem('ANDALUS_TEACHERS_BAK', JSON.stringify({ts: Date.now(), teachers: DB.teachers})); } catch(e) {}
   renderTeachers();
   toast('تم الحذف', true);
 }
