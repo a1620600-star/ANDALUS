@@ -4730,7 +4730,25 @@ var _autoSaveTimer = null;
 var _lastAutoSaveHash = '';
 
 function _getDBHash() {
-  try { return JSON.stringify(DB.teachers||[]).length + '_' + (DB._lastSaved||0); } catch(e) { return ''; }
+  try {
+    // يشمل جميع السجلات الحيوية: معلمون + توجيه + نشاط + مختبر + موهوبون + صحي + مكتبة + انتظار + إشراف
+    return [
+      (DB.teachers||[]).length,
+      (DB.guidance||[]).length,
+      (DB.activity||[]).length,
+      (DB.lab||[]).length,
+      (DB.gifted||[]).length,
+      (DB.health||[]).length,
+      (DB.library||[]).length,
+      (DB.waiting||[]).length,
+      (DB.supervision||[]).length,
+      (DB.impPlans||[]).length,
+      (DB.impExec||[]).length,
+      (DB.profdev||[]).length,
+      (DB.classVisits||[]).length,
+      JSON.stringify(DB.staff||{})
+    ].join('|');
+  } catch(e) { return String(Date.now()); }
 }
 
 // يُستدعى بعد أي تعديل — يحفظ بعد 3 ثوانٍ من آخر تغيير
