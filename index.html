@@ -4489,6 +4489,7 @@ function _fbSave() {
     var toSave = JSON.parse(JSON.stringify(DB));
     var stamp = toSave._customStamp || null;
     delete toSave._customStamp;
+    toSave._lastSaved = Date.now(); // طابع زمني للمقارنة
     // تنظيف القيم undefined
     toSave = JSON.parse(JSON.stringify(toSave, function(k,v){ return v===undefined?null:v; }));
     window._fbFs.doc(_FB_DB_PATH).set(toSave).catch(function(e){ console.warn('Firestore save:', e); });
@@ -4506,8 +4507,20 @@ function _fbLoad(callback) {
   }
   window._fbFs.doc(_FB_DB_PATH).get().then(function(snap) {
     if (snap.exists) {
-      var data = snap.data();
-      DB = Object.assign({}, DEFAULT_DB, data);
+      var fbData = snap.data();
+      // مقارنة الطابع الزمني: استخدم الأحدث بين Firebase وlocalStorage
+      var localRaw = null;
+      try { localRaw = JSON.parse(localStorage.getItem('ANDALUS_V2') || 'null'); } catch(e) {}
+      var fbTime = fbData._lastSaved || 0;
+      var localTime = (localRaw && localRaw._lastSaved) || 0;
+      if (localRaw && localTime > fbTime) {
+        // localStorage أحدث — استخدمه وارفعه لـ Firebase
+        console.log('SYNC: localStorage newer, uploading to Firebase');
+        DB = Object.assign({}, DEFAULT_DB, localRaw);
+        _fbSave();
+      } else {
+        DB = Object.assign({}, DEFAULT_DB, fbData);
+      }
       // إعادة تحميل الشعار وصورة المالك من localStorage (لا تُحفظ في Firestore)
       try { var _l = localStorage.getItem('ANDALUS_LOGO'); if (_l) DB._schoolLogo = _l; } catch(e) {}
       try { var _op = localStorage.getItem('ANDALUS_OWNER_PHOTO'); if (_op) DB._ownerPhoto = _op; } catch(e) {}
