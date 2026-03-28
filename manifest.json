@@ -2,7 +2,7 @@
   "name": "ثانوية الأندلس بترقش",
   "short_name": "الأندلس",
   "description": "نظام الإدارة المدرسية — رؤية 2030",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0a1628",
