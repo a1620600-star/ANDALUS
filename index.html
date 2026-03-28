@@ -5086,9 +5086,78 @@ function initApp() {
     _renderCharterBanner();
     setTimeout(showRoleWelcome, 400);
     if (currentTeacherId) setTimeout(() => _renderAbsenceWarnBanner(currentTeacherId), 600);
+    // تحقق من التوقيع على الميثاق — يظهر overlay إذا لم يوقّع
+    setTimeout(_checkCharterRequired, 600);
   }
   // فتح إقرار الانتظار إذا جاء المستخدم من رابط واتساب
   _checkWaitAckParam();
+}
+
+// ── overlay إلزامي لتوقيع الميثاق ──
+function _checkCharterRequired() {
+  if (!currentTeacherId) return;
+  const isSigned = (DB.charter||[]).includes(currentTeacherId);
+  if (isSigned) return; // وقّع مسبقاً — لا شيء
+  _showCharterRequiredOverlay();
+}
+
+function _showCharterRequiredOverlay() {
+  if (document.getElementById('_CHARTER_OVERLAY')) return;
+  const t = (DB.teachers||[]).find(x => x.id === currentTeacherId);
+  const name = t ? t.name : '';
+  const ov = document.createElement('div');
+  ov.id = '_CHARTER_OVERLAY';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(10,22,40,.92);z-index:99998;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);font-family:Cairo,sans-serif;direction:rtl';
+  ov.innerHTML = `
+    <div style="background:var(--surf,#fff);border-radius:20px;max-width:480px;width:100%;padding:28px 24px;box-shadow:0 24px 60px rgba(0,0,0,.4);animation:wlcIn .4s ease;text-align:center">
+      <div style="font-size:44px;margin-bottom:10px">📜</div>
+      <h2 style="font-size:16px;font-weight:900;color:var(--d1,#1e3a5f);margin:0 0 6px">ميثاق أخلاقيات مهنة التعليم</h2>
+      <p style="font-size:12px;color:var(--tx2,#475569);margin:0 0 16px">أستاذ / <strong>${name}</strong></p>
+      <div style="background:var(--surf2,#f8fafc);border:1.5px solid var(--brd,#e2e8f0);border-radius:12px;padding:14px;font-size:10.5px;color:var(--tx2,#475569);line-height:2;text-align:right;max-height:160px;overflow-y:auto;margin-bottom:20px;border-right:4px solid #0d7a5f">
+        يُشترط التوقيع على ميثاق أخلاقيات مهنة التعليم قبل استخدام النظام.<br>
+        أُقرّ بالتزامي التام بميثاق أخلاقيات مهنة التعليم، وأتعهد بأداء رسالتي بأمانة وإخلاص،
+        وتقديم نموذج حسن للطلاب والمجتمع، والحرص على التطوير المستمر في أداء مهامي الوظيفية.
+      </div>
+      <div style="background:rgba(220,38,38,.06);border:1.5px solid var(--r2,#dc2626);border-radius:10px;padding:10px 14px;font-size:11px;color:var(--r2,#dc2626);font-weight:700;margin-bottom:20px">
+        ⚠️ لا يمكن الاستفادة من مميزات النظام قبل التوقيع على الميثاق
+      </div>
+      <button onclick="_charterOverlaySign()"
+        style="width:100%;padding:14px;background:linear-gradient(135deg,#0a1628,#1e3a5f);color:#fff;border:none;border-radius:12px;font-family:Cairo,sans-serif;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.3px">
+        ✍ التوقيع على ميثاق المهنة الآن
+      </button>
+    </div>`;
+  document.body.appendChild(ov);
+}
+
+function _charterOverlaySign() {
+  // أغلق الـ overlay مؤقتاً وافتح نافذة التوقيع
+  const ov = document.getElementById('_CHARTER_OVERLAY');
+  if (ov) ov.style.display = 'none';
+  openCharterSign();
+  // بعد التوقيع — راقب DB.charter لإزالة الـ overlay
+  var _watcher = setInterval(function() {
+    if ((DB.charter||[]).includes(currentTeacherId)) {
+      clearInterval(_watcher);
+      var overlay = document.getElementById('_CHARTER_OVERLAY');
+      if (overlay) {
+        overlay.style.transition = 'opacity .5s';
+        overlay.style.opacity = '0';
+        setTimeout(function() { if(overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 500);
+      }
+      toast('✅ تم حفظ توقيعك على ميثاق المهنة في السحابة', true);
+    }
+  }, 500);
+  // إذا أغلق المعلم نافذة التوقيع بدون توقيع — أعِد الـ overlay
+  var _sigModal = document.getElementById('_CSIGN_MODAL');
+  if (_sigModal) {
+    var _obs = new MutationObserver(function() {
+      if (_sigModal.style.display === 'none' && !(DB.charter||[]).includes(currentTeacherId)) {
+        var overlay = document.getElementById('_CHARTER_OVERLAY');
+        if (overlay) overlay.style.display = 'flex';
+      }
+    });
+    _obs.observe(_sigModal, {attributes:true, attributeFilter:['style']});
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════
