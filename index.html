@@ -3337,6 +3337,13 @@ body{background:#fff!important}
       <button class="btn b-gh bsm" onclick="document.getElementById('TASK-FORM').style.display='none'">إلغاء</button>
     </div>
   </div>
+  <div style="margin-top:8px">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+      <label class="fl" style="margin:0;font-size:10px;color:var(--tx3)">مهام التكليف (اختياري)</label>
+      <span style="font-size:9px;background:rgba(8,145,178,.1);color:var(--s2);padding:1px 7px;border-radius:10px">تظهر للمكلَّف وعند التصدير</span>
+    </div>
+    <textarea class="fc fc-sm" id="tk-duties" rows="2" placeholder="اكتب مهام ومسؤوليات هذا التكليف بالتفصيل..." style="width:100%;resize:vertical"></textarea>
+  </div>
 </div>
 <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
   <input type="text" class="fc fc-sm" id="task-search" placeholder="🔍 بحث بالاسم أو التكليف..." style="flex:1;min-width:180px" oninput="filterTasks(this.value)">
@@ -3355,7 +3362,7 @@ body{background:#fff!important}
 </div>
 <div class="card">
   <div class="ch"><span class="ct"><span class="ct-dot"></span>سجل التكليفات</span><span class="badge bb2" id="TASK-CNT">0</span></div>
-  <div class="tw"><table><thead><tr><th>#</th><th>المعلم المكلَّف</th><th>العمل المكلَّف به</th><th>تاريخ التكليف</th><th>المدة</th><th>الحالة</th><th>الاعتماد</th><th>إجراءات</th></tr></thead><tbody id="TASK-TB"><tr><td colspan="8" style="padding:16px;color:var(--tx3)">لا توجد تكليفات</td></tr></tbody></table></div>
+  <div class="tw"><table><thead><tr><th>#</th><th>المعلم المكلَّف</th><th>العمل المكلَّف به</th><th>تاريخ التكليف</th><th>المدة</th><th>الحالة</th><th>الاعتماد</th><th>التوقيع</th><th>إجراءات</th></tr></thead><tbody id="TASK-TB"><tr><td colspan="9" style="padding:16px;color:var(--tx3)">لا توجد تكليفات</td></tr></tbody></table></div>
 </div>
 
 <!-- أرشيف التكليفات المعتمدة -->
@@ -4894,7 +4901,7 @@ let currentRole = null;  // 'admin' | 'teacher' | 'guidance' | 'activity' | 'lib
 let currentTeacherId = null;
 
 const TEACHER_ALLOWED_PAGES  = ['plan-term','plan-week','profdev','plc','perf','charter','super','remedial'];
-const TEACHER_ALLOWED_NAV    = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-charter','n-super','n-remedial'];
+const TEACHER_ALLOWED_NAV    = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-charter','n-super','n-remedial','n-tasks'];
 const GUIDANCE_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf','guidance','plan-imp','attendance','charter','remedial'];
 const GUIDANCE_ALLOWED_NAV   = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-guidance','n-plan-imp','n-attendance','n-charter','n-remedial'];
 const ACTIVITY_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf','activity','plan-imp','attendance','charter'];
@@ -5084,6 +5091,7 @@ function initApp() {
   } else {
     gp(ROLE_START_PAGE[currentRole] || 'plan-term');
     _renderCharterBanner();
+    _renderTaskBanner();
     setTimeout(showRoleWelcome, 400);
     if (currentTeacherId) setTimeout(() => _renderAbsenceWarnBanner(currentTeacherId), 600);
     // تحقق من التوقيع على الميثاق — يظهر overlay إذا لم يوقّع
@@ -5241,7 +5249,20 @@ function _getWelcomeTasks(role, teacherId) {
     action:"closeWelcome();gp('profdev')"
   });
 
-  return tasks.slice(0,3); // أقصى 3 مهام لتجنب الإرهاق
+  // التكليفات المسندة للمعلم ولم يوقّع عليها بعد
+  const myTasks = (DB.tasks||[]).filter(tk => {
+    const tName = t.name;
+    return (tk.teacher === tName || tk.teacherId == t.id) && !tk.signed;
+  });
+  if (myTasks.length) tasks.push({
+    icon:'📋', color:'#c2410c', bg:'#fff7ed',
+    text: myTasks.length === 1
+      ? `لديك تكليف بانتظار توقيعك: ${myTasks[0].task}`
+      : `لديك ${myTasks.length} تكليفات تحتاج توقيعك`,
+    action:"closeWelcome();setTimeout(()=>gp('tasks'),200)"
+  });
+
+  return tasks.slice(0,4); // أقصى 4 مهام
 }
 
 function showRoleWelcome() {
@@ -5507,6 +5528,46 @@ function _renderCharterBanner() {
   // إدراج الشارة بعد رأس الصفحة مباشرة
   const ph = page.querySelector('.ph');
   if (ph && ph.nextSibling) page.insertBefore(banner, ph.nextSibling);
+  else page.appendChild(banner);
+}
+
+// ── بانر التكليفات المعلقة على صفحة المعلم ──────────────────────────
+function _renderTaskBanner() {
+  const existing = document.getElementById('_TASK_BANNER');
+  if (existing) existing.remove();
+  if (currentRole === 'admin' || !currentTeacherId) return;
+  const tObj = (DB.teachers||[]).find(x=>x.id==currentTeacherId);
+  if (!tObj) return;
+  const pageMap = { teacher:'plan-term', guidance:'guidance', activity:'activity', library:'library', lab:'lab' };
+  if (!pageMap[currentRole]) return;
+  const page = document.getElementById('page-' + pageMap[currentRole]);
+  if (!page) return;
+
+  const myTasks = (DB.tasks||[]).filter(tk => (tk.teacher===tObj.name||tk.teacherId==tObj.id) && !tk.signed);
+  if (!myTasks.length) return;
+
+  const banner = document.createElement('div');
+  banner.id = '_TASK_BANNER';
+  banner.className = 'charter-banner';
+  banner.style.cssText = 'background:#fff7ed;border:1.5px solid #c2410c;animation:wlcIn .3s ease';
+  banner.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:20px">📋</span>
+      <div>
+        <div style="font-size:11px;font-weight:900;color:#c2410c">
+          ${myTasks.length===1 ? `لديك تكليف بانتظار توقيعك` : `لديك ${myTasks.length} تكليفات تحتاج توقيعك`}
+        </div>
+        <div style="font-size:9px;color:#c2410c;opacity:.8">${myTasks.map(t=>t.task).join(' · ')}</div>
+      </div>
+    </div>
+    <button onclick="gp('tasks')"
+      style="font-size:11px;padding:7px 16px;background:linear-gradient(135deg,#c2410c,#ea580c);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Cairo,sans-serif;font-weight:800;white-space:nowrap">
+      ✍ توقيع الآن
+    </button>`;
+  const ph = page.querySelector('.ph');
+  const charterBanner = page.querySelector('#_CHARTER_BANNER');
+  const insertAfter = charterBanner || ph;
+  if (insertAfter && insertAfter.nextSibling) page.insertBefore(banner, insertAfter.nextSibling);
   else page.appendChild(banner);
 }
 
@@ -5949,6 +6010,15 @@ function renderNotifs() {
   }
   // إشعارات ردود المعلمين للمدير
   if (currentRole === 'admin') {
+    // إشعار المدير بالتكليفات التي وقّع عليها المعلمون
+    const signedTasks = (DB.tasks||[]).filter(t => t.signed && !t.adminNotifRead);
+    if (signedTasks.length === 1) {
+      notifs.push({icon:'✍', msg:`المعلم ${signedTasks[0].teacher} وقّع على التكليف: "${signedTasks[0].task}" — انقر للاطلاع`, color:'#c2410c',
+        action:`document.getElementById('NP').classList.remove('show');gp('tasks');(DB.tasks||[]).filter(t=>t.signed&&!t.adminNotifRead).forEach(t=>t.adminNotifRead=true);saveAllData(true)`});
+    } else if (signedTasks.length > 1) {
+      notifs.push({icon:'✍', msg:`${signedTasks.length} معلمون وقّعوا على تكليفاتهم — انقر للاطلاع`, color:'#c2410c',
+        action:`document.getElementById('NP').classList.remove('show');gp('tasks');(DB.tasks||[]).filter(t=>t.signed&&!t.adminNotifRead).forEach(t=>t.adminNotifRead=true);saveAllData(true)`});
+    }
     const newReplies = (DB.remedialInqNotifs||[]).filter(n => !n.read);
     if (newReplies.length === 1) {
       notifs.push({icon:'📨', msg:`المعلم ${newReplies[0].teacherName} رد على استعلام مستوى التحصيل — انقر للاطلاع`, color:'#0d7a5f',
@@ -10112,13 +10182,60 @@ function _updateTaskStats() {
   const ed = document.getElementById('task-cnt-done'); if (ed) ed.textContent = done;
 }
 
+function _taskSignCell(t) {
+  if (t.signed && t.sigImg) {
+    return `<div style="text-align:center">
+      <img src="${t.sigImg}" style="height:32px;border:1px solid #86efac;border-radius:5px;background:#fff;padding:2px;display:block;margin:0 auto 2px">
+      <span style="font-size:9px;color:var(--g1);font-weight:700">✓ ${t.sigDate||''}</span>
+    </div>`;
+  }
+  return '<span style="font-size:10px;color:var(--a2)">بانتظار التوقيع</span>';
+}
+
 function renderTasks() {
   _updateTaskStats();
   const tb = document.getElementById('TASK-TB');
   if (!tb) return;
   const cnt = document.getElementById('TASK-CNT');
+
+  // عرض المعلم: يرى فقط تكليفاته مع زر التوقيع
+  if (currentRole !== 'admin' && currentTeacherId) {
+    const tObj = (DB.teachers||[]).find(x=>x.id==currentTeacherId);
+    const myTasks = (DB.tasks||[]).filter(tk => tk.teacher===tObj?.name || tk.teacherId==currentTeacherId);
+    if (!myTasks.length) {
+      tb.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--tx3)">لا توجد تكليفات مسندة إليك</td></tr>';
+      if (cnt) cnt.textContent = '0';
+    } else {
+      if (cnt) cnt.textContent = myTasks.length;
+      const statColor = s => s==='منجز'?'var(--g1)':s==='جارٍ'?'var(--s2)':'var(--a2)';
+      tb.innerHTML = myTasks.map((t,i) => `
+        <tr style="${!t.signed?'background:rgba(234,88,12,.04)':''}">
+          <td style="text-align:center">${i+1}</td>
+          <td><b>${t.teacher||'—'}</b></td>
+          <td>
+            <div style="font-weight:700">${t.task||'—'}</div>
+            ${t.duties?`<button onclick="showTaskDuties(${t.id})" style="margin-top:4px;font-size:9px;background:rgba(8,145,178,.1);color:var(--s2);border:none;border-radius:6px;padding:2px 8px;cursor:pointer;font-family:Cairo,sans-serif">📋 مهام التكليف</button>`:''}
+          </td>
+          <td style="text-align:center">${t.start||'—'}</td>
+          <td style="text-align:center">${t.dur||'—'}</td>
+          <td style="text-align:center"><span class="badge" style="background:${statColor(t.status||'منتظر')}22;color:${statColor(t.status||'منتظر')}">${t.status||'منتظر'}</span></td>
+          <td style="text-align:center">${t.approved?'<span style="color:var(--g1);font-weight:700">✓ معتمد</span>':'<span style="color:var(--a2)">بانتظار</span>'}</td>
+          <td style="text-align:center">${_taskSignCell(t)}</td>
+          <td style="text-align:center">
+            ${!t.signed
+              ? `<button class="btn b-g bsm" onclick="openTaskSignModal(${t.id})" style="font-size:10px">✍ توقيع</button>`
+              : `<button class="btn b-gh bsm" onclick="exportSingleTask(${t.id})" style="font-size:10px">📄 تصدير</button>`}
+          </td>
+        </tr>`).join('');
+    }
+    // إخفاء أزرار المدير
+    const addBtn = document.querySelector('#page-tasks .ph-r');
+    if (addBtn) addBtn.style.display = 'none';
+    return;
+  }
+
   if (!DB.tasks.length) {
-    tb.innerHTML = '<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--tx3)">لا توجد تكليفات — اضغط إضافة تكليف</td></tr>';
+    tb.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--tx3)">لا توجد تكليفات — اضغط إضافة تكليف</td></tr>';
     if (cnt) cnt.textContent = '0';
   } else {
     if (cnt) cnt.textContent = DB.tasks.length;
@@ -10127,16 +10244,21 @@ function renderTasks() {
       <tr>
         <td style="text-align:center">${i+1}</td>
         <td><b>${t.teacher||'—'}</b></td>
-        <td>${t.task||'—'}</td>
+        <td>
+          <div>${t.task||'—'}</div>
+          ${t.duties?`<button onclick="showTaskDuties(${t.id})" style="margin-top:4px;font-size:9px;background:rgba(8,145,178,.1);color:var(--s2);border:none;border-radius:6px;padding:2px 8px;cursor:pointer;font-family:Cairo,sans-serif">📋 مهام التكليف</button>`:''}
+        </td>
         <td style="text-align:center">${t.start||'—'}</td>
         <td style="text-align:center">${t.dur||'—'}</td>
         <td style="text-align:center"><span class="badge" style="background:${statColor(t.status||'منتظر')}22;color:${statColor(t.status||'منتظر')}">${t.status||'منتظر'}</span></td>
         <td style="text-align:center">${t.approved?'<span style="color:var(--g1);font-weight:700">✓ معتمد</span>':'<span style="color:var(--a2)">بانتظار</span>'}</td>
+        <td style="text-align:center">${_taskSignCell(t)}</td>
         <td style="text-align:center">
           <div style="display:flex;gap:4px;justify-content:center">
-            <button class="ab ae" onclick="toggleTaskStatus(${t.id})">⟳</button>
-            <button class="ab ae" onclick="toggleTaskApprove(${t.id})">✓</button>
-            <button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delTask(${t.id})">🗑</button>
+            <button class="ab ae" onclick="toggleTaskStatus(${t.id})" title="تغيير الحالة">⟳</button>
+            <button class="ab ae" onclick="toggleTaskApprove(${t.id})" title="اعتماد">✓</button>
+            <button class="ab" style="background:rgba(8,145,178,.1);color:var(--s2)" onclick="exportSingleTask(${t.id})" title="تصدير التكليف">📄</button>
+            <button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delTask(${t.id})" title="حذف">🗑</button>
           </div>
         </td>
       </tr>`).join('');
@@ -10183,11 +10305,14 @@ function saveTask() {
   const task    = document.getElementById('tk-task')?.value.trim();
   const start   = document.getElementById('tk-start')?.value;
   const dur     = document.getElementById('tk-dur')?.value.trim();
+  const duties  = document.getElementById('tk-duties')?.value.trim();
   if (!teacher) { toast('اختر المعلم', false); return; }
   if (!task)    { toast('أدخل التكليف', false); return; }
-  DB.tasks.push({ id: Date.now(), teacher, task, start, dur, status:'منتظر', approved:false });
+  const tObj = (DB.teachers||[]).find(t=>t.name===teacher);
+  DB.tasks.push({ id: Date.now(), teacher, teacherId: tObj?.id||null, task, start, dur, duties: duties||'', status:'منتظر', approved:false, signed:false, sigImg:'', sigDate:'' });
   document.getElementById('tk-task').value = '';
   document.getElementById('tk-dur').value  = '';
+  document.getElementById('tk-duties').value = '';
   document.getElementById('TASK-FORM').style.display = 'none';
   saveAllData();
   renderTasks();
@@ -10229,25 +10354,231 @@ function filterTasks(q) {
   if (statF) data = data.filter(t => (t.status||'منتظر') === statF);
   const cnt = document.getElementById('TASK-CNT');
   if (cnt) cnt.textContent = data.length;
-  if (!data.length) { tb.innerHTML = '<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--tx3)">لا توجد نتائج</td></tr>'; return; }
+  if (!data.length) { tb.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--tx3)">لا توجد نتائج</td></tr>'; return; }
   const statColor = s => s==='منجز'?'var(--g1)':s==='جارٍ'?'var(--s2)':'var(--a2)';
   tb.innerHTML = data.map((t,i) => `
     <tr>
       <td style="text-align:center">${i+1}</td>
       <td><b>${t.teacher||'—'}</b></td>
-      <td>${t.task||'—'}</td>
+      <td>
+        <div>${t.task||'—'}</div>
+        ${t.duties?`<button onclick="showTaskDuties(${t.id})" style="margin-top:4px;font-size:9px;background:rgba(8,145,178,.1);color:var(--s2);border:none;border-radius:6px;padding:2px 8px;cursor:pointer;font-family:Cairo,sans-serif">📋 مهام التكليف</button>`:''}
+      </td>
       <td style="text-align:center">${t.start||'—'}</td>
       <td style="text-align:center">${t.dur||'—'}</td>
       <td style="text-align:center"><span class="badge" style="background:${statColor(t.status||'منتظر')}22;color:${statColor(t.status||'منتظر')}">${t.status||'منتظر'}</span></td>
       <td style="text-align:center">${t.approved?'<span style="color:var(--g1);font-weight:700">✓ معتمد</span>':'<span style="color:var(--a2)">بانتظار</span>'}</td>
+      <td style="text-align:center">${_taskSignCell(t)}</td>
       <td style="text-align:center">
         <div style="display:flex;gap:4px;justify-content:center">
-          <button class="ab ae" onclick="toggleTaskStatus(${t.id})">⟳</button>
-          <button class="ab ae" onclick="toggleTaskApprove(${t.id})">✓</button>
-          <button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delTask(${t.id})">🗑</button>
+          <button class="ab ae" onclick="toggleTaskStatus(${t.id})" title="تغيير الحالة">⟳</button>
+          <button class="ab ae" onclick="toggleTaskApprove(${t.id})" title="اعتماد">✓</button>
+          <button class="ab" style="background:rgba(8,145,178,.1);color:var(--s2)" onclick="exportSingleTask(${t.id})" title="تصدير">📄</button>
+          <button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delTask(${t.id})" title="حذف">🗑</button>
         </div>
       </td>
     </tr>`).join('');
+}
+
+// ── عرض مهام التكليف ──────────────────────────────────────────────
+function showTaskDuties(taskId) {
+  const tk = (DB.tasks||[]).find(x=>x.id===taskId);
+  if (!tk || !tk.duties) return;
+  let modal = document.getElementById('_TASK_DUTIES_MODAL');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = '_TASK_DUTIES_MODAL';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if(e.target===modal) modal.style.display='none'; });
+  }
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:16px;padding:20px;max-width:480px;width:100%;direction:rtl;font-family:Cairo,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div>
+          <div style="font-size:13px;font-weight:900;color:var(--tx1)">📋 مهام التكليف</div>
+          <div style="font-size:10px;color:var(--tx3);margin-top:2px">${tk.teacher||''} — ${tk.task||''}</div>
+        </div>
+        <button onclick="document.getElementById('_TASK_DUTIES_MODAL').style.display='none'"
+          style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--tx3)">×</button>
+      </div>
+      <div style="background:var(--surf2);border-radius:10px;padding:14px;font-size:12px;color:var(--tx1);line-height:2;border-right:3px solid var(--s2);white-space:pre-wrap">${tk.duties}</div>
+      ${tk.start?`<div style="margin-top:10px;font-size:10px;color:var(--tx3)">📅 تاريخ التكليف: ${tk.start} ${tk.dur?'| ⏱ المدة: '+tk.dur:''}</div>`:''}
+    </div>`;
+  modal.style.display = 'flex';
+}
+
+// ── توقيع المعلم على التكليف ──────────────────────────────────────
+let _taskSignCanvas = null, _taskSignCtx = null, _taskSignDrawing = false;
+
+function openTaskSignModal(taskId) {
+  const tk = (DB.tasks||[]).find(x=>x.id===taskId);
+  if (!tk) return;
+  if (!currentTeacherId) return;
+  const tObj = (DB.teachers||[]).find(x=>x.id==currentTeacherId);
+
+  let modal = document.getElementById('_TASK_SIGN_MODAL');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = '_TASK_SIGN_MODAL';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if(e.target===modal) modal.style.display='none'; });
+  }
+
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:16px;padding:20px;max-width:460px;width:100%;direction:rtl;font-family:Cairo,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h3 style="font-size:14px;font-weight:900;color:var(--tx1);margin:0">✍ التوقيع على التكليف</h3>
+        <button onclick="document.getElementById('_TASK_SIGN_MODAL').style.display='none'"
+          style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx3)">×</button>
+      </div>
+      <div style="background:var(--surf2);border:1.5px solid var(--brd);border-radius:10px;padding:12px;font-size:11px;color:var(--tx2);line-height:1.9;margin-bottom:14px;border-right:3px solid #c2410c">
+        <b style="color:var(--tx1)">${tObj?.name||tk.teacher}</b> — أقرّ باستلام هذا التكليف والالتزام بتنفيذه:
+        <div style="font-weight:700;color:#c2410c;margin-top:4px">"${tk.task||'—'}"</div>
+        ${tk.duties?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--brd)"><b>مهام التكليف:</b><br><span style="white-space:pre-wrap">${tk.duties}</span></div>`:''}
+        ${tk.start?`<div style="margin-top:6px;font-size:10px;color:var(--tx3)">📅 ${tk.start} ${tk.dur?'| ⏱ '+tk.dur:''}</div>`:''}
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:5px">ارسم توقيعك هنا — يُقبل باللمس والماوس</div>
+        <canvas id="_TSIGN_CV" style="width:100%;height:120px;border:1.5px solid var(--brd);border-radius:8px;background:#fff;touch-action:none;cursor:crosshair"></canvas>
+        <div style="display:flex;justify-content:flex-end;margin-top:4px">
+          <button onclick="_taskSignClear()" style="font-size:10px;color:var(--tx3);background:none;border:none;cursor:pointer;font-family:Cairo,sans-serif">🗑 مسح</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="_saveTaskSign(${taskId})"
+          style="flex:1;padding:12px;background:linear-gradient(135deg,#c2410c,#ea580c);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">
+          ✍ تأكيد التوقيع
+        </button>
+        <button onclick="document.getElementById('_TASK_SIGN_MODAL').style.display='none'"
+          style="padding:12px 16px;background:var(--surf2);color:var(--tx2);border:1.5px solid var(--brd);border-radius:10px;cursor:pointer;font-family:Cairo,sans-serif;font-size:11px">
+          لاحقاً
+        </button>
+      </div>
+    </div>`;
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    _taskSignCanvas = document.getElementById('_TSIGN_CV');
+    if (!_taskSignCanvas) return;
+    _taskSignCtx = _taskSignCanvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = _taskSignCanvas.offsetWidth || 400;
+    const cssH = _taskSignCanvas.offsetHeight || 120;
+    _taskSignCanvas.width  = Math.floor(cssW * dpr);
+    _taskSignCanvas.height = Math.floor(cssH * dpr);
+    _taskSignCtx.scale(dpr, dpr);
+    _taskSignCtx.strokeStyle = '#c2410c';
+    _taskSignCtx.lineWidth   = 2.5;
+    _taskSignCtx.lineCap     = 'round';
+    _taskSignCtx.lineJoin    = 'round';
+    const getPos = e => { const r = _taskSignCanvas.getBoundingClientRect(); return {x: e.clientX-r.left, y: e.clientY-r.top}; };
+    _taskSignCanvas.onmousedown  = e => { _taskSignDrawing=true; const p=getPos(e); _taskSignCtx.beginPath(); _taskSignCtx.moveTo(p.x,p.y); };
+    _taskSignCanvas.onmousemove  = e => { if(!_taskSignDrawing) return; const p=getPos(e); _taskSignCtx.lineTo(p.x,p.y); _taskSignCtx.stroke(); };
+    _taskSignCanvas.onmouseup    = () => _taskSignDrawing=false;
+    _taskSignCanvas.onmouseleave = () => _taskSignDrawing=false;
+    _taskSignCanvas.addEventListener('touchstart',  e => { e.preventDefault(); const t=e.touches[0]; _taskSignDrawing=true; const r=_taskSignCanvas.getBoundingClientRect(); _taskSignCtx.beginPath(); _taskSignCtx.moveTo(t.clientX-r.left,t.clientY-r.top); }, {passive:false});
+    _taskSignCanvas.addEventListener('touchmove',   e => { e.preventDefault(); if(!_taskSignDrawing) return; const t=e.touches[0]; const r=_taskSignCanvas.getBoundingClientRect(); _taskSignCtx.lineTo(t.clientX-r.left,t.clientY-r.top); _taskSignCtx.stroke(); }, {passive:false});
+    _taskSignCanvas.addEventListener('touchend',    () => _taskSignDrawing=false);
+  }));
+}
+
+function _taskSignClear() {
+  if (!_taskSignCtx || !_taskSignCanvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  _taskSignCtx.clearRect(0, 0, _taskSignCanvas.width/dpr, _taskSignCanvas.height/dpr);
+}
+
+function _saveTaskSign(taskId) {
+  if (!_taskSignCanvas) return;
+  const data = _taskSignCtx.getImageData(0,0,_taskSignCanvas.width,_taskSignCanvas.height).data;
+  const hasDrawing = data.some((v,i) => i%4===3 && v>0);
+  if (!hasDrawing) { toast('ارسم توقيعك أولاً على اللوحة', false); return; }
+
+  const tk = (DB.tasks||[]).find(x=>x.id===taskId);
+  if (!tk) return;
+  tk.signed  = true;
+  tk.sigImg  = _taskSignCanvas.toDataURL('image/png');
+  tk.sigDate = new Date().toLocaleDateString('ar-SA-u-nu-latn');
+
+  saveAllData();
+  document.getElementById('_TASK_SIGN_MODAL').style.display = 'none';
+  toast(`✅ تم توقيعك على التكليف: "${tk.task}"`, true);
+  renderTasks();
+  _renderTaskBanner();
+}
+
+// ── تصدير تكليف واحد بالختم ──────────────────────────────────────
+function exportSingleTask(taskId) {
+  const tk = (DB.tasks||[]).find(x=>x.id===taskId);
+  if (!tk) return;
+  _directorExport(showStamp => {
+    const director = DB.opPlan?.principal || document.getElementById('imp-director')?.value || 'عبدالعزيز عبده حديش';
+    const today = new Date().toLocaleDateString('ar-SA-u-nu-latn');
+    const statBg = tk.status==='منجز'?'#dcfce7':tk.status==='جارٍ'?'#dbeafe':'#fef9c3';
+    const statClr = tk.status==='منجز'?'#166534':tk.status==='جارٍ'?'#1e3a5f':'#854d0e';
+
+    const dutiesSection = tk.duties ? `
+      <div style="margin-top:18px;padding:14px 18px;background:#f0f9ff;border:1.5px solid #0891b233;border-radius:10px">
+        <div style="font-size:12px;font-weight:800;color:#0891b2;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+          <span style="width:20px;height:20px;background:#0891b2;color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px">📋</span>
+          مهام التكليف ومسؤولياته
+        </div>
+        <div style="font-size:11px;color:#0c4a6e;line-height:2;white-space:pre-wrap;padding-right:8px">${tk.duties}</div>
+      </div>` : '';
+
+    const sigSection = tk.signed && tk.sigImg ? `
+      <div style="margin-top:18px;padding:12px 18px;background:#f0fdf9;border:1.5px solid #16a34a33;border-radius:10px;display:flex;align-items:center;gap:14px">
+        <img src="${tk.sigImg}" style="height:50px;border:1px solid #86efac;border-radius:6px;background:#fff;padding:3px">
+        <div>
+          <div style="font-size:11px;font-weight:800;color:#166534">✓ وقّع المكلَّف على هذا التكليف إلكترونياً</div>
+          <div style="font-size:10px;color:#166534;opacity:.8;margin-top:2px">تاريخ التوقيع: ${tk.sigDate||'—'}</div>
+        </div>
+      </div>` : `
+      <div style="margin-top:18px;padding:10px 18px;background:#fef9c3;border:1.5px solid #ca8a0433;border-radius:10px">
+        <div style="font-size:11px;color:#854d0e">⏳ بانتظار توقيع المكلَّف إلكترونياً</div>
+      </div>`;
+
+    const body = `
+      <div style="background:linear-gradient(135deg,#c2410c08,#ea580c05);border:2px solid #c2410c33;border-radius:14px;padding:20px 24px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:700;color:#c2410c;margin-bottom:14px;letter-spacing:.5px;text-transform:uppercase">خطاب تكليف رسمي</div>
+        <table style="width:100%;border:none;border-collapse:collapse">
+          <tr>
+            <td style="border:none;padding:7px 0;width:30%;font-weight:700;color:var(--tx3,#666)">المكلَّف:</td>
+            <td style="border:none;padding:7px 0;font-weight:900;font-size:14px;color:#0d7a5f">${tk.teacher||'—'}</td>
+          </tr>
+          <tr>
+            <td style="border:none;padding:7px 0;font-weight:700;color:var(--tx3,#666)">التكليف:</td>
+            <td style="border:none;padding:7px 0;font-weight:800;font-size:13px">${tk.task||'—'}</td>
+          </tr>
+          <tr>
+            <td style="border:none;padding:7px 0;font-weight:700;color:var(--tx3,#666)">تاريخ التكليف:</td>
+            <td style="border:none;padding:7px 0">${tk.start||today}</td>
+          </tr>
+          ${tk.dur?`<tr><td style="border:none;padding:7px 0;font-weight:700;color:var(--tx3,#666)">مدة التكليف:</td><td style="border:none;padding:7px 0">${tk.dur}</td></tr>`:''}
+          <tr>
+            <td style="border:none;padding:7px 0;font-weight:700;color:var(--tx3,#666)">الحالة:</td>
+            <td style="border:none;padding:7px 0"><span style="background:${statBg};color:${statClr};padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700">${tk.status||'منتظر'}</span></td>
+          </tr>
+        </table>
+      </div>
+      ${dutiesSection}
+      ${sigSection}
+      <div style="margin-top:22px;display:flex;justify-content:space-between;padding-top:14px;border-top:1px dashed #0d7a5f33">
+        <div style="text-align:center">
+          <div style="height:40px;border-bottom:1px solid #444;width:130px;margin-bottom:6px"></div>
+          <div style="font-size:11px;font-weight:700;color:#0d7a5f">توقيع المكلَّف</div>
+          <div style="font-size:10px;color:#666">${tk.teacher||'—'}</div>
+        </div>
+        <div style="text-align:center">
+          <div style="height:40px;border-bottom:1px solid #444;width:130px;margin-bottom:6px"></div>
+          <div style="font-size:11px;font-weight:700;color:#0d7a5f">توقيع مدير المدرسة</div>
+          <div style="font-size:10px;color:#666">${director}</div>
+        </div>
+      </div>`;
+
+    _openDoc(_officialDoc(`خطاب تكليف — ${tk.teacher}`, body, {showStamp, subject:'خطاب تكليف رسمي'}));
+  });
 }
 
 function exportTasksPDF() {
