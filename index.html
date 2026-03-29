@@ -3335,13 +3335,19 @@ body{background:#fff!important}
 <div class="page" id="page-tasks">
 <div class="ph">
   <div class="ph-l"><h2><span class="phi" style="background:linear-gradient(135deg,var(--o1),var(--o2))"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>التكليفات المدرسية</h2></div>
-  <div class="ph-r no-print"><button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button><button class="btn b-o bsm" onclick="showTaskForm()">+ إضافة تكليف</button><button class="btn b-wa bsm" onclick="sendTasksWhatsApp()">📱 واتساب</button><button class="btn b-s bsm" onclick="sendTasksSMS()">💬 رسالة نصية</button><button class="btn b-gh bsm" onclick="prtTasks()">🖨 تقرير</button></div>
+  <div class="ph-r no-print"><button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button><button class="btn b-o bsm" onclick="showTaskForm()">+ إضافة تكليف</button><button class="btn b-wa bsm" onclick="sendTasksWhatsApp()">📱 واتساب</button><button class="btn b-gh bsm" onclick="prtTasks()">🖨 تقرير</button></div>
 </div>
 <div class="card" id="TASK-FORM" style="display:none;margin-bottom:12px">
   <div class="ch"><span class="ct"><span class="ct-dot"></span>نموذج إضافة تكليف</span></div>
   <div style="display:grid;grid-template-columns:1.5fr 1.5fr 1fr 1fr auto;gap:8px;align-items:end">
-    <div class="fg" style="margin:0"><label class="fl">اسم المعلم المكلَّف *</label>
-      <select class="fc fc-sm" id="tk-tch"><option value="">-- اختر المعلم --</option></select>
+    <div class="fg" style="margin:0">
+      <label class="fl">اسم المعلم المكلَّف *</label>
+      <select class="fc fc-sm" id="tk-tch" onchange="onTaskTeacherChange()"><option value="">-- اختر المعلم --</option></select>
+      <div id="tk-tch-info" style="display:none;margin-top:5px;padding:5px 10px;background:var(--surf2);border-radius:7px;border:1px solid var(--brd);display:flex;align-items:center;gap:8px">
+        <span style="font-size:10px;color:var(--tx3)">📱</span>
+        <span style="font-size:11px;font-weight:700;color:var(--tx1)" id="tk-tch-phone">—</span>
+        <button id="tk-wa-quick" onclick="sendTaskWaQuick()" style="margin-right:auto;font-size:10px;padding:3px 10px;background:#25d366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:Cairo,sans-serif;font-weight:700;display:none">📱 إرسال</button>
+      </div>
     </div>
     <div class="fg" style="margin:0"><label class="fl">العمل المكلَّف به *</label><input type="text" class="fc fc-sm" id="tk-task" placeholder="وصف التكليف..."></div>
     <div class="fg" style="margin:0"><label class="fl">تاريخ التكليف</label><input type="date" class="fc fc-sm" id="tk-start"></div>
@@ -10344,6 +10350,7 @@ function renderTasks() {
             <button class="ab ae" onclick="toggleTaskStatus(${t.id})" title="تغيير الحالة">⟳</button>
             <button class="ab ae" onclick="toggleTaskApprove(${t.id})" title="اعتماد">✓</button>
             <button class="ab" style="background:rgba(8,145,178,.1);color:var(--s2)" onclick="exportSingleTask(${t.id})" title="تصدير التكليف">📄</button>
+            <button class="ab" style="background:rgba(37,211,102,.1);color:#25d366" onclick="sendOneTaskWa(${t.id})" title="إرسال واتساب للمكلَّف">📱</button>
             <button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delTask(${t.id})" title="حذف">🗑</button>
           </div>
         </td>
@@ -10376,10 +10383,13 @@ function renderTasks() {
 function showTaskForm() {
   const f = document.getElementById('TASK-FORM');
   if (!f) return;
-  // ملء قائمة المعلمين
+  // ملء قائمة المعلمين بالـ id كـ value
   const sel = document.getElementById('tk-tch');
   if (sel) sel.innerHTML = '<option value="">-- اختر المعلم --</option>' +
-    DB.teachers.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+    DB.teachers.map(t => `<option value="${t.id}">${t.name}${t.subject?' — '+t.subject:''}</option>`).join('');
+  // إخفاء معلومات المكلَّف
+  const info = document.getElementById('tk-tch-info');
+  if (info) info.style.display = 'none';
   // تاريخ اليوم
   const st = document.getElementById('tk-start');
   if (st && !st.value) st.value = new Date().toISOString().slice(0,10);
@@ -10387,22 +10397,26 @@ function showTaskForm() {
 }
 
 function saveTask() {
-  const teacher = document.getElementById('tk-tch')?.value;
-  const task    = document.getElementById('tk-task')?.value.trim();
-  const start   = document.getElementById('tk-start')?.value;
-  const dur     = document.getElementById('tk-dur')?.value.trim();
-  const duties  = document.getElementById('tk-duties')?.value.trim();
-  if (!teacher) { toast('اختر المعلم', false); return; }
-  if (!task)    { toast('أدخل التكليف', false); return; }
-  const tObj = (DB.teachers||[]).find(t=>t.name===teacher);
-  DB.tasks.push({ id: Date.now(), teacher, teacherId: tObj?.id||null, task, start, dur, duties: duties||'', status:'منتظر', approved:false, signed:false, sigImg:'', sigDate:'' });
-  document.getElementById('tk-task').value = '';
-  document.getElementById('tk-dur').value  = '';
-  document.getElementById('tk-duties').value = '';
+  const teacherId = document.getElementById('tk-tch')?.value;
+  const task      = document.getElementById('tk-task')?.value.trim();
+  const start     = document.getElementById('tk-start')?.value;
+  const dur       = document.getElementById('tk-dur')?.value.trim();
+  const duties    = document.getElementById('tk-duties')?.value.trim();
+  if (!teacherId) { toast('اختر المعلم', false); return; }
+  if (!task)      { toast('أدخل التكليف', false); return; }
+  const tObj   = (DB.teachers||[]).find(t => String(t.id) === String(teacherId));
+  const teacher = tObj?.name || '';
+  const newTask = { id: Date.now(), teacher, teacherId: tObj?.id||null, task, start, dur, duties: duties||'', status:'منتظر', approved:false, signed:false, sigImg:'', sigDate:'' };
+  DB.tasks.push(newTask);
+  document.getElementById('tk-task').value    = '';
+  document.getElementById('tk-dur').value     = '';
+  document.getElementById('tk-duties').value  = '';
   document.getElementById('TASK-FORM').style.display = 'none';
   saveAllData();
   renderTasks();
   toast('تمت إضافة التكليف', true);
+  // شريط إرسال سريع إذا كان لديه جوال
+  if (tObj?.phone) _showTaskQuickWa(newTask.id, teacher);
 }
 
 function toggleTaskStatus(id) {
@@ -10460,6 +10474,7 @@ function filterTasks(q) {
           <button class="ab ae" onclick="toggleTaskStatus(${t.id})" title="تغيير الحالة">⟳</button>
           <button class="ab ae" onclick="toggleTaskApprove(${t.id})" title="اعتماد">✓</button>
           <button class="ab" style="background:rgba(8,145,178,.1);color:var(--s2)" onclick="exportSingleTask(${t.id})" title="تصدير">📄</button>
+          <button class="ab" style="background:rgba(37,211,102,.1);color:#25d366" onclick="sendOneTaskWa(${t.id})" title="إرسال واتساب للمكلَّف">📱</button>
           <button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delTask(${t.id})" title="حذف">🗑</button>
         </div>
       </td>
@@ -10698,13 +10713,125 @@ function exportTasksPDF() {
   });
 }
 
-function sendTasksWhatsApp() {
-  const t = DB.teachers.find(x=>x.phone);
-  if (!t) { toast('لا يوجد معلمون لديهم أرقام جوال', false); return; }
-  const pending = (DB.tasks||[]).filter(x=>!x.approved && x.teacher===t.name);
-  const msg = encodeURIComponent(`السلام عليكم أستاذ ${t.name}،\nلديك تكليفات بانتظار الإنجاز:\n${pending.map(x=>'• '+x.task).join('\n')}\nإدارة ثانوية الأندلس بترقش`);
-  window.open(`https://wa.me/966${t.phone.replace(/^0/,'')}?text=${msg}`, '_blank');
+// ── شريط إرسال سريع بعد حفظ التكليف ────────────────────────────────
+function _showTaskQuickWa(taskId, teacherName) {
+  let bar = document.getElementById('_TASK_QWA_BAR');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = '_TASK_QWA_BAR';
+    bar.style.cssText = 'position:fixed;bottom:80px;right:50%;transform:translateX(50%);z-index:9998;background:#0f172a;color:#fff;border-radius:12px;padding:10px 18px;display:flex;align-items:center;gap:12px;font-family:Cairo,sans-serif;font-size:12px;box-shadow:0 8px 32px rgba(0,0,0,.4);direction:rtl;transition:opacity .3s';
+    document.body.appendChild(bar);
+  }
+  clearTimeout(bar._timer);
+  bar.innerHTML = `
+    <span>تم حفظ التكليف لـ <b>${teacherName}</b></span>
+    <button onclick="sendOneTaskWa(${taskId});document.getElementById('_TASK_QWA_BAR').style.opacity='0'"
+      style="background:#25d366;color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-family:Cairo,sans-serif;font-size:11px;font-weight:800;white-space:nowrap">
+      📱 إرسال واتساب الآن
+    </button>
+    <button onclick="document.getElementById('_TASK_QWA_BAR').style.opacity='0'"
+      style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-family:Cairo,sans-serif;font-size:11px">✕</button>`;
+  bar.style.opacity = '1';
+  bar._timer = setTimeout(() => bar.style.opacity = '0', 6000);
+}
+
+// ── يُستدعى عند تغيير المكلَّف في النموذج ──────────────────────────
+function onTaskTeacherChange() {
+  const sel   = document.getElementById('tk-tch');
+  const info  = document.getElementById('tk-tch-info');
+  const phEl  = document.getElementById('tk-tch-phone');
+  const waBtn = document.getElementById('tk-wa-quick');
+  if (!sel || !info) return;
+  const tObj = (DB.teachers||[]).find(t => String(t.id) === sel.value);
+  if (!tObj) { info.style.display = 'none'; return; }
+  info.style.display = 'flex';
+  if (tObj.phone) {
+    phEl.textContent  = tObj.phone;
+    waBtn.style.display = 'inline-block';
+  } else {
+    phEl.textContent  = 'لا يوجد رقم جوال';
+    waBtn.style.display = 'none';
+  }
+}
+
+// ── إرسال واتساب للمكلَّف المختار في النموذج قبل الحفظ ──────────────
+function sendTaskWaQuick() {
+  const sel   = document.getElementById('tk-tch');
+  const taskT = document.getElementById('tk-task')?.value.trim();
+  const tObj  = (DB.teachers||[]).find(t => String(t.id) === sel?.value);
+  if (!tObj?.phone) { toast('لا يوجد رقم جوال لهذا المنسوب', false); return; }
+  if (!taskT)       { toast('أدخل التكليف أولاً', false); return; }
+  const duties = document.getElementById('tk-duties')?.value.trim();
+  const dur    = document.getElementById('tk-dur')?.value.trim();
+  let msgText  = `السلام عليكم ${tObj.name}،\n\nلديك تكليف من إدارة ثانوية الأندلس بترقش:\n\n📋 *${taskT}*`;
+  if (duties)  msgText += `\n\nمهام التكليف:\n${duties}`;
+  if (dur)     msgText += `\n\n⏱ المدة: ${dur}`;
+  msgText += '\n\nيُرجى التوقيع على التكليف من خلال النظام.';
+  window.open(`https://wa.me/966${tObj.phone.replace(/^0/,'')}?text=${encodeURIComponent(msgText)}`, '_blank');
   toast('تم فتح واتساب', true);
+}
+
+// ── إرسال واتساب لمكلَّف محدد من الجدول ─────────────────────────────
+function sendOneTaskWa(taskId) {
+  const tk   = (DB.tasks||[]).find(x => x.id === taskId);
+  if (!tk) return;
+  const tObj = (DB.teachers||[]).find(t => t.name === tk.teacher || String(t.id) === String(tk.teacherId));
+  if (!tObj?.phone) { toast(`لا يوجد رقم جوال للمنسوب ${tk.teacher}`, false); return; }
+  let msgText = `السلام عليكم ${tk.teacher}،\n\nتم تكليفك من إدارة ثانوية الأندلس بترقش:\n\n📋 *${tk.task}*`;
+  if (tk.duties) msgText += `\n\nمهام التكليف:\n${tk.duties}`;
+  if (tk.start)  msgText += `\n\n📅 تاريخ التكليف: ${tk.start}`;
+  if (tk.dur)    msgText += `\n⏱ المدة: ${tk.dur}`;
+  if (!tk.signed) msgText += '\n\nيُرجى التوقيع على التكليف من خلال النظام.';
+  window.open(`https://wa.me/966${tObj.phone.replace(/^0/,'')}?text=${encodeURIComponent(msgText)}`, '_blank');
+  toast(`تم فتح واتساب — ${tk.teacher}`, true);
+}
+
+function sendTasksWhatsApp() {
+  // عرض قائمة المكلَّفين لاختيار من ترسل إليه
+  const tasks = DB.tasks||[];
+  if (!tasks.length) { toast('لا توجد تكليفات', false); return; }
+  const teachersWithTasks = [...new Map(tasks.map(t=>[t.teacher, t])).values()];
+  const teachersWithPhone = teachersWithTasks.map(tk => {
+    const tObj = (DB.teachers||[]).find(t => t.name===tk.teacher || String(t.id)===String(tk.teacherId));
+    return { ...tk, phone: tObj?.phone||'' };
+  });
+  const withPhone    = teachersWithPhone.filter(t => t.phone);
+  const withoutPhone = teachersWithPhone.filter(t => !t.phone);
+  if (!withPhone.length) { toast('لا يوجد مكلَّفون لديهم أرقام جوال', false); return; }
+  // إذا كان مكلَّف واحد فقط أرسل مباشرة
+  if (withPhone.length === 1) { sendOneTaskWa(withPhone[0].id); return; }
+  // عرض modal اختيار
+  let modal = document.getElementById('_TASK_WA_MODAL');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = '_TASK_WA_MODAL';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if(e.target===modal) modal.style.display='none'; });
+  }
+  const rows = withPhone.map(tk => {
+    const myTasks = tasks.filter(x => x.teacher===tk.teacher||String(x.teacherId)===String(tk.teacherId));
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--brd)">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:800">${tk.teacher}</div>
+        <div style="font-size:10px;color:var(--tx3)">${myTasks.length} تكليف — ${tk.phone}</div>
+      </div>
+      <button onclick="sendOneTaskWa(${myTasks[0].id});document.getElementById('_TASK_WA_MODAL').style.display='none'"
+        style="padding:7px 16px;background:#25d366;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Cairo,sans-serif;font-size:11px;font-weight:700">
+        📱 إرسال
+      </button>
+    </div>`;
+  }).join('');
+  const noPhoneNote = withoutPhone.length ? `<div style="font-size:10px;color:var(--tx3);margin-top:8px">⚠️ ${withoutPhone.map(t=>t.teacher).join('، ')} — لا يوجد رقم جوال</div>` : '';
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:14px;padding:18px;max-width:400px;width:100%;direction:rtl;font-family:Cairo,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:900">📱 إرسال واتساب للمكلَّفين</div>
+        <button onclick="document.getElementById('_TASK_WA_MODAL').style.display='none'" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx3)">×</button>
+      </div>
+      ${rows}${noPhoneNote}
+    </div>`;
+  modal.style.display = 'flex';
 }
 
 function sendTasksSMS() {
