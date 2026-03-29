@@ -4893,10 +4893,10 @@ let loginMode = 'admin'; // 'admin' | 'teacher' | 'guidance' | 'activity' | 'lib
 let currentRole = null;  // 'admin' | 'teacher' | 'guidance' | 'activity' | 'library' | 'lab'
 let currentTeacherId = null;
 
-const TEACHER_ALLOWED_PAGES  = ['plan-term','plan-week','profdev','plc','perf','attendance','charter','super'];
-const TEACHER_ALLOWED_NAV    = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-attendance','n-charter','n-super'];
-const GUIDANCE_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf','guidance','plan-imp','attendance','charter'];
-const GUIDANCE_ALLOWED_NAV   = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-guidance','n-plan-imp','n-attendance','n-charter'];
+const TEACHER_ALLOWED_PAGES  = ['plan-term','plan-week','profdev','plc','perf','attendance','charter','super','remedial'];
+const TEACHER_ALLOWED_NAV    = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-attendance','n-charter','n-super','n-remedial'];
+const GUIDANCE_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf','guidance','plan-imp','attendance','charter','remedial'];
+const GUIDANCE_ALLOWED_NAV   = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-guidance','n-plan-imp','n-attendance','n-charter','n-remedial'];
 const ACTIVITY_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf','activity','plan-imp','attendance','charter'];
 const ACTIVITY_ALLOWED_NAV   = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-activity','n-plan-imp','n-attendance','n-charter'];
 const LIBRARY_ALLOWED_PAGES  = ['plan-term','plan-week','profdev','plc','perf','library','attendance','charter'];
@@ -5648,15 +5648,15 @@ function gp(id) {
   if (id === 'wait') renderWait();
   if (id === 'super') renderSuper();
   if (id === 'grades') renderGrades();
-  if (id === 'perf') { renderPerf(); if (currentRole !== 'admin' && currentTeacherId) setTimeout(() => showPerfCard(currentTeacherId), 80); }
+  if (id === 'perf') { renderPerf(); _applyPerfRoleUI(); if (currentRole !== 'admin' && currentTeacherId) setTimeout(() => showPerfCard(currentTeacherId), 80); }
   if (id === 'teachers') renderTeachers();
   if (id === 'tasks') renderTasks();
   if (id === 'charter') renderCharter();
   if (id === 'committees') renderComm();
   if (id === 'messages') renderMessages();
   if (id === 'plan-imp') { renderImp(); _applyImpRoleFilter(); }
-  if (id === 'plan-term') renderTermPlan();
-  if (id === 'plan-week') renderWeekPlan();
+  if (id === 'plan-term') { renderTermPlan(); _applyPageRoleUI('plan-term'); }
+  if (id === 'plan-week') { renderWeekPlan(); _applyPageRoleUI('plan-week'); }
   if (id === 'schedule') renderSchedule();
   if (id === 'guidance') { renderGuidancePage(); _applySpecialStaffPageUI('guidance'); }
   if (id === 'activity') { renderActivityPage(); _applySpecialStaffPageUI('activity'); }
@@ -5664,11 +5664,11 @@ function gp(id) {
   if (id === 'lab') { renderLabPage(); _applySpecialStaffPageUI('lab'); }
   if (id === 'gifted') { renderGiftedPage(); _applySpecialStaffPageUI('gifted'); }
   if (id === 'health') { renderHealthPage(); _applySpecialStaffPageUI('health'); }
-  if (id === 'remedial') renderRemedial();
+  if (id === 'remedial') { renderRemedial(); _applyRemedialRoleUI(); }
   if (id === 'plan-op') renderOpPlan();
   if (id === 'madrasati') renderMadrasati();
-  if (id === 'profdev') renderProfDev();
-  if (id === 'plc') renderPLCPage();
+  if (id === 'profdev') { renderProfDev(); _applyPageRoleUI('profdev'); }
+  if (id === 'plc') { renderPLCPage(); _applyPageRoleUI('plc'); }
   if (id === 'visits') renderVisitsPage();
   if (id === 'settings') { _refreshStampPreview(); _refreshWASettingsUI(); _applySchoolLogo(); }
   if (id === 'attendance') renderAttendancePage();
@@ -5704,6 +5704,128 @@ function _applyImpRoleFilter() {
     sel.dispatchEvent(new Event('change'));
     sel.disabled = true;
   });
+}
+
+// ── عزل واجهة صفحة الخطط العلاجية حسب الدور ──
+function _applyRemedialRoleUI() {
+  const isAdmin   = currentRole === 'admin';
+  const isTeacher = !isAdmin && !!currentTeacherId;
+  const page = document.getElementById('page-remedial');
+  if (!page) return;
+
+  // أزرار رأس الصفحة — للمدير فقط
+  const adminOnlyFns = ['notifyRemedialWA','exportRemedialInquiry','exportRemedialHTML','prtRemedial','archiveRemedialPlans'];
+  adminOnlyFns.forEach(fn => {
+    page.querySelectorAll(`[onclick*="${fn}"]`).forEach(el => el.style.display = isAdmin ? '' : 'none');
+  });
+
+  // تبويبات الأرشيف والاستعلامات — للمدير فقط
+  const tabs = page.querySelectorAll('.tbtn');
+  if (tabs[2]) tabs[2].style.display = isAdmin ? '' : 'none'; // 🗄 الأرشيف
+  if (tabs[3]) tabs[3].style.display = isAdmin ? '' : 'none'; // 📨 الاستعلامات
+
+  // بطاقة "دخول المعلم" — تُخفى عندما يكون المعلم مسجّلاً في حسابه
+  const teacherIdInput = document.getElementById('rem-teacher-id');
+  if (teacherIdInput) {
+    const loginCard = teacherIdInput.closest('.card');
+    if (loginCard) loginCard.style.display = isTeacher ? 'none' : '';
+  }
+
+  // زر "⚡ تحويل الكل" — للمدير فقط
+  page.querySelectorAll('[onclick*="autoTransferAllToRemedial"]').forEach(el => el.style.display = isAdmin ? '' : 'none');
+
+  // للمعلم: إظهار زر "إضافة خطة" مباشرة في تبويب الخطط
+  const addPlanBtn = page.querySelector('[onclick*="addRemedialPlan"],[onclick*="toggleRemedialForm"]');
+  if (addPlanBtn) addPlanBtn.style.display = '';
+}
+
+// ── عزل واجهة صفحة الأداء الوظيفي حسب الدور ──
+function _applyPerfRoleUI() {
+  const isAdmin = currentRole === 'admin';
+  const page = document.getElementById('page-perf');
+  if (!page) return;
+  // أزرار فتح/إغلاق التقييم وتصدير الكل — للمدير فقط
+  ['openEvalAndNotify','closeEval','exportPerfAll'].forEach(fn => {
+    page.querySelectorAll(`[onclick*="${fn}"]`).forEach(el => el.style.display = isAdmin ? '' : 'none');
+  });
+  // جدول بطاقات جميع المعلمين وأرشيف التقارير — للمدير فقط
+  const archCard = document.getElementById('PERF-ARCHIVE-CARD');
+  if (archCard) archCard.style.display = isAdmin ? '' : 'none';
+  const ptb = document.getElementById('PTB');
+  if (ptb && !isAdmin) ptb.closest('table')?.closest('.card')?.style.setProperty('display','none');
+  else if (ptb && isAdmin) ptb.closest('table')?.closest('.card')?.style.removeProperty('display');
+}
+
+// ── عزل واجهة الصفحات العامة حسب الدور وملء بيانات المعلم تلقائياً ──
+function _applyPageRoleUI(pageId) {
+  const isAdmin = currentRole === 'admin';
+  if (isAdmin) return; // المدير يرى كل شيء
+  const t = currentTeacherId ? (DB.teachers||[]).find(x=>x.id==currentTeacherId) : null;
+  if (!t) return;
+  const idNum = String(t.idNum||t.id||'');
+
+  // ── الخطة الفصلية ──
+  if (pageId === 'plan-term') {
+    const card = document.getElementById('TERM-LOGIN-CARD');
+    if (card) card.style.display = 'none'; // يدخل مباشرة
+    const idEl   = document.getElementById('term-id');
+    const nameEl = document.getElementById('term-teacher-name');
+    const subEl  = document.getElementById('term-subject');
+    if (idEl)   idEl.value   = idNum;
+    if (nameEl) nameEl.value = t.name;
+    if (subEl && t.subject && !subEl.value) subEl.value = t.subject;
+    // استدعاء autoFill لاكتشاف الخطط المحفوظة
+    if (typeof autoFillTermTeacher === 'function') autoFillTermTeacher();
+  }
+
+  // ── الخطة الأسبوعية ──
+  if (pageId === 'plan-week') {
+    const card = document.getElementById('WP-LOGIN-CARD');
+    if (card) card.style.display = 'none';
+    const idEl   = document.getElementById('wp-teacher-id');
+    const nameEl = document.getElementById('wp-teacher-name');
+    const subEl  = document.getElementById('wp-subject');
+    if (idEl)   idEl.value   = idNum;
+    if (nameEl) nameEl.value = t.name;
+    if (subEl && t.subject && !subEl.value) subEl.value = t.subject;
+    if (typeof autoFillWPTeacher === 'function') autoFillWPTeacher();
+    // إخفاء أزرار تنبيه المعلمين (للمدير فقط)
+    const page = document.getElementById('page-plan-week');
+    if (page) page.querySelectorAll('[onclick*="sendWeekPlanNotify"]').forEach(el => el.style.display = 'none');
+  }
+
+  // ── التطوير المهني ──
+  if (pageId === 'profdev') {
+    // إخفاء تبويبي "طلبات المعلمين" و"لجنة التميز"
+    const page = document.getElementById('page-profdev');
+    if (page) {
+      const tabs = page.querySelectorAll('.tbtn');
+      if (tabs[1]) tabs[1].style.display = 'none'; // طلبات المعلمين
+      if (tabs[2]) tabs[2].style.display = 'none'; // لجنة التميز
+    }
+    // ملء رقم الهوية تلقائياً
+    const idEl   = document.getElementById('pd-teacher-id');
+    const nameEl = document.getElementById('pd-teacher-name');
+    if (idEl)   idEl.value   = idNum;
+    if (nameEl) nameEl.value = t.name;
+    if (typeof autoFillPDTeacher === 'function') autoFillPDTeacher();
+  }
+
+  // ── مجتمع التعلم المهني ──
+  if (pageId === 'plc') {
+    const idEl   = document.getElementById('plc-teacher-id');
+    const nameEl = document.getElementById('plc-teacher-name');
+    if (idEl)   idEl.value   = idNum;
+    if (nameEl) nameEl.value = t.name;
+    if (typeof autoFillPLCTeacher === 'function') autoFillPLCTeacher();
+    // إخفاء أزرار إدارة PLC (إدارة فرق، الإعدادات) للمعلم
+    const page = document.getElementById('page-plc');
+    if (page) {
+      page.querySelectorAll('[onclick*="managePLCTeams"],[onclick*="exportPLCReport"]').forEach(el => el.style.display = 'none');
+    }
+  }
+
+  // ── الخطط العلاجية — تغطّيها _applyRemedialRoleUI() ──
 }
 
 // ── الشريط الجانبي ──
@@ -12558,10 +12680,29 @@ function closeEval() {
 // الخطط العلاجية
 // ══════════════════════════════════════════
 function renderRemedial() {
+  // تحديد دور المستخدم الحالي
+  const isAdmin   = currentRole === 'admin';
+  const isTeacher = !isAdmin && !!currentTeacherId;
+  const curT = isTeacher ? (DB.teachers||[]).find(x=>x.id==currentTeacherId) : null;
+
   // ── استخراج الطلاب الراسبين من DB.grades ──
   const studWrap = document.getElementById('REM-STUDENTS');
   if (studWrap) {
-    const failing = (DB.grades||[]).filter(g => Number(g.score||0) < 60);
+    let failing = (DB.grades||[]).filter(g => Number(g.score||0) < 60);
+
+    // للمعلم المسجّل: فلترة بمادته فقط
+    if (isTeacher && curT) {
+      const tSub = (curT.subject||'').trim();
+      failing = failing.filter(g => {
+        const gSub = (g.sub||'').trim();
+        return gSub === tSub || gSub.includes(tSub) || tSub.includes(gSub);
+      });
+      // فلترة بفصوله إن كان لديه فصول محددة
+      if (curT.classes && curT.classes.length > 0) {
+        failing = failing.filter(g => !g.cls || curT.classes.some(c => c===g.cls));
+      }
+    }
+
     if (failing.length) {
       studWrap.innerHTML = `<div class="tw" style="overflow-x:auto"><table>
         <thead><tr style="background:var(--r1);color:#fff">
@@ -12587,32 +12728,52 @@ function renderRemedial() {
         </tr>`).join('') +
         '</tbody></table></div>';
     } else {
-      studWrap.innerHTML = '<p style="padding:14px;text-align:center;color:var(--tx3)">لا يوجد طلاب تحت 60% حتى الآن</p>';
+      studWrap.innerHTML = isTeacher && curT
+        ? `<p style="padding:14px;text-align:center;color:var(--tx3)">لا يوجد طلاب محتاجون لخطط علاجية في مادة (${curT.subject||'—'}) حتى الآن</p>`
+        : '<p style="padding:14px;text-align:center;color:var(--tx3)">لا يوجد طلاب تحت 60% حتى الآن</p>';
     }
     const cnt = document.getElementById('REM-CNT');
     if (cnt) cnt.textContent = failing.length + ' طالب';
   }
+
   // ── عرض الخطط العلاجية ──
   const wrap=document.getElementById('REM-PLANS');
   if (!wrap) return;
-  if (!DB.remedial.length) { wrap.innerHTML='<p style="padding:18px;text-align:center;color:var(--tx3)">لا توجد خطط علاجية بعد — اضغط إضافة أو اختر طالباً من القائمة أعلاه</p>'; return; }
-  const sc=s=>s==='مكتملة'?'var(--g1)':s==='جارية'?'var(--s2)':'var(--a2)';
-  wrap.innerHTML=DB.remedial.map(r=>`
-    <div style="background:var(--surf2);border:1.5px solid var(--brd);border-radius:10px;padding:12px;margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div style="font-weight:800;font-size:12px">${r.student||'—'} — <span style="color:var(--d2)">${r.subject||'—'}</span></div>
-          <div style="font-size:10px;color:var(--tx3);margin-top:3px">المعلم: ${r.teacher||'—'} | الفصل: ${r.cls||'—'}</div>
+
+  // للمعلم: عرض خططه فقط
+  const fSub = document.getElementById('rem-filter-sub')?.value||'';
+  const fStat = document.getElementById('rem-filter-status')?.value||'';
+  let plans = DB.remedial||[];
+  if (isTeacher && curT) {
+    plans = plans.filter(r => r.teacher===curT.name ||
+      (r.subject && curT.subject && (r.subject===curT.subject || r.subject.includes(curT.subject) || curT.subject.includes(r.subject))));
+  }
+  if (fSub)  plans = plans.filter(r=>r.subject===fSub);
+  if (fStat) plans = plans.filter(r=>r.status===fStat);
+
+  if (!plans.length) { wrap.innerHTML='<p style="padding:18px;text-align:center;color:var(--tx3)">لا توجد خطط علاجية بعد — اضغط إضافة أو اختر طالباً من القائمة أعلاه</p>'; }
+  else {
+    const sc=s=>s==='مكتملة'?'var(--g1)':s==='جارية'?'var(--s2)':'var(--a2)';
+    wrap.innerHTML=plans.map(r=>`
+      <div style="background:var(--surf2);border:1.5px solid var(--brd);border-radius:10px;padding:12px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:800;font-size:12px">${r.student||'—'} — <span style="color:var(--d2)">${r.subject||'—'}</span></div>
+            <div style="font-size:10px;color:var(--tx3);margin-top:3px">المعلم: ${r.teacher||'—'} | الفصل: ${r.cls||'—'}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span class="badge" style="background:${sc(r.status||'جارية')}22;color:${sc(r.status||'جارية')}">${r.status||'جارية'}</span>
+            <button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delRemedial(${r.id})">🗑</button>
+          </div>
         </div>
-        <div style="display:flex;gap:6px;align-items:center">
-          <span class="badge" style="background:${sc(r.status||'جارية')}22;color:${sc(r.status||'جارية')}">${r.status||'جارية'}</span>
-          <button class="ab" style="background:rgba(220,38,38,.1);color:var(--r2)" onclick="delRemedial(${r.id})">🗑</button>
-        </div>
-      </div>
-      ${r.plan?`<div style="margin-top:8px;font-size:11px;color:var(--tx2)"><b>الخطة:</b> ${r.plan}</div>`:''}
-    </div>`).join('');
-  renderRemedialInquiries();
-  _renderTeacherInquiries();
+        ${r.plan?`<div style="margin-top:8px;font-size:11px;color:var(--tx2)"><b>الخطة:</b> ${r.plan}</div>`:''}
+      </div>`).join('');
+  }
+
+  if (isAdmin) {
+    renderRemedialInquiries();
+    _renderTeacherInquiries();
+  }
 }
 
 // ── دخول المعلم لإضافة خطة علاجية ──────────────────────────────────
@@ -13034,22 +13195,44 @@ function toggleRemedialForm() {
   if (!f) return;
   const isOpen = f.style.display !== 'none';
   if (!isOpen) {
-    // clear fields
-    ['rem-student','rem-plan','rem-teacher'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    ['rem-student','rem-plan'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     ['rem-subject','rem-cls'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     const st=document.getElementById('rem-status'); if(st) st.value='جارية';
+    // ملء اسم المعلم تلقائياً من الجلسة الحالية
+    const tEl=document.getElementById('rem-teacher');
+    if (tEl) {
+      if (currentTeacherId) {
+        const t=(DB.teachers||[]).find(x=>x.id==currentTeacherId);
+        tEl.value = t ? t.name : '';
+      } else { tEl.value=''; }
+    }
   }
   f.style.display = isOpen ? 'none' : 'block';
 }
 
 function addRemedialFromGrade(student, subject, cls) {
   const f = document.getElementById('REM-FORM');
-  if (!f) { return; }
+  if (!f) return;
+  // الانتقال لتبويب الخطط المُعدّة
+  const tab2 = document.querySelectorAll('#page-remedial .tbtn')[1];
+  if (tab2 && !tab2.classList.contains('active')) tab2.click();
   const sEl=document.getElementById('rem-student'); if(sEl) sEl.value=student;
   const subEl=document.getElementById('rem-subject'); if(subEl) subEl.value=subject;
   const clsEl=document.getElementById('rem-cls'); if(clsEl) clsEl.value=cls;
   const planEl=document.getElementById('rem-plan'); if(planEl) planEl.value='';
   const stEl=document.getElementById('rem-status'); if(stEl) stEl.value='جارية';
+  // ملء اسم المعلم تلقائياً
+  const tEl=document.getElementById('rem-teacher');
+  if (tEl) {
+    if (currentTeacherId) {
+      const t=(DB.teachers||[]).find(x=>x.id==currentTeacherId);
+      tEl.value = t ? t.name : '';
+    } else {
+      // محاولة إيجاد معلم المادة
+      const tBySubject = (DB.teachers||[]).find(x=>(x.subject||'')===(subject||''));
+      tEl.value = tBySubject ? tBySubject.name : '';
+    }
+  }
   f.style.display='block';
   f.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
@@ -13058,10 +13241,15 @@ function saveRemedialPlan() {
   const student = document.getElementById('rem-student')?.value.trim();
   if (!student) { toast('أدخل اسم الطالب', false); return; }
   const subject = document.getElementById('rem-subject')?.value||'';
-  const teacher = document.getElementById('rem-teacher')?.value||'';
+  let   teacher = document.getElementById('rem-teacher')?.value||'';
   const cls     = document.getElementById('rem-cls')?.value||'';
   const plan    = document.getElementById('rem-plan')?.value.trim()||'';
   const status  = document.getElementById('rem-status')?.value||'جارية';
+  // إذا كان المعلم مسجّلاً في حسابه → إضافة اسمه تلقائياً
+  if (!teacher && currentTeacherId) {
+    const t = (DB.teachers||[]).find(x=>x.id==currentTeacherId);
+    if (t) teacher = t.name;
+  }
   DB.remedial.push({id:Date.now(),student,subject,teacher,cls,plan,status});
   document.getElementById('REM-FORM').style.display='none';
   saveAllData(); renderRemedial();
