@@ -459,7 +459,26 @@ body{background:#fff!important}
     </div>
     <p class="lb-mode-hint" id="login-hint">أدخل رمز دخول المدير</p>
     <div class="lb-disp" id="DISP">&nbsp;</div>
-    <div class="lb-kp" id="KP"></div>
+    <div class="lb-kp" id="KP">
+      <button class="kpb ltr" onclick="kpAdd('A')">A</button>
+      <button class="kpb ltr" onclick="kpAdd('B')">B</button>
+      <button class="kpb ltr" onclick="kpAdd('C')">C</button>
+      <button class="kpb ltr" onclick="kpAdd('D')">D</button>
+      <button class="kpb ltr" onclick="kpAdd('Z')">Z</button>
+      <button class="kpb ltr" onclick="kpAdd('X')">X</button>
+      <button class="kpb" onclick="kpAdd('1')">1</button>
+      <button class="kpb" onclick="kpAdd('2')">2</button>
+      <button class="kpb" onclick="kpAdd('3')">3</button>
+      <button class="kpb" onclick="kpAdd('4')">4</button>
+      <button class="kpb" onclick="kpAdd('5')">5</button>
+      <button class="kpb" onclick="kpAdd('6')">6</button>
+      <button class="kpb" onclick="kpAdd('7')">7</button>
+      <button class="kpb" onclick="kpAdd('8')">8</button>
+      <button class="kpb" onclick="kpAdd('9')">9</button>
+      <button class="kpb" onclick="kpAdd('0')">0</button>
+      <button class="kpb del" onclick="kpBack()">&#8592;</button>
+      <button class="kpb ent" onclick="doLogin()">&#10003;</button>
+    </div>
     <button class="lb-clr" onclick="kpClear()">مسح الإدخال</button>
     <button class="lb-btn" onclick="doLogin()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
