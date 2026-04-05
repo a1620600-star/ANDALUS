@@ -3034,16 +3034,21 @@ body{background:#fff!important}
 <div class="tabs">
   <button class="tbtn active" onclick="swtab(this,'vs','vs1')">📝 زيارة جديدة</button>
   <button class="tbtn" onclick="swtab(this,'vs','vs2');renderVisitsList()">📋 سجل الزيارات</button>
+  <button class="tbtn" onclick="swtab(this,'vs','vs3');renderVisitsStats()">📊 إحصائيات وتحليل</button>
+  <button class="tbtn" onclick="swtab(this,'vs','vs4');renderScheduledVisits()">📅 جدولة مسبقة</button>
 </div>
 
 <div class="tc active" id="vs-vs1">
+
+<!-- بانر المعلمين غير المزارين -->
+<div id="vs-unvisited-banner" style="display:none;margin-bottom:12px"></div>
 
 <!-- بيانات الزيارة الأساسية -->
 <div class="card" style="margin-bottom:14px">
   <div class="ch"><span class="ct"><span class="ct-dot"></span>بيانات الزيارة الصفية</span></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px">
     <div class="fg"><label class="fl">اسم المعلم *</label>
-      <select class="fc fc-sm" id="vs-teacher">
+      <select class="fc fc-sm" id="vs-teacher" onchange="vsLoadPrevFollowup()">
         <option value="">-- اختر المعلم --</option>
       </select>
     </div>
@@ -3077,7 +3082,21 @@ body{background:#fff!important}
       <span id="vs-visitor-name" style="font-size:11px;color:var(--tx2);margin-top:4px;display:block;font-weight:700"></span>
     </div>
   </div>
-  <div style="margin-bottom:10px">
+  <!-- متابعة توصيات الزيارة السابقة -->
+  <div id="vs-prev-followup" style="display:none;background:#fef9c3;border:1.5px solid #fde047;border-radius:10px;padding:12px;margin-top:8px">
+    <div style="font-size:11px;font-weight:800;color:#854d0e;margin-bottom:6px">📌 توصيات الزيارة السابقة (للمتابعة)</div>
+    <div id="vs-prev-recs" style="font-size:11px;color:#713f12;margin-bottom:8px"></div>
+    <div class="fg" style="margin:0">
+      <label class="fl" style="font-size:10px">مدى تنفيذ التوصيات في هذه الزيارة</label>
+      <select class="fc fc-sm" id="vs-followup-status">
+        <option value="">-- اختر --</option>
+        <option value="نُفِّذت بالكامل">✅ نُفِّذت بالكامل</option>
+        <option value="نُفِّذت جزئياً">⚠ نُفِّذت جزئياً</option>
+        <option value="لم تُنفَّذ">❌ لم تُنفَّذ</option>
+      </select>
+    </div>
+  </div>
+  <div style="margin-bottom:10px;margin-top:10px">
     <button class="btn b-wa bsm" onclick="sendVisitNotification()">📱 إرسال إشعار للمعلم بموعد الزيارة</button>
   </div>
 </div>
@@ -3132,6 +3151,63 @@ body{background:#fff!important}
   <div id="VISITS-LIST"><p style="padding:14px;text-align:center;color:var(--tx3)">لا توجد زيارات مسجلة</p></div>
 </div>
 </div><!-- end vs2 -->
+
+<!-- ── تبويب الإحصائيات والتحليل ── -->
+<div class="tc" id="vs-vs3">
+  <div id="vs-stats-wrap"></div>
+</div><!-- end vs3 -->
+
+<!-- ── تبويب الجدولة المسبقة ── -->
+<div class="tc" id="vs-vs4">
+  <!-- نموذج الجدولة -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ch"><span class="ct"><span class="ct-dot" style="background:#7c3aed"></span>تخطيط زيارة مسبقة</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px">
+      <div class="fg"><label class="fl">المعلم *</label>
+        <select class="fc fc-sm" id="sv-teacher"><option value="">-- اختر --</option></select>
+      </div>
+      <div class="fg"><label class="fl">المادة *</label>
+        <select class="fc fc-sm" id="sv-subject">
+          <option value="">-- اختر --</option>
+          <option>رياضيات</option><option>فيزياء</option><option>كيمياء</option><option>أحياء</option>
+          <option>لغة عربية</option><option>لغة إنجليزية</option><option>تربية إسلامية</option><option>حاسب آلي</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">التاريخ المخطط *</label>
+        <input type="date" class="fc fc-sm" id="sv-date">
+      </div>
+      <div class="fg"><label class="fl">الحصة</label>
+        <select class="fc fc-sm" id="sv-period">
+          <option>الأولى</option><option>الثانية</option><option>الثالثة</option>
+          <option>الرابعة</option><option>الخامسة</option><option>السادسة</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">الصف</label>
+        <input type="text" class="fc fc-sm" id="sv-class" placeholder="مثال: B2">
+      </div>
+    </div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">ملاحظات</label>
+      <input type="text" class="fc fc-sm" id="sv-notes" placeholder="أي ملاحظات مسبقة...">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn b-g" onclick="saveScheduledVisit()">💾 حفظ الخطة</button>
+      <button class="btn bsm" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff" onclick="saveScheduledVisit(true)">📱 حفظ وإشعار المعلم</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch">
+      <span class="ct"><span class="ct-dot" style="background:#7c3aed"></span>الزيارات المخططة</span>
+      <div style="display:flex;gap:6px">
+        <select class="fc fc-sm" id="sv-filter" onchange="renderScheduledVisits()" style="width:auto;font-size:10px">
+          <option value="pending">المعلقة</option>
+          <option value="done">المنجزة</option>
+          <option value="all">الكل</option>
+        </select>
+      </div>
+    </div>
+    <div id="sv-list"></div>
+  </div>
+</div><!-- end vs4 -->
 
 </div><!-- end page-visits -->
 
@@ -15635,11 +15711,16 @@ const VISIT_ITEMS = [
 ];
 
 function renderVisitsPage() {
+  const excluded = typeof PV_EXCLUDED_ROLES !== 'undefined' ? PV_EXCLUDED_ROLES : [];
+  const teachingTeachers = (DB.teachers||[]).filter(t => t.subject && !excluded.includes(t.subject));
   const sel = document.getElementById('vs-teacher');
-  if (sel) sel.innerHTML = '<option value="">-- اختر المعلم --</option>' + (DB.teachers||[]).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  if (sel) sel.innerHTML = '<option value="">-- اختر المعلم --</option>' + teachingTeachers.map(t=>`<option value="${t.id}">${t.name} — ${t.subject}</option>`).join('');
+  const svSel = document.getElementById('sv-teacher');
+  if (svSel) svSel.innerHTML = '<option value="">-- اختر --</option>' + teachingTeachers.map(t=>`<option value="${t.id}">${t.name} — ${t.subject}</option>`).join('');
   const dt = document.getElementById('vs-date');
   if (dt && !dt.value) dt.value = new Date().toISOString().split('T')[0];
   renderVisitEvalItems();
+  vsRenderUnvisitedBanner();
 }
 
 function renderVisitEvalItems() {
@@ -15707,9 +15788,11 @@ function saveVisit() {
     improvements: (document.getElementById('vs-improvements')||{}).value||'',
     recommendations: (document.getElementById('vs-recommendations')||{}).value||'',
     appreciation: (document.getElementById('vs-appreciation')||{}).value||'',
+    followupStatus: (document.getElementById('vs-followup-status')||{}).value||'',
     ts: new Date().toISOString()
   });
   saveAllData(); toast('✅ تم حفظ الزيارة', true);
+  vsRenderUnvisitedBanner();
   renderVisitsList();
 }
 
@@ -15740,6 +15823,289 @@ function deleteVisit(id) {
 }
 
 function prtVisit() { window.print(); }
+
+// ══════════════════════════════════════════
+// متابعة توصيات الزيارة السابقة
+// ══════════════════════════════════════════
+function vsLoadPrevFollowup() {
+  const teacherId = (document.getElementById('vs-teacher')||{}).value;
+  const panel = document.getElementById('vs-prev-followup');
+  const recsEl = document.getElementById('vs-prev-recs');
+  if (!panel || !recsEl || !teacherId) { if(panel) panel.style.display='none'; return; }
+  const prev = (DB.classVisits||[]).filter(v=>String(v.teacherId)===String(teacherId))
+    .sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  if (prev && prev.recommendations && prev.recommendations.trim()) {
+    recsEl.innerHTML = `<b>الزيارة بتاريخ ${prev.date}:</b><br>${prev.recommendations.replace(/\n/g,'<br>')}`;
+    panel.style.display = '';
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════════════════
+// بانر المعلمين غير المزارين
+// ══════════════════════════════════════════
+function vsRenderUnvisitedBanner() {
+  const banner = document.getElementById('vs-unvisited-banner');
+  if (!banner) return;
+  const visited = new Set((DB.classVisits||[]).map(v=>String(v.teacherId)));
+  const unvisited = (DB.teachers||[]).filter(t =>
+    !PV_EXCLUDED_ROLES.includes(t.subject) && t.subject && !visited.has(String(t.id))
+  );
+  if (!unvisited.length) { banner.style.display='none'; return; }
+  banner.style.display = '';
+  banner.innerHTML = `
+    <div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:12px;padding:12px 16px">
+      <div style="font-size:12px;font-weight:800;color:#dc2626;margin-bottom:8px">
+        ⚠ ${unvisited.length} معلم لم تُجرَ له زيارة صفية بعد
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${unvisited.map(t=>`<span style="background:#fee2e2;border-radius:6px;padding:3px 10px;font-size:10px;font-weight:700;color:#991b1b">
+          ${t.name} <span style="font-weight:400;color:#b91c1c">(${t.subject})</span>
+        </span>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════
+// لوحة الإحصائيات والتحليل
+// ══════════════════════════════════════════
+function renderVisitsStats() {
+  const wrap = document.getElementById('vs-stats-wrap');
+  if (!wrap) return;
+  const visits = DB.classVisits || [];
+  if (!visits.length) {
+    wrap.innerHTML = '<div class="card" style="text-align:center;padding:30px;color:var(--tx3)"><div style="font-size:32px">📊</div><div style="font-size:12px;margin-top:8px">لا توجد زيارات بعد — ابدأ بتسجيل الزيارات أولاً</div></div>';
+    return;
+  }
+  const total = visits.length;
+  const avg = (visits.reduce((s,v)=>s+(v.total||0),0)/total).toFixed(1);
+  const best = visits.reduce((a,b)=>(b.total>a.total?b:a));
+  const worst = visits.reduce((a,b)=>(b.total<a.total?b:a));
+
+  // إحصاء بالمعلم
+  const byTeacher = {};
+  visits.forEach(v => {
+    if (!byTeacher[v.teacherName]) byTeacher[v.teacherName] = [];
+    byTeacher[v.teacherName].push(v);
+  });
+
+  // تحليل أضعف المعايير
+  const VISIT_ITEMS_LOCAL = typeof VISIT_ITEMS !== 'undefined' ? VISIT_ITEMS : [];
+  const criteriaSum = VISIT_ITEMS_LOCAL.map((_,i) => ({
+    label: VISIT_ITEMS_LOCAL[i]?.label || `المعيار ${i+1}`,
+    avg: visits.reduce((s,v)=>s+(v.scores?v.scores[i]||0:0),0) / total
+  }));
+  const weakest = [...criteriaSum].sort((a,b)=>a.avg-b.avg).slice(0,3);
+
+  const gradeColor = s => s>=90?'#0d7a5f':s>=80?'#1e3a5f':s>=70?'#b45309':'#dc2626';
+  const gradeLabel = s => s>=90?'ممتاز':s>=80?'جيد جداً':s>=70?'جيد':s>=60?'مقبول':'يحتاج تطوير';
+
+  wrap.innerHTML = `
+    <!-- إحصائيات عامة -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px">
+      <div style="background:var(--surf2);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:26px;font-weight:900;color:#0d7a5f">${total}</div>
+        <div style="font-size:10px;color:var(--tx3)">إجمالي الزيارات</div>
+      </div>
+      <div style="background:var(--surf2);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:26px;font-weight:900;color:${gradeColor(avg)}">${avg}</div>
+        <div style="font-size:10px;color:var(--tx3)">متوسط الدرجات</div>
+      </div>
+      <div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center;border:1px solid #bbf7d0">
+        <div style="font-size:16px;font-weight:900;color:#0d7a5f">${best.total}</div>
+        <div style="font-size:9px;color:#0d7a5f;font-weight:700">${best.teacherName}</div>
+        <div style="font-size:10px;color:var(--tx3)">أعلى درجة</div>
+      </div>
+      <div style="background:#fef2f2;border-radius:10px;padding:12px;text-align:center;border:1px solid #fca5a5">
+        <div style="font-size:16px;font-weight:900;color:#dc2626">${worst.total}</div>
+        <div style="font-size:9px;color:#dc2626;font-weight:700">${worst.teacherName}</div>
+        <div style="font-size:10px;color:var(--tx3)">أدنى درجة</div>
+      </div>
+      <div style="background:var(--surf2);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:26px;font-weight:900;color:#7c3aed">${Object.keys(byTeacher).length}</div>
+        <div style="font-size:10px;color:var(--tx3)">معلمون مزارون</div>
+      </div>
+    </div>
+
+    <!-- أداء كل معلم -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="ch"><span class="ct"><span class="ct-dot"></span>أداء المعلمين — درجات ومقارنة</span></div>
+      ${Object.entries(byTeacher).map(([name, tvs]) => {
+        const tavg = (tvs.reduce((s,v)=>s+(v.total||0),0)/tvs.length).toFixed(0);
+        const pct = Math.round(tavg);
+        const color = gradeColor(tavg);
+        const trend = tvs.length>1 ? (tvs[tvs.length-1].total - tvs[0].total > 0 ? '📈' : tvs[tvs.length-1].total - tvs[0].total < 0 ? '📉' : '➡') : '';
+        const dots = tvs.slice(-5).map(v=>`<span title="${v.date}: ${v.total}" style="display:inline-block;width:10px;height:${Math.round(v.total/10)}px;background:${gradeColor(v.total)};border-radius:2px;margin-left:1px;vertical-align:bottom"></span>`).join('');
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--brd);flex-wrap:wrap">
+          <div style="min-width:160px;font-size:11px;font-weight:800">${name}</div>
+          <div style="flex:1;min-width:120px;background:var(--surf3);border-radius:6px;height:8px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;background:${color};border-radius:6px;transition:.3s"></div>
+          </div>
+          <div style="font-size:12px;font-weight:900;color:${color};min-width:50px">${tavg}/100</div>
+          <div style="font-size:10px;color:var(--tx3)">${tvs.length} زيارة ${trend}</div>
+          <div style="display:flex;align-items:flex-end;gap:1px;height:20px">${dots}</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- أضعف المعايير -->
+    ${weakest.length && VISIT_ITEMS_LOCAL.length ? `<div class="card" style="margin-bottom:12px">
+      <div class="ch"><span class="ct"><span class="ct-dot" style="background:#dc2626"></span>أضعف معايير التقييم (المتوسط الكلي)</span></div>
+      ${weakest.map((c,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--brd)">
+        <span style="background:#fee2e2;color:#dc2626;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:900">${i+1}</span>
+        <div style="flex:1;font-size:11px">${c.label}</div>
+        <div style="font-size:12px;font-weight:900;color:#dc2626">${c.avg.toFixed(1)}/10</div>
+        <div style="width:80px;background:var(--surf3);border-radius:6px;height:7px;overflow:hidden">
+          <div style="width:${c.avg*10}%;height:100%;background:#dc2626;border-radius:6px"></div>
+        </div>
+      </div>`).join('')}
+    </div>` : ''}
+
+    <!-- تقرير تحليلي + تصدير -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn bsm" style="background:linear-gradient(135deg,var(--o1),var(--o2));color:#fff" onclick="exportVisitsAnalytics()">📄 تصدير التقرير التحليلي</button>
+    </div>`;
+}
+
+// ══════════════════════════════════════════
+// تصدير التقرير التحليلي الجماعي
+// ══════════════════════════════════════════
+function exportVisitsAnalytics() {
+  const visits = DB.classVisits || [];
+  if (!visits.length) { toast('لا توجد زيارات بعد', false); return; }
+  const VISIT_ITEMS_LOCAL = typeof VISIT_ITEMS !== 'undefined' ? VISIT_ITEMS : [];
+  const total = visits.length;
+  const avg = (visits.reduce((s,v)=>s+(v.total||0),0)/total).toFixed(1);
+  const byTeacher = {};
+  visits.forEach(v => {
+    if (!byTeacher[v.teacherName]) byTeacher[v.teacherName] = [];
+    byTeacher[v.teacherName].push(v);
+  });
+  const gradeLabel = s => s>=90?'ممتاز':s>=80?'جيد جداً':s>=70?'جيد':s>=60?'مقبول':'يحتاج تطوير';
+  const criteriaRows = VISIT_ITEMS_LOCAL.map((item,i) => {
+    const cavg = (visits.reduce((s,v)=>s+(v.scores?v.scores[i]||0:0),0)/total).toFixed(2);
+    const pct = Math.round(cavg*10);
+    const bar = `<div style="width:${pct}%;height:8px;background:${pct>=70?'#0d7a5f':pct>=50?'#d97706':'#dc2626'};border-radius:4px;display:inline-block"></div>`;
+    return `<tr><td>${i+1}</td><td>${item.label||item}</td><td style="text-align:center;font-weight:800;color:${pct>=70?'#0d7a5f':pct>=50?'#d97706':'#dc2626'}">${cavg}/10</td><td style="width:120px">${bar}</td></tr>`;
+  }).join('');
+  const teacherRows = Object.entries(byTeacher).map(([name,tvs])=>{
+    const tavg = (tvs.reduce((s,v)=>s+(v.total||0),0)/tvs.length).toFixed(1);
+    const trend = tvs.length>1?(tvs[tvs.length-1].total-tvs[0].total>0?'📈':tvs[tvs.length-1].total-tvs[0].total<0?'📉':'➡'):'—';
+    return `<tr><td style="font-weight:700">${name}</td><td style="text-align:center">${tvs.length}</td><td style="text-align:center;font-weight:800">${tavg}/100</td><td style="text-align:center">${gradeLabel(tavg)}</td><td style="text-align:center">${trend}</td></tr>`;
+  }).join('');
+  const body = `
+    <h3 style="text-align:center;font-size:13px;margin-bottom:6px">التقرير التحليلي للزيارات الصفية</h3>
+    <p style="text-align:center;font-size:11px;color:#555;margin-bottom:14px">إجمالي الزيارات: ${total} | متوسط الدرجات: ${avg}/100</p>
+    <div style="background:#0d7a5f;color:#fff;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:900;margin-bottom:8px">📊 أداء المعلمين</div>
+    <table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px">
+      <thead style="background:#0d7a5f;color:#fff"><tr><th>المعلم</th><th>عدد الزيارات</th><th>المتوسط</th><th>التقدير</th><th>الاتجاه</th></tr></thead>
+      <tbody>${teacherRows}</tbody>
+    </table>
+    ${VISIT_ITEMS_LOCAL.length ? `<div style="background:#dc2626;color:#fff;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:900;margin-bottom:8px">📌 تحليل معايير التقييم</div>
+    <table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:11px">
+      <thead style="background:#dc2626;color:#fff"><tr><th>#</th><th>المعيار</th><th>المتوسط</th><th>المستوى</th></tr></thead>
+      <tbody>${criteriaRows}</tbody>
+    </table>` : ''}`;
+  _directorExport(showStamp => {
+    _openDoc(_officialDoc('التقرير التحليلي للزيارات الصفية', body, {showStamp, subject:'تحليل الزيارات الصفية'}));
+  });
+}
+
+// ══════════════════════════════════════════
+// الجدولة المسبقة للزيارات
+// ══════════════════════════════════════════
+function saveScheduledVisit(notify=false) {
+  const teacherSel = document.getElementById('sv-teacher');
+  const teacherId = teacherSel ? teacherSel.value : '';
+  const t = (DB.teachers||[]).find(x=>String(x.id)===String(teacherId));
+  const date = (document.getElementById('sv-date')||{}).value||'';
+  if (!teacherId||!date) { toast('اختر المعلم والتاريخ', false); return; }
+  if (!DB.scheduledVisits) DB.scheduledVisits = [];
+  const entry = {
+    id: Date.now(), teacherId, teacherName: t?t.name:'',
+    subject: (document.getElementById('sv-subject')||{}).value||'',
+    date, period: (document.getElementById('sv-period')||{}).value||'',
+    cls: (document.getElementById('sv-class')||{}).value||'',
+    notes: (document.getElementById('sv-notes')||{}).value||'',
+    done: false, ts: new Date().toISOString()
+  };
+  DB.scheduledVisits.push(entry);
+  saveAllData(); toast('✅ تم حفظ الخطة', true);
+  renderScheduledVisits();
+  if (notify && t && t.phone) {
+    const msg = `السلام عليكم ${t.name}\nنود إعلامكم بأن زيارة صفية مخططة لكم:\n📅 التاريخ: ${date}\n⏰ الحصة: ${entry.period}\n📚 المادة: ${entry.subject}\nتحياتنا`;
+    window.open('https://wa.me/'+t.phone+'?text='+encodeURIComponent(msg));
+  }
+}
+
+function renderScheduledVisits() {
+  const el = document.getElementById('sv-list'); if (!el) return;
+  const filter = (document.getElementById('sv-filter')||{}).value||'pending';
+  const today = new Date(); today.setHours(0,0,0,0);
+  let list = (DB.scheduledVisits||[]).filter(v => {
+    if (filter==='pending') return !v.done;
+    if (filter==='done') return v.done;
+    return true;
+  }).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  if (!list.length) {
+    el.innerHTML = '<p style="padding:14px;text-align:center;color:var(--tx3)">لا توجد زيارات مخططة</p>'; return;
+  }
+  el.innerHTML = list.map(v => {
+    const vDate = new Date(v.date); vDate.setHours(0,0,0,0);
+    const diff = Math.ceil((vDate-today)/86400000);
+    let badge = '';
+    if (!v.done) {
+      if (diff<0) badge = `<span class="badge" style="background:#fee2e2;color:#dc2626">تأخرت ${Math.abs(diff)} يوم</span>`;
+      else if (diff===0) badge = `<span class="badge" style="background:#fef3c7;color:#d97706">اليوم</span>`;
+      else if (diff<=3) badge = `<span class="badge" style="background:#fef3c7;color:#d97706">${diff} أيام</span>`;
+    }
+    return `<div style="border:1px solid var(--brd);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:${v.done?'#f0fdf4':'var(--surf2)'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+        <div>
+          <div style="font-size:12px;font-weight:900;color:var(--d1)">${v.teacherName||'—'}</div>
+          <div style="font-size:10px;color:var(--tx3)">📅 ${v.date} | ${v.period} | ${v.cls||'—'} | ${v.subject||'—'}</div>
+          ${v.notes?`<div style="font-size:10px;color:var(--tx2);margin-top:3px">📝 ${v.notes}</div>`:''}
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          ${badge}
+          ${!v.done?`<button class="btn bsm" style="background:#dcfce7;color:#0d7a5f;font-size:10px" onclick="svMarkDone(${v.id})">✅ تم الإجراء</button>`:'<span style="font-size:10px;color:#0d7a5f;font-weight:700">✅ منجزة</span>'}
+          <button class="btn bsm" style="background:#fee2e2;color:#dc2626;font-size:10px" onclick="svDelete(${v.id})">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function svMarkDone(id) {
+  const v = (DB.scheduledVisits||[]).find(x=>x.id==id);
+  if (!v) return;
+  v.done = true;
+  // انتقل لنموذج الزيارة مع تعبئة بيانات المخطط
+  const teacherSel = document.getElementById('vs-teacher');
+  if (teacherSel) {
+    teacherSel.value = v.teacherId;
+    vsLoadPrevFollowup();
+  }
+  ['vs-subject','vs-class','vs-date','vs-period'].forEach(id2 => {
+    const el = document.getElementById(id2);
+    if (!el) return;
+    if (id2==='vs-subject') el.value = v.subject||'';
+    else if (id2==='vs-class') el.value = v.cls||'';
+    else if (id2==='vs-date') el.value = v.date||'';
+    else if (id2==='vs-period') el.value = v.period||'';
+  });
+  saveAllData(); renderScheduledVisits();
+  // انتقل لتبويب الزيارة الجديدة
+  const firstTab = document.querySelector('#page-visits .tbtn');
+  if (firstTab) swtab(firstTab,'vs','vs1');
+  toast('تم نقل البيانات لنموذج الزيارة ✓', true);
+}
+
+function svDelete(id) {
+  DB.scheduledVisits = (DB.scheduledVisits||[]).filter(x=>x.id!=id);
+  saveAllData(); renderScheduledVisits(); toast('تم الحذف', true);
+}
 
 function exportVisitHTML() {
   const all = (DB.classVisits||[]).slice().reverse();
