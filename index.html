@@ -3034,16 +3034,21 @@ body{background:#fff!important}
 <div class="tabs">
   <button class="tbtn active" onclick="swtab(this,'vs','vs1')">📝 زيارة جديدة</button>
   <button class="tbtn" onclick="swtab(this,'vs','vs2');renderVisitsList()">📋 سجل الزيارات</button>
+  <button class="tbtn" onclick="swtab(this,'vs','vs3');renderVisitsStats()">📊 إحصائيات وتحليل</button>
+  <button class="tbtn" onclick="swtab(this,'vs','vs4');renderScheduledVisits()">📅 جدولة مسبقة</button>
 </div>
 
 <div class="tc active" id="vs-vs1">
+
+<!-- بانر المعلمين غير المزارين -->
+<div id="vs-unvisited-banner" style="display:none;margin-bottom:12px"></div>
 
 <!-- بيانات الزيارة الأساسية -->
 <div class="card" style="margin-bottom:14px">
   <div class="ch"><span class="ct"><span class="ct-dot"></span>بيانات الزيارة الصفية</span></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px">
     <div class="fg"><label class="fl">اسم المعلم *</label>
-      <select class="fc fc-sm" id="vs-teacher">
+      <select class="fc fc-sm" id="vs-teacher" onchange="vsLoadPrevFollowup()">
         <option value="">-- اختر المعلم --</option>
       </select>
     </div>
@@ -3077,7 +3082,21 @@ body{background:#fff!important}
       <span id="vs-visitor-name" style="font-size:11px;color:var(--tx2);margin-top:4px;display:block;font-weight:700"></span>
     </div>
   </div>
-  <div style="margin-bottom:10px">
+  <!-- متابعة توصيات الزيارة السابقة -->
+  <div id="vs-prev-followup" style="display:none;background:#fef9c3;border:1.5px solid #fde047;border-radius:10px;padding:12px;margin-top:8px">
+    <div style="font-size:11px;font-weight:800;color:#854d0e;margin-bottom:6px">📌 توصيات الزيارة السابقة (للمتابعة)</div>
+    <div id="vs-prev-recs" style="font-size:11px;color:#713f12;margin-bottom:8px"></div>
+    <div class="fg" style="margin:0">
+      <label class="fl" style="font-size:10px">مدى تنفيذ التوصيات في هذه الزيارة</label>
+      <select class="fc fc-sm" id="vs-followup-status">
+        <option value="">-- اختر --</option>
+        <option value="نُفِّذت بالكامل">✅ نُفِّذت بالكامل</option>
+        <option value="نُفِّذت جزئياً">⚠ نُفِّذت جزئياً</option>
+        <option value="لم تُنفَّذ">❌ لم تُنفَّذ</option>
+      </select>
+    </div>
+  </div>
+  <div style="margin-bottom:10px;margin-top:10px">
     <button class="btn b-wa bsm" onclick="sendVisitNotification()">📱 إرسال إشعار للمعلم بموعد الزيارة</button>
   </div>
 </div>
@@ -3099,7 +3118,119 @@ body{background:#fff!important}
   </div>
 </div>
 
-<!-- التوصيات والملاحظات -->
+<!-- ① بيئة التعلم وحضور الطلاب -->
+<div class="card" style="margin-bottom:14px">
+  <div class="ch"><span class="ct"><span class="ct-dot" style="background:#0369a1"></span>بيئة التعلم وحضور الطلاب</span></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px">
+    <div class="fg">
+      <label class="fl">عدد الطلاب الحاضرين</label>
+      <input type="number" class="fc fc-sm" id="vs-students-present" min="0" placeholder="0">
+    </div>
+    <div class="fg">
+      <label class="fl">عدد الطلاب الغائبين</label>
+      <input type="number" class="fc fc-sm" id="vs-students-absent" min="0" placeholder="0">
+    </div>
+    <div class="fg">
+      <label class="fl">نظافة وترتيب الفصل</label>
+      <select class="fc fc-sm" id="vs-env-order">
+        <option value="">-- اختر --</option>
+        <option value="ممتاز">ممتاز</option>
+        <option value="جيد">جيد</option>
+        <option value="يحتاج تحسين">يحتاج تحسين</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">التهوية والإضاءة</label>
+      <select class="fc fc-sm" id="vs-env-ventilation">
+        <option value="">-- اختر --</option>
+        <option value="مناسبة">مناسبة</option>
+        <option value="جزئياً">جزئياً</option>
+        <option value="غير مناسبة">غير مناسبة</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">اللوحات التعليمية</label>
+      <select class="fc fc-sm" id="vs-env-boards">
+        <option value="">-- اختر --</option>
+        <option value="منظمة وفعّالة">منظمة وفعّالة</option>
+        <option value="موجودة جزئياً">موجودة جزئياً</option>
+        <option value="غائبة">غائبة</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">توزيع مقاعد الطلاب</label>
+      <select class="fc fc-sm" id="vs-env-seating">
+        <option value="">-- اختر --</option>
+        <option value="مناسب للنشاط">مناسب للنشاط</option>
+        <option value="تقليدي منتظم">تقليدي منتظم</option>
+        <option value="غير منتظم">غير منتظم</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- ② مشاركة الطلاب -->
+<div class="card" style="margin-bottom:14px">
+  <div class="ch"><span class="ct"><span class="ct-dot" style="background:#7c3aed"></span>مستوى مشاركة الطلاب (لا يدخل في درجة المعلم)</span></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:10px">
+    <div class="fg">
+      <label class="fl">مستوى التفاعل العام</label>
+      <select class="fc fc-sm" id="vs-stu-engagement">
+        <option value="">-- اختر --</option>
+        <option value="عالٍ جداً">عالٍ جداً</option>
+        <option value="عالٍ">عالٍ</option>
+        <option value="متوسط">متوسط</option>
+        <option value="منخفض">منخفض</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">نسبة المشاركة التقريبية</label>
+      <select class="fc fc-sm" id="vs-stu-participation-pct">
+        <option value="">-- اختر --</option>
+        <option value="75% وأكثر">75% وأكثر</option>
+        <option value="50% - 74%">50% - 74%</option>
+        <option value="25% - 49%">25% - 49%</option>
+        <option value="أقل من 25%">أقل من 25%</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">سلوك الطلاب</label>
+      <select class="fc fc-sm" id="vs-stu-behavior">
+        <option value="">-- اختر --</option>
+        <option value="منضبط ومحترم">منضبط ومحترم</option>
+        <option value="منضبط عموماً">منضبط عموماً</option>
+        <option value="يحتاج ضبط">يحتاج ضبط</option>
+      </select>
+    </div>
+  </div>
+  <!-- شريط تقييم بصري -->
+  <div style="margin-top:4px">
+    <label class="fl" style="font-size:10px">تقييم مشاركة الطلاب (1-5)</label>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      ${[1,2,3,4,5].map(n=>`<label style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-size:10px">
+        <input type="radio" name="vs-stu-score" value="${n}" style="accent-color:#7c3aed">${n}
+      </label>`).join('')}
+    </div>
+  </div>
+</div>
+
+<!-- ③ الأدوات والتقنية -->
+<div class="card" style="margin-bottom:14px">
+  <div class="ch"><span class="ct"><span class="ct-dot" style="background:#0891b2"></span>الأدوات والتقنية المستخدمة في الحصة</span></div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px" id="vs-tech-checkboxes">
+    ${['سبورة ذكية','عروض تقديمية (PPT)','فيديو تعليمي','مختبر علمي','ورش عمل جماعية',
+       'بطاقات تعليمية','نماذج وعينات','تطبيقات رقمية','كتاب مقرر فقط','أوراق عمل'].map(t=>
+      `<label style="display:flex;align-items:center;gap:5px;background:var(--surf2);border:1px solid var(--brd);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:11px">
+        <input type="checkbox" class="vs-tech-cb" value="${t}" style="accent-color:#0891b2">${t}
+      </label>`).join('')}
+  </div>
+  <div class="fg" style="margin:0">
+    <label class="fl">أدوات أخرى</label>
+    <input type="text" class="fc fc-sm" id="vs-tech-other" placeholder="اذكر أي أدوات إضافية...">
+  </div>
+</div>
+
+<!-- ④ التوصيات والملاحظات -->
 <div class="card" style="margin-bottom:14px">
   <div class="ch"><span class="ct"><span class="ct-dot"></span>التوصيات والملاحظات</span></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
@@ -3118,6 +3249,28 @@ body{background:#fff!important}
   </div>
 </div>
 
+<!-- ⑤ توقيع المعلم الإلكتروني -->
+<div class="card" style="margin-bottom:14px">
+  <div class="ch"><span class="ct"><span class="ct-dot" style="background:#0d7a5f"></span>توقيع المعلم الإلكتروني</span></div>
+  <div id="vs-teacher-sign-wrap">
+    <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">بعد حفظ الزيارة يمكن للمعلم التوقيع بالعلم من خلال حسابه الخاص</div>
+    <div id="vs-sign-status" style="font-size:11px;color:var(--tx3)">⏳ في انتظار توقيع المعلم</div>
+  </div>
+</div>
+
+<!-- ⑥ صورة من الزيارة -->
+<div class="card" style="margin-bottom:14px">
+  <div class="ch"><span class="ct"><span class="ct-dot" style="background:#6d28d9"></span>صورة فوتوغرافية من الزيارة (اختياري)</span></div>
+  <input type="file" id="vs-photo-input" accept="image/*" style="display:none" onchange="vsHandlePhoto(this)">
+  <div style="border:2px dashed var(--brd2);border-radius:10px;padding:16px;text-align:center;cursor:pointer;background:var(--surf2)" onclick="document.getElementById('vs-photo-input').click()">
+    <div id="vs-photo-preview" style="margin-bottom:8px">
+      <div style="font-size:28px">📷</div>
+      <div style="font-size:11px;color:var(--tx3)">اضغط لرفع صورة من الحصة</div>
+    </div>
+  </div>
+  <input type="hidden" id="vs-photo-data" value="">
+</div>
+
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
   <button class="btn b-g" onclick="saveVisit()">💾 حفظ الزيارة</button>
   <button class="btn b-gh bsm" onclick="prtVisit()">🖨 طباعة تقرير الزيارة</button>
@@ -3127,11 +3280,78 @@ body{background:#fff!important}
 </div><!-- end vs1 -->
 
 <div class="tc" id="vs-vs2">
-<div class="card">
-  <div class="ch"><span class="ct"><span class="ct-dot"></span>سجل الزيارات الصفية المُجراة</span></div>
-  <div id="VISITS-LIST"><p style="padding:14px;text-align:center;color:var(--tx3)">لا توجد زيارات مسجلة</p></div>
+<!-- عرض المدير: سجل كامل -->
+<div id="vs-admin-list-section">
+  <div class="card">
+    <div class="ch"><span class="ct"><span class="ct-dot"></span>سجل الزيارات الصفية المُجراة</span></div>
+    <div id="VISITS-LIST"><p style="padding:14px;text-align:center;color:var(--tx3)">لا توجد زيارات مسجلة</p></div>
+  </div>
+</div>
+<!-- عرض المعلم: زياراته فقط مع التوقيع -->
+<div id="vs-teacher-section" style="display:none">
+  <div class="card">
+    <div class="ch"><span class="ct"><span class="ct-dot" style="background:#0d7a5f"></span>زياراتي الصفية</span></div>
+    <div id="vs-teacher-my-visits"><p style="padding:14px;text-align:center;color:var(--tx3)">لا توجد زيارات صفية مسجلة لك بعد</p></div>
+  </div>
 </div>
 </div><!-- end vs2 -->
+
+<!-- ── تبويب الإحصائيات والتحليل ── -->
+<div class="tc" id="vs-vs3">
+  <div id="vs-stats-wrap"></div>
+</div><!-- end vs3 -->
+
+<!-- ── تبويب الجدولة المسبقة ── -->
+<div class="tc" id="vs-vs4">
+  <!-- نموذج الجدولة -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ch"><span class="ct"><span class="ct-dot" style="background:#7c3aed"></span>تخطيط زيارة مسبقة</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px">
+      <div class="fg"><label class="fl">المعلم *</label>
+        <select class="fc fc-sm" id="sv-teacher"><option value="">-- اختر --</option></select>
+      </div>
+      <div class="fg"><label class="fl">المادة *</label>
+        <select class="fc fc-sm" id="sv-subject">
+          <option value="">-- اختر --</option>
+          <option>رياضيات</option><option>فيزياء</option><option>كيمياء</option><option>أحياء</option>
+          <option>لغة عربية</option><option>لغة إنجليزية</option><option>تربية إسلامية</option><option>حاسب آلي</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">التاريخ المخطط *</label>
+        <input type="date" class="fc fc-sm" id="sv-date">
+      </div>
+      <div class="fg"><label class="fl">الحصة</label>
+        <select class="fc fc-sm" id="sv-period">
+          <option>الأولى</option><option>الثانية</option><option>الثالثة</option>
+          <option>الرابعة</option><option>الخامسة</option><option>السادسة</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">الصف</label>
+        <input type="text" class="fc fc-sm" id="sv-class" placeholder="مثال: B2">
+      </div>
+    </div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">ملاحظات</label>
+      <input type="text" class="fc fc-sm" id="sv-notes" placeholder="أي ملاحظات مسبقة...">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn b-g" onclick="saveScheduledVisit()">💾 حفظ الخطة</button>
+      <button class="btn bsm" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff" onclick="saveScheduledVisit(true)">📱 حفظ وإشعار المعلم</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch">
+      <span class="ct"><span class="ct-dot" style="background:#7c3aed"></span>الزيارات المخططة</span>
+      <div style="display:flex;gap:6px">
+        <select class="fc fc-sm" id="sv-filter" onchange="renderScheduledVisits()" style="width:auto;font-size:10px">
+          <option value="pending">المعلقة</option>
+          <option value="done">المنجزة</option>
+          <option value="all">الكل</option>
+        </select>
+      </div>
+    </div>
+    <div id="sv-list"></div>
+  </div>
+</div><!-- end vs4 -->
 
 </div><!-- end page-visits -->
 
@@ -3143,7 +3363,9 @@ body{background:#fff!important}
   <div class="ph-r no-print" id="pv-admin-btns">
     <button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button>
     <button class="btn bsm" style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff" onclick="pvShowForm()">+ جدول زيارة جديد</button>
+    <button class="btn b-gh bsm" onclick="pvExportSchedule()">📄 تصدير الكشف</button>
     <button class="btn b-gh bsm" onclick="pvPrintList()">🖨 طباعة</button>
+    <button class="btn bsm" style="background:linear-gradient(135deg,#64748b,#475569);color:#fff" onclick="pvToggleArchive()">🗂 الأرشيف</button>
   </div>
   <div class="ph-r no-print" id="pv-teacher-btns" style="display:none">
     <button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button>
@@ -3234,6 +3456,23 @@ body{background:#fff!important}
   </div>
 </div>
 
+<!-- ── لوحة إحصائيات المدير ── -->
+<div id="pv-stats-wrap" style="margin-bottom:14px"></div>
+
+<!-- ── فلتر الفصل / الأرشيف (للمدير) ── -->
+<div id="pv-filter-bar" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+  <label style="font-size:11px;font-weight:700;color:var(--tx2)">الفصل الدراسي:</label>
+  <select class="fc fc-sm" id="pv-filter-semester" onchange="pvRenderAdminList()" style="width:auto;min-width:120px">
+    <option value="">الكل</option>
+    <option value="الأول">الأول</option>
+    <option value="الثاني">الثاني</option>
+  </select>
+  <label style="font-size:11px;font-weight:700;color:var(--tx2);margin-right:8px">
+    <input type="checkbox" id="pv-show-archived" onchange="pvRenderAdminList()" style="margin-left:4px">
+    عرض المؤرشفة
+  </label>
+</div>
+
 <!-- ── قائمة جداول الزيارات (للمدير) ── -->
 <div id="pv-admin-list-wrap">
   <div id="pv-admin-list"></div>
@@ -3241,6 +3480,8 @@ body{background:#fff!important}
 
 <!-- ── صفحة المعلم ── -->
 <div id="pv-teacher-wrap" style="display:none">
+  <!-- بطاقة زملاء التخصص -->
+  <div id="pv-team-card" style="margin-bottom:14px"></div>
   <div id="pv-teacher-list"></div>
 </div>
 
@@ -4788,7 +5029,8 @@ const DEFAULT_DB = {
     {id:21, name:'محمد بن علي بن محمد عسيري',                     idNum:'1018494268', phone:'0501043278', subject:'فيزياء',                          classes:[], perf:80},
     {id:22, name:'محمد علي محمد آل حديس عسيري',                   idNum:'1042919561', phone:'0564648846', subject:'اللغة الإنجليزية',                classes:[], perf:80},
     {id:23, name:'مسفر حسن أحمد آل المجنب عسيري',                 idNum:'1062132376', phone:'0598542221', subject:'اللغة العربية',                   classes:[], perf:80},
-    {id:24, name:'يحيى بن شار بن أحمد البارقي',                   idNum:'1054837701', phone:'0534001216', subject:'تربية إسلامية',                   classes:[], perf:80}
+    {id:24, name:'يحيى بن شار بن أحمد البارقي',                   idNum:'1054837701', phone:'0534001216', subject:'تربية إسلامية',                   classes:[], perf:80},
+    {id:25, name:'جابر أحمد علي المشعبي',                         idNum:'',            phone:'',            subject:'اللغة الإنجليزية',                classes:[], perf:80}
   ],
   waiting: [],
   supervision: [],
@@ -4857,6 +5099,15 @@ try {
       if (!parsed.teachers || parsed.teachers.length === 0) {
         DB.teachers = JSON.parse(JSON.stringify(DEFAULT_DB.teachers));
       }
+    }
+    // دمج المعلمين الجدد من DEFAULT_DB إلى البيانات المحفوظة (إضافة فقط دون تكرار)
+    if (DB.teachers && DB.teachers.length > 0) {
+      const existingIds = new Set(DB.teachers.map(t => t.id));
+      DEFAULT_DB.teachers.forEach(dt => {
+        if (!existingIds.has(dt.id)) {
+          DB.teachers.push(JSON.parse(JSON.stringify(dt)));
+        }
+      });
     }
     // ترحيل: إذا كان الرمز القديم 1234 يُستبدل بـ A2009
     if (DB.pin === '1234') { DB.pin = 'A2009'; }
@@ -5087,8 +5338,8 @@ let loginMode = 'admin'; // 'admin' | 'teacher' | 'guidance' | 'activity' | 'lib
 let currentRole = null;  // 'admin' | 'teacher' | 'guidance' | 'activity' | 'library' | 'lab'
 let currentTeacherId = null;
 
-const TEACHER_ALLOWED_PAGES  = ['plan-term','plan-week','profdev','plc','perf','charter','super','remedial','peer-visits'];
-const TEACHER_ALLOWED_NAV    = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-charter','n-super','n-remedial','n-tasks','n-peer-visits'];
+const TEACHER_ALLOWED_PAGES  = ['plan-term','plan-week','profdev','plc','perf','charter','super','remedial','peer-visits','visits'];
+const TEACHER_ALLOWED_NAV    = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-charter','n-super','n-remedial','n-tasks','n-peer-visits','n-visits'];
 const GUIDANCE_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf','guidance','plan-imp','attendance','charter','remedial'];
 const GUIDANCE_ALLOWED_NAV   = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-guidance','n-plan-imp','n-attendance','n-charter','n-remedial'];
 const ACTIVITY_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf','activity','plan-imp','attendance','charter'];
@@ -15604,11 +15855,42 @@ const VISIT_ITEMS = [
 ];
 
 function renderVisitsPage() {
-  const sel = document.getElementById('vs-teacher');
-  if (sel) sel.innerHTML = '<option value="">-- اختر المعلم --</option>' + (DB.teachers||[]).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
-  const dt = document.getElementById('vs-date');
-  if (dt && !dt.value) dt.value = new Date().toISOString().split('T')[0];
-  renderVisitEvalItems();
+  const excluded = typeof PV_EXCLUDED_ROLES !== 'undefined' ? PV_EXCLUDED_ROLES : [];
+  const teachingTeachers = (DB.teachers||[]).filter(t => t.subject && !excluded.includes(t.subject));
+  const isTeacher = currentRole === 'teacher';
+
+  // إظهار/إخفاء أقسام المدير والمعلم
+  const adminBtns = document.getElementById('vs-admin-section-btns');
+  const teacherWrap = document.getElementById('vs-teacher-section');
+  const adminList = document.getElementById('vs-admin-list-section');
+  const adminTabBtns = document.querySelectorAll('#page-visits .tbtn');
+
+  if (isTeacher) {
+    // المعلم: يرى فقط تبويب "سجل الزيارات" مع قسمه الخاص
+    if (adminList) adminList.style.display = 'none';
+    if (teacherWrap) teacherWrap.style.display = '';
+    // إخفاء تبويبات الجدولة والإحصائيات والنموذج من المعلم
+    adminTabBtns.forEach((btn,i) => { if (i>1) btn.style.display='none'; });
+    // إخفاء أزرار الأدمن
+    const phR = document.querySelector('#page-visits .ph-r');
+    if (phR) phR.querySelectorAll('.btn').forEach(b=>{ if(!b.classList.contains('back-btn')) b.style.display='none'; });
+    // الانتقال لتبويب السجل مباشرة
+    const secTab = document.querySelectorAll('#page-visits .tbtn')[1];
+    if (secTab) swtab(secTab,'vs','vs2');
+    vsRenderTeacherVisits();
+  } else {
+    if (adminList) adminList.style.display = '';
+    if (teacherWrap) teacherWrap.style.display = 'none';
+    adminTabBtns.forEach(btn => btn.style.display='');
+    const sel = document.getElementById('vs-teacher');
+    if (sel) sel.innerHTML = '<option value="">-- اختر المعلم --</option>' + teachingTeachers.map(t=>`<option value="${t.id}">${t.name} — ${t.subject}</option>`).join('');
+    const svSel = document.getElementById('sv-teacher');
+    if (svSel) svSel.innerHTML = '<option value="">-- اختر --</option>' + teachingTeachers.map(t=>`<option value="${t.id}">${t.name} — ${t.subject}</option>`).join('');
+    const dt = document.getElementById('vs-date');
+    if (dt && !dt.value) dt.value = new Date().toISOString().split('T')[0];
+    renderVisitEvalItems();
+    vsRenderUnvisitedBanner();
+  }
 }
 
 function renderVisitEvalItems() {
@@ -15676,9 +15958,29 @@ function saveVisit() {
     improvements: (document.getElementById('vs-improvements')||{}).value||'',
     recommendations: (document.getElementById('vs-recommendations')||{}).value||'',
     appreciation: (document.getElementById('vs-appreciation')||{}).value||'',
+    followupStatus: (document.getElementById('vs-followup-status')||{}).value||'',
+    // بيئة التعلم
+    studentsPresent: parseInt((document.getElementById('vs-students-present')||{}).value||0)||0,
+    studentsAbsent:  parseInt((document.getElementById('vs-students-absent')||{}).value||0)||0,
+    envOrder:       (document.getElementById('vs-env-order')||{}).value||'',
+    envVentilation: (document.getElementById('vs-env-ventilation')||{}).value||'',
+    envBoards:      (document.getElementById('vs-env-boards')||{}).value||'',
+    envSeating:     (document.getElementById('vs-env-seating')||{}).value||'',
+    // مشاركة الطلاب
+    stuEngagement:  (document.getElementById('vs-stu-engagement')||{}).value||'',
+    stuParticipationPct: (document.getElementById('vs-stu-participation-pct')||{}).value||'',
+    stuBehavior:    (document.getElementById('vs-stu-behavior')||{}).value||'',
+    stuScore:       (()=>{ const r=document.querySelector('input[name="vs-stu-score"]:checked'); return r?r.value:''; })(),
+    // الأدوات والتقنية
+    techUsed: Array.from(document.querySelectorAll('.vs-tech-cb:checked')).map(c=>c.value),
+    techOther: (document.getElementById('vs-tech-other')||{}).value||'',
+    // صورة الزيارة
+    photo: (document.getElementById('vs-photo-data')||{}).value||'',
+    teacherSigned: false,
     ts: new Date().toISOString()
   });
   saveAllData(); toast('✅ تم حفظ الزيارة', true);
+  vsRenderUnvisitedBanner();
   renderVisitsList();
 }
 
@@ -15709,6 +16011,353 @@ function deleteVisit(id) {
 }
 
 function prtVisit() { window.print(); }
+
+// ══════════════════════════════════════════
+// صورة الزيارة
+// ══════════════════════════════════════════
+function vsHandlePhoto(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('vs-photo-data').value = e.target.result;
+    const prev = document.getElementById('vs-photo-preview');
+    if (prev) prev.innerHTML = `<img src="${e.target.result}" style="max-width:100%;max-height:180px;border-radius:8px;object-fit:cover">
+      <div style="font-size:10px;color:var(--tx3);margin-top:4px">${file.name}</div>`;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ══════════════════════════════════════════
+// توقيع المعلم من حسابه على الزيارة الصفية
+// ══════════════════════════════════════════
+function vsTeacherSignVisit(visitId) {
+  const v = (DB.classVisits||[]).find(x=>x.id==visitId);
+  if (!v) return;
+  const signDate = new Date().toLocaleDateString('ar-SA-u-nu-latn');
+  v.teacherSigned = true;
+  v.teacherSignDate = signDate;
+  saveAllData();
+  toast('تم التوقيع بالعلم ✓', true);
+  vsRenderTeacherVisits();
+}
+
+// عرض زيارات المعلم في حسابه (الزيارات الصفية)
+function vsRenderTeacherVisits() {
+  // يُظهر للمعلم زياراته في صفحة الزيارات الصفية إن كان دوره teacher
+  const wrap = document.getElementById('vs-teacher-my-visits');
+  if (!wrap) return;
+  const tid = currentTeacherId;
+  const myVisits = (DB.classVisits||[]).filter(v => String(v.teacherId)===String(tid))
+    .sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if (!myVisits.length) {
+    wrap.innerHTML = '<p style="padding:14px;text-align:center;color:var(--tx3)">لا توجد زيارات صفية مسجلة لك بعد</p>';
+    return;
+  }
+  const gradeLabel = s => s>=90?'ممتاز':s>=80?'جيد جداً':s>=70?'جيد':s>=60?'مقبول':'يحتاج تطوير';
+  const gradeColor = s => s>=90?'#0d7a5f':s>=80?'#1e3a5f':s>=70?'#b45309':'#dc2626';
+  wrap.innerHTML = myVisits.map(v => {
+    const isSigned = v.teacherSigned;
+    return `<div style="border:1.5px solid ${isSigned?'#bbf7d0':'#fde68a'};border-radius:10px;padding:12px;margin-bottom:8px;background:${isSigned?'#f0fdf4':'#fffbeb'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+        <div>
+          <div style="font-size:11px;font-weight:800;color:var(--d1)">📅 ${v.date} — الحصة ${v.period} — ${v.cls||'—'}</div>
+          <div style="font-size:10px;color:var(--tx3)">📚 ${v.subject||'—'} | الزائر: ${v.visitor||'—'}</div>
+          ${v.strengths?`<div style="font-size:10px;color:#0d7a5f;margin-top:4px">✅ ${v.strengths.split('\n')[0]}</div>`:''}
+          ${v.recommendations?`<div style="font-size:10px;color:#854d0e;margin-top:2px">📌 ${v.recommendations.split('\n')[0]}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+          <span style="font-size:14px;font-weight:900;color:${gradeColor(v.total)}">${v.total}/100</span>
+          <span style="font-size:10px;font-weight:700;color:${gradeColor(v.total)}">${gradeLabel(v.total)}</span>
+          ${!isSigned?`<button onclick="vsTeacherSignVisit(${v.id})" style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:10px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">✍ توقيع بالعلم</button>`
+          :`<div style="font-size:10px;color:#0d7a5f;font-weight:700">✅ وقّعت بتاريخ ${v.teacherSignDate}</div>`}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// متابعة توصيات الزيارة السابقة
+// ══════════════════════════════════════════
+function vsLoadPrevFollowup() {
+  const teacherId = (document.getElementById('vs-teacher')||{}).value;
+  const panel = document.getElementById('vs-prev-followup');
+  const recsEl = document.getElementById('vs-prev-recs');
+  if (!panel || !recsEl || !teacherId) { if(panel) panel.style.display='none'; return; }
+  const prev = (DB.classVisits||[]).filter(v=>String(v.teacherId)===String(teacherId))
+    .sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  if (prev && prev.recommendations && prev.recommendations.trim()) {
+    recsEl.innerHTML = `<b>الزيارة بتاريخ ${prev.date}:</b><br>${prev.recommendations.replace(/\n/g,'<br>')}`;
+    panel.style.display = '';
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════════════════
+// بانر المعلمين غير المزارين
+// ══════════════════════════════════════════
+function vsRenderUnvisitedBanner() {
+  const banner = document.getElementById('vs-unvisited-banner');
+  if (!banner) return;
+  const visited = new Set((DB.classVisits||[]).map(v=>String(v.teacherId)));
+  const unvisited = (DB.teachers||[]).filter(t =>
+    !PV_EXCLUDED_ROLES.includes(t.subject) && t.subject && !visited.has(String(t.id))
+  );
+  if (!unvisited.length) { banner.style.display='none'; return; }
+  banner.style.display = '';
+  banner.innerHTML = `
+    <div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:12px;padding:12px 16px">
+      <div style="font-size:12px;font-weight:800;color:#dc2626;margin-bottom:8px">
+        ⚠ ${unvisited.length} معلم لم تُجرَ له زيارة صفية بعد
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${unvisited.map(t=>`<span style="background:#fee2e2;border-radius:6px;padding:3px 10px;font-size:10px;font-weight:700;color:#991b1b">
+          ${t.name} <span style="font-weight:400;color:#b91c1c">(${t.subject})</span>
+        </span>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════
+// لوحة الإحصائيات والتحليل
+// ══════════════════════════════════════════
+function renderVisitsStats() {
+  const wrap = document.getElementById('vs-stats-wrap');
+  if (!wrap) return;
+  const visits = DB.classVisits || [];
+  if (!visits.length) {
+    wrap.innerHTML = '<div class="card" style="text-align:center;padding:30px;color:var(--tx3)"><div style="font-size:32px">📊</div><div style="font-size:12px;margin-top:8px">لا توجد زيارات بعد — ابدأ بتسجيل الزيارات أولاً</div></div>';
+    return;
+  }
+  const total = visits.length;
+  const avg = (visits.reduce((s,v)=>s+(v.total||0),0)/total).toFixed(1);
+  const best = visits.reduce((a,b)=>(b.total>a.total?b:a));
+  const worst = visits.reduce((a,b)=>(b.total<a.total?b:a));
+
+  // إحصاء بالمعلم
+  const byTeacher = {};
+  visits.forEach(v => {
+    if (!byTeacher[v.teacherName]) byTeacher[v.teacherName] = [];
+    byTeacher[v.teacherName].push(v);
+  });
+
+  // تحليل أضعف المعايير
+  const VISIT_ITEMS_LOCAL = typeof VISIT_ITEMS !== 'undefined' ? VISIT_ITEMS : [];
+  const criteriaSum = VISIT_ITEMS_LOCAL.map((_,i) => ({
+    label: VISIT_ITEMS_LOCAL[i]?.label || `المعيار ${i+1}`,
+    avg: visits.reduce((s,v)=>s+(v.scores?v.scores[i]||0:0),0) / total
+  }));
+  const weakest = [...criteriaSum].sort((a,b)=>a.avg-b.avg).slice(0,3);
+
+  const gradeColor = s => s>=90?'#0d7a5f':s>=80?'#1e3a5f':s>=70?'#b45309':'#dc2626';
+  const gradeLabel = s => s>=90?'ممتاز':s>=80?'جيد جداً':s>=70?'جيد':s>=60?'مقبول':'يحتاج تطوير';
+
+  wrap.innerHTML = `
+    <!-- إحصائيات عامة -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px">
+      <div style="background:var(--surf2);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:26px;font-weight:900;color:#0d7a5f">${total}</div>
+        <div style="font-size:10px;color:var(--tx3)">إجمالي الزيارات</div>
+      </div>
+      <div style="background:var(--surf2);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:26px;font-weight:900;color:${gradeColor(avg)}">${avg}</div>
+        <div style="font-size:10px;color:var(--tx3)">متوسط الدرجات</div>
+      </div>
+      <div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center;border:1px solid #bbf7d0">
+        <div style="font-size:16px;font-weight:900;color:#0d7a5f">${best.total}</div>
+        <div style="font-size:9px;color:#0d7a5f;font-weight:700">${best.teacherName}</div>
+        <div style="font-size:10px;color:var(--tx3)">أعلى درجة</div>
+      </div>
+      <div style="background:#fef2f2;border-radius:10px;padding:12px;text-align:center;border:1px solid #fca5a5">
+        <div style="font-size:16px;font-weight:900;color:#dc2626">${worst.total}</div>
+        <div style="font-size:9px;color:#dc2626;font-weight:700">${worst.teacherName}</div>
+        <div style="font-size:10px;color:var(--tx3)">أدنى درجة</div>
+      </div>
+      <div style="background:var(--surf2);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:26px;font-weight:900;color:#7c3aed">${Object.keys(byTeacher).length}</div>
+        <div style="font-size:10px;color:var(--tx3)">معلمون مزارون</div>
+      </div>
+    </div>
+
+    <!-- أداء كل معلم -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="ch"><span class="ct"><span class="ct-dot"></span>أداء المعلمين — درجات ومقارنة</span></div>
+      ${Object.entries(byTeacher).map(([name, tvs]) => {
+        const tavg = (tvs.reduce((s,v)=>s+(v.total||0),0)/tvs.length).toFixed(0);
+        const pct = Math.round(tavg);
+        const color = gradeColor(tavg);
+        const trend = tvs.length>1 ? (tvs[tvs.length-1].total - tvs[0].total > 0 ? '📈' : tvs[tvs.length-1].total - tvs[0].total < 0 ? '📉' : '➡') : '';
+        const dots = tvs.slice(-5).map(v=>`<span title="${v.date}: ${v.total}" style="display:inline-block;width:10px;height:${Math.round(v.total/10)}px;background:${gradeColor(v.total)};border-radius:2px;margin-left:1px;vertical-align:bottom"></span>`).join('');
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--brd);flex-wrap:wrap">
+          <div style="min-width:160px;font-size:11px;font-weight:800">${name}</div>
+          <div style="flex:1;min-width:120px;background:var(--surf3);border-radius:6px;height:8px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;background:${color};border-radius:6px;transition:.3s"></div>
+          </div>
+          <div style="font-size:12px;font-weight:900;color:${color};min-width:50px">${tavg}/100</div>
+          <div style="font-size:10px;color:var(--tx3)">${tvs.length} زيارة ${trend}</div>
+          <div style="display:flex;align-items:flex-end;gap:1px;height:20px">${dots}</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- أضعف المعايير -->
+    ${weakest.length && VISIT_ITEMS_LOCAL.length ? `<div class="card" style="margin-bottom:12px">
+      <div class="ch"><span class="ct"><span class="ct-dot" style="background:#dc2626"></span>أضعف معايير التقييم (المتوسط الكلي)</span></div>
+      ${weakest.map((c,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--brd)">
+        <span style="background:#fee2e2;color:#dc2626;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:900">${i+1}</span>
+        <div style="flex:1;font-size:11px">${c.label}</div>
+        <div style="font-size:12px;font-weight:900;color:#dc2626">${c.avg.toFixed(1)}/10</div>
+        <div style="width:80px;background:var(--surf3);border-radius:6px;height:7px;overflow:hidden">
+          <div style="width:${c.avg*10}%;height:100%;background:#dc2626;border-radius:6px"></div>
+        </div>
+      </div>`).join('')}
+    </div>` : ''}
+
+    <!-- تقرير تحليلي + تصدير -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn bsm" style="background:linear-gradient(135deg,var(--o1),var(--o2));color:#fff" onclick="exportVisitsAnalytics()">📄 تصدير التقرير التحليلي</button>
+    </div>`;
+}
+
+// ══════════════════════════════════════════
+// تصدير التقرير التحليلي الجماعي
+// ══════════════════════════════════════════
+function exportVisitsAnalytics() {
+  const visits = DB.classVisits || [];
+  if (!visits.length) { toast('لا توجد زيارات بعد', false); return; }
+  const VISIT_ITEMS_LOCAL = typeof VISIT_ITEMS !== 'undefined' ? VISIT_ITEMS : [];
+  const total = visits.length;
+  const avg = (visits.reduce((s,v)=>s+(v.total||0),0)/total).toFixed(1);
+  const byTeacher = {};
+  visits.forEach(v => {
+    if (!byTeacher[v.teacherName]) byTeacher[v.teacherName] = [];
+    byTeacher[v.teacherName].push(v);
+  });
+  const gradeLabel = s => s>=90?'ممتاز':s>=80?'جيد جداً':s>=70?'جيد':s>=60?'مقبول':'يحتاج تطوير';
+  const criteriaRows = VISIT_ITEMS_LOCAL.map((item,i) => {
+    const cavg = (visits.reduce((s,v)=>s+(v.scores?v.scores[i]||0:0),0)/total).toFixed(2);
+    const pct = Math.round(cavg*10);
+    const bar = `<div style="width:${pct}%;height:8px;background:${pct>=70?'#0d7a5f':pct>=50?'#d97706':'#dc2626'};border-radius:4px;display:inline-block"></div>`;
+    return `<tr><td>${i+1}</td><td>${item.label||item}</td><td style="text-align:center;font-weight:800;color:${pct>=70?'#0d7a5f':pct>=50?'#d97706':'#dc2626'}">${cavg}/10</td><td style="width:120px">${bar}</td></tr>`;
+  }).join('');
+  const teacherRows = Object.entries(byTeacher).map(([name,tvs])=>{
+    const tavg = (tvs.reduce((s,v)=>s+(v.total||0),0)/tvs.length).toFixed(1);
+    const trend = tvs.length>1?(tvs[tvs.length-1].total-tvs[0].total>0?'📈':tvs[tvs.length-1].total-tvs[0].total<0?'📉':'➡'):'—';
+    return `<tr><td style="font-weight:700">${name}</td><td style="text-align:center">${tvs.length}</td><td style="text-align:center;font-weight:800">${tavg}/100</td><td style="text-align:center">${gradeLabel(tavg)}</td><td style="text-align:center">${trend}</td></tr>`;
+  }).join('');
+  const body = `
+    <h3 style="text-align:center;font-size:13px;margin-bottom:6px">التقرير التحليلي للزيارات الصفية</h3>
+    <p style="text-align:center;font-size:11px;color:#555;margin-bottom:14px">إجمالي الزيارات: ${total} | متوسط الدرجات: ${avg}/100</p>
+    <div style="background:#0d7a5f;color:#fff;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:900;margin-bottom:8px">📊 أداء المعلمين</div>
+    <table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px">
+      <thead style="background:#0d7a5f;color:#fff"><tr><th>المعلم</th><th>عدد الزيارات</th><th>المتوسط</th><th>التقدير</th><th>الاتجاه</th></tr></thead>
+      <tbody>${teacherRows}</tbody>
+    </table>
+    ${VISIT_ITEMS_LOCAL.length ? `<div style="background:#dc2626;color:#fff;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:900;margin-bottom:8px">📌 تحليل معايير التقييم</div>
+    <table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:11px">
+      <thead style="background:#dc2626;color:#fff"><tr><th>#</th><th>المعيار</th><th>المتوسط</th><th>المستوى</th></tr></thead>
+      <tbody>${criteriaRows}</tbody>
+    </table>` : ''}`;
+  _directorExport(showStamp => {
+    _openDoc(_officialDoc('التقرير التحليلي للزيارات الصفية', body, {showStamp, subject:'تحليل الزيارات الصفية'}));
+  });
+}
+
+// ══════════════════════════════════════════
+// الجدولة المسبقة للزيارات
+// ══════════════════════════════════════════
+function saveScheduledVisit(notify=false) {
+  const teacherSel = document.getElementById('sv-teacher');
+  const teacherId = teacherSel ? teacherSel.value : '';
+  const t = (DB.teachers||[]).find(x=>String(x.id)===String(teacherId));
+  const date = (document.getElementById('sv-date')||{}).value||'';
+  if (!teacherId||!date) { toast('اختر المعلم والتاريخ', false); return; }
+  if (!DB.scheduledVisits) DB.scheduledVisits = [];
+  const entry = {
+    id: Date.now(), teacherId, teacherName: t?t.name:'',
+    subject: (document.getElementById('sv-subject')||{}).value||'',
+    date, period: (document.getElementById('sv-period')||{}).value||'',
+    cls: (document.getElementById('sv-class')||{}).value||'',
+    notes: (document.getElementById('sv-notes')||{}).value||'',
+    done: false, ts: new Date().toISOString()
+  };
+  DB.scheduledVisits.push(entry);
+  saveAllData(); toast('✅ تم حفظ الخطة', true);
+  renderScheduledVisits();
+  if (notify && t && t.phone) {
+    const msg = `السلام عليكم ${t.name}\nنود إعلامكم بأن زيارة صفية مخططة لكم:\n📅 التاريخ: ${date}\n⏰ الحصة: ${entry.period}\n📚 المادة: ${entry.subject}\nتحياتنا`;
+    window.open('https://wa.me/'+t.phone+'?text='+encodeURIComponent(msg));
+  }
+}
+
+function renderScheduledVisits() {
+  const el = document.getElementById('sv-list'); if (!el) return;
+  const filter = (document.getElementById('sv-filter')||{}).value||'pending';
+  const today = new Date(); today.setHours(0,0,0,0);
+  let list = (DB.scheduledVisits||[]).filter(v => {
+    if (filter==='pending') return !v.done;
+    if (filter==='done') return v.done;
+    return true;
+  }).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  if (!list.length) {
+    el.innerHTML = '<p style="padding:14px;text-align:center;color:var(--tx3)">لا توجد زيارات مخططة</p>'; return;
+  }
+  el.innerHTML = list.map(v => {
+    const vDate = new Date(v.date); vDate.setHours(0,0,0,0);
+    const diff = Math.ceil((vDate-today)/86400000);
+    let badge = '';
+    if (!v.done) {
+      if (diff<0) badge = `<span class="badge" style="background:#fee2e2;color:#dc2626">تأخرت ${Math.abs(diff)} يوم</span>`;
+      else if (diff===0) badge = `<span class="badge" style="background:#fef3c7;color:#d97706">اليوم</span>`;
+      else if (diff<=3) badge = `<span class="badge" style="background:#fef3c7;color:#d97706">${diff} أيام</span>`;
+    }
+    return `<div style="border:1px solid var(--brd);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:${v.done?'#f0fdf4':'var(--surf2)'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+        <div>
+          <div style="font-size:12px;font-weight:900;color:var(--d1)">${v.teacherName||'—'}</div>
+          <div style="font-size:10px;color:var(--tx3)">📅 ${v.date} | ${v.period} | ${v.cls||'—'} | ${v.subject||'—'}</div>
+          ${v.notes?`<div style="font-size:10px;color:var(--tx2);margin-top:3px">📝 ${v.notes}</div>`:''}
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          ${badge}
+          ${!v.done?`<button class="btn bsm" style="background:#dcfce7;color:#0d7a5f;font-size:10px" onclick="svMarkDone(${v.id})">✅ تم الإجراء</button>`:'<span style="font-size:10px;color:#0d7a5f;font-weight:700">✅ منجزة</span>'}
+          <button class="btn bsm" style="background:#fee2e2;color:#dc2626;font-size:10px" onclick="svDelete(${v.id})">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function svMarkDone(id) {
+  const v = (DB.scheduledVisits||[]).find(x=>x.id==id);
+  if (!v) return;
+  v.done = true;
+  // انتقل لنموذج الزيارة مع تعبئة بيانات المخطط
+  const teacherSel = document.getElementById('vs-teacher');
+  if (teacherSel) {
+    teacherSel.value = v.teacherId;
+    vsLoadPrevFollowup();
+  }
+  ['vs-subject','vs-class','vs-date','vs-period'].forEach(id2 => {
+    const el = document.getElementById(id2);
+    if (!el) return;
+    if (id2==='vs-subject') el.value = v.subject||'';
+    else if (id2==='vs-class') el.value = v.cls||'';
+    else if (id2==='vs-date') el.value = v.date||'';
+    else if (id2==='vs-period') el.value = v.period||'';
+  });
+  saveAllData(); renderScheduledVisits();
+  // انتقل لتبويب الزيارة الجديدة
+  const firstTab = document.querySelector('#page-visits .tbtn');
+  if (firstTab) swtab(firstTab,'vs','vs1');
+  toast('تم نقل البيانات لنموذج الزيارة ✓', true);
+}
+
+function svDelete(id) {
+  DB.scheduledVisits = (DB.scheduledVisits||[]).filter(x=>x.id!=id);
+  saveAllData(); renderScheduledVisits(); toast('تم الحذف', true);
+}
 
 function exportVisitHTML() {
   const all = (DB.classVisits||[]).slice().reverse();
@@ -17123,11 +17772,43 @@ function renderPeerVisitsPage() {
   }
 }
 
+const PV_EXCLUDED_ROLES = ['امين المصادر','أمين المصادر','محضر المختبر','رائد النشاط','الموجه الطلابي','موجه طلابي','توجيه طلابي'];
+
+// مجموعات التخصصات المرتبطة — تظهر معاً في الزيارات التبادلية
+const PV_SUBJECT_GROUPS = [
+  ['علم البيئة', 'كيمياء'],
+  ['علوم الأرض والفضاء', 'علوم الأرض و الفضاء', 'أحياء'],
+  ['إدارة الأعمال', 'إدارة أعمال', 'علم نفس واجتماع', 'علم النفس والاجتماع'],
+];
+
+// إرجاع كل التخصصات المرتبطة بتخصص معين (بما فيه نفسه)
+function pvGetGroupedSubjects(subj) {
+  const grp = PV_SUBJECT_GROUPS.find(g => g.includes(subj));
+  return grp ? grp : [subj];
+}
+
 function pvPopulateSubjects() {
   const sel = document.getElementById('pv-subject');
   if (!sel) return;
-  const subjects = [...new Set((DB.teachers||[]).map(t=>t.subject).filter(Boolean))].sort();
-  sel.innerHTML = '<option value="">-- اختر التخصص --</option>' + subjects.map(s=>`<option>${s}</option>`).join('');
+  // جمع التخصصات مع إظهار مجموعتها مدموجة في خيار واحد
+  const allTeachers = (DB.teachers||[]).filter(t => t.subject && !PV_EXCLUDED_ROLES.includes(t.subject));
+  const seen = new Set();
+  const options = [];
+  allTeachers.forEach(t => {
+    const grp = pvGetGroupedSubjects(t.subject);
+    const key = grp.sort().join('|');
+    if (!seen.has(key)) {
+      seen.add(key);
+      // عنوان الخيار: دمج التخصصات الموجودة فعلياً في المجموعة
+      const presentSubjects = [...new Set(allTeachers.filter(x => grp.includes(x.subject)).map(x => x.subject))];
+      const label = presentSubjects.join(' / ');
+      options.push({label, subj: presentSubjects[0], grp});
+    }
+  });
+  options.sort((a,b) => a.label.localeCompare(b.label, 'ar'));
+  sel.innerHTML = '<option value="">-- اختر التخصص --</option>' +
+    options.map(o => `<option value="${o.subj}" data-group="${o.grp.join('|')}">${o.label}</option>`).join('');
+}
 }
 
 function pvShowForm() {
@@ -17148,13 +17829,17 @@ function pvHideForm() {
 }
 
 function pvOnSubjectChange() {
-  const subj = document.getElementById('pv-subject').value;
-  const teachers = (DB.teachers||[]).filter(t => t.subject === subj);
+  const selEl = document.getElementById('pv-subject');
+  const subj = selEl.value;
+  const selectedOpt = selEl.options[selEl.selectedIndex];
+  const groupAttr = selectedOpt ? selectedOpt.getAttribute('data-group') : null;
+  const groupSubjects = groupAttr ? groupAttr.split('|') : pvGetGroupedSubjects(subj);
+  const teachers = (DB.teachers||[]).filter(t => groupSubjects.includes(t.subject) && !PV_EXCLUDED_ROLES.includes(t.subject));
   const hostSel = document.getElementById('pv-host');
   const visitorsSel = document.getElementById('pv-visitors');
   hostSel.innerHTML = '<option value="">-- اختر المعلم المضيف --</option>' +
-    teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
-  visitorsSel.innerHTML = teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+    teachers.map(t=>`<option value="${t.id}">${t.name}${teachers.some(x=>x.id!==t.id&&x.subject!==t.subject)?' ('+t.subject+')':''}</option>`).join('');
+  visitorsSel.innerHTML = teachers.map(t=>`<option value="${t.id}">${t.name}${teachers.some(x=>x.id!==t.id&&x.subject!==t.subject)?' ('+t.subject+')':''}</option>`).join('');
 }
 
 function pvOnHostChange() {
@@ -17233,11 +17918,22 @@ function pvDelete(id) {
 function pvRenderAdminList() {
   const wrap = document.getElementById('pv-admin-list');
   if (!wrap) return;
-  const visits = DB.peerVisits || [];
+  const filterSem = (document.getElementById('pv-filter-semester')||{}).value || '';
+  const showArchived = (document.getElementById('pv-show-archived')||{}).checked;
+  let visits = (DB.peerVisits || []).filter(v => {
+    if (!showArchived && v.archived) return false;
+    if (showArchived && !v.archived) return false;
+    if (filterSem && v.semester !== filterSem) return false;
+    return true;
+  });
+
+  pvRenderStats();
+
   if (!visits.length) {
-    wrap.innerHTML = '<div class="card" style="text-align:center;padding:30px;color:var(--tx3)"><div style="font-size:32px;margin-bottom:8px">📋</div><div style="font-size:12px">لا توجد جداول زيارات تبادلية بعد</div><div style="font-size:11px;margin-top:4px">اضغط "+ جدول زيارة جديد" للبدء</div></div>';
+    wrap.innerHTML = `<div class="card" style="text-align:center;padding:30px;color:var(--tx3)"><div style="font-size:32px;margin-bottom:8px">${showArchived?'🗂':'📋'}</div><div style="font-size:12px">${showArchived?'لا توجد زيارات مؤرشفة':'لا توجد جداول زيارات تبادلية بعد'}</div>${!showArchived?'<div style="font-size:11px;margin-top:4px">اضغط "+ جدول زيارة جديد" للبدء</div>':''}</div>`;
     return;
   }
+  const today = new Date(); today.setHours(0,0,0,0);
   const bySubject = {};
   visits.forEach(v => {
     if (!bySubject[v.subject]) bySubject[v.subject] = [];
@@ -17247,15 +17943,41 @@ function pvRenderAdminList() {
     <div class="card" style="margin-bottom:12px">
       <div class="ch">
         <span class="ct"><span class="ct-dot" style="background:#0d7a5f"></span>تخصص: ${subj}</span>
-        <span class="badge" style="background:rgba(13,122,95,.1);color:#0d7a5f">${svs.length} جدول</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="badge" style="background:rgba(13,122,95,.1);color:#0d7a5f">${svs.length} جدول</span>
+          ${!showArchived ? `<button class="btn bsm" style="background:#f1f5f9;color:#475569;font-size:10px" onclick="pvArchiveSubject('${subj}')">🗂 أرشفة التخصص</button>` : ''}
+        </div>
       </div>
       ${svs.map(v => {
         const ackCount = Object.values(v.acknowledgments||{}).filter(a=>a.signed).length;
         const totalTeachers = (v.visitorIds||[]).length + 1;
         const allSigned = ackCount === totalTeachers;
+        // حالة التقارير
+        const visitorIds = v.visitorIds||[];
+        const reports = v.reports||{};
+        const reportsCount = visitorIds.filter(id=>reports[id]).length;
+        const allReports = visitorIds.length > 0 && reportsCount === visitorIds.length;
+        // تحذير اقتراب الموعد
+        let warningBadge = '';
+        if (v.sent && !allSigned && v.date) {
+          const vDate = new Date(v.date); vDate.setHours(0,0,0,0);
+          const diffDays = Math.ceil((vDate - today) / 86400000);
+          if (diffDays >= 0 && diffDays <= 3) {
+            warningBadge = `<span class="badge" style="background:rgba(220,38,38,.12);color:#dc2626;animation:pulse 1.5s infinite">⚠ موعد قريب (${diffDays===0?'اليوم':diffDays+' أيام'})</span>`;
+          } else if (diffDays < 0) {
+            warningBadge = `<span class="badge" style="background:rgba(220,38,38,.12);color:#dc2626">⚠ تأخر التوقيع</span>`;
+          }
+        }
         const sentLabel = v.sent
           ? `<span class="badge" style="background:rgba(13,122,95,.1);color:#0d7a5f">✅ أُرسل</span>`
           : `<span class="badge" style="background:rgba(217,119,6,.1);color:var(--a2)">⏳ لم يُرسل</span>`;
+        // تفصيل حالة كل زائر
+        const visitorsDetail = visitorIds.map(id => {
+          const name = (v.visitorNames||[])[visitorIds.indexOf(id)] || 'معلم';
+          const signed = (v.acknowledgments||{})[id]?.signed;
+          const hasRep = !!reports[id];
+          return `<span style="font-size:10px;background:${signed?'#dcfce7':'#fef3c7'};border-radius:6px;padding:2px 6px;white-space:nowrap">${name} ${signed?'✅':'⏳'}${signed?' '+(hasRep?'📊':'📝'):''}`;
+        }).join('</span> ');
         return `<div style="border:1px solid var(--brd);border-radius:10px;padding:12px;margin-bottom:8px;background:var(--surf2)">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap">
             <div style="flex:1;min-width:0">
@@ -17265,19 +17987,18 @@ function pvRenderAdminList() {
               <div style="font-size:11px;color:var(--tx2);margin-bottom:2px">
                 📅 ${v.day} — ${v.date} | الحصة: ${v.period} | ${v.classRoom} | الفصل ${v.semester}
               </div>
-              <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">📖 ${v.lessonTitle}</div>
-              <div style="font-size:10px;color:var(--tx3)">
-                👥 الزائرون: ${(v.visitorNames||[]).join(' · ')}
-              </div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:6px">📖 ${v.lessonTitle}</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">${visitorsDetail}</span></div>
               <div style="font-size:10px;color:var(--tx3);margin-top:3px">
-                ✍ التوقيعات: ${ackCount} / ${totalTeachers}
-                ${allSigned ? '<span style="color:#0d7a5f;font-weight:800"> — مكتمل</span>' : ''}
+                ✍ التوقيعات: <b>${ackCount}/${totalTeachers}</b>${allSigned?' <span style="color:#0d7a5f;font-weight:800">— مكتمل</span>':''}
+                &nbsp;|&nbsp; 📊 التقارير: <b>${reportsCount}/${visitorIds.length}</b>${allReports&&visitorIds.length?' <span style="color:#0d7a5f;font-weight:800">— مكتملة</span>':''}
               </div>
             </div>
             <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:flex-start">
-              ${sentLabel}
+              ${sentLabel}${warningBadge}
               ${!v.sent ? `<button class="btn bsm" style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff;font-size:10px" onclick="pvSend(${v.id})">📨 إرسال</button>` : ''}
               <button class="btn b-gh bsm" onclick="pvOpenFormModal(${v.id})">📋 الاستمارة</button>
+              ${!v.archived?`<button class="btn bsm" style="background:#f1f5f9;color:#475569;font-size:10px" onclick="pvArchiveOne(${v.id})">🗂</button>`:`<button class="btn bsm" style="background:#dcfce7;color:#0d7a5f;font-size:10px" onclick="pvUnarchiveOne(${v.id})">↩</button>`}
               <button class="btn b-r bsm" onclick="pvDelete(${v.id})">🗑</button>
             </div>
           </div>
@@ -17286,11 +18007,91 @@ function pvRenderAdminList() {
     </div>`).join('');
 }
 
+function pvRenderStats() {
+  const statsWrap = document.getElementById('pv-stats-wrap');
+  if (!statsWrap) return;
+  const active = (DB.peerVisits||[]).filter(v=>!v.archived);
+  const total = active.length;
+  const sent = active.filter(v=>v.sent).length;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const allSignedCount = active.filter(v => {
+    const tot = (v.visitorIds||[]).length + 1;
+    return Object.values(v.acknowledgments||{}).filter(a=>a.signed).length === tot;
+  }).length;
+  const unsigned = sent - allSignedCount;
+  const warning = active.filter(v => {
+    if (!v.sent || !v.date) return false;
+    const vDate = new Date(v.date); vDate.setHours(0,0,0,0);
+    const diff = Math.ceil((vDate-today)/86400000);
+    const totSigned = Object.values(v.acknowledgments||{}).filter(a=>a.signed).length;
+    const tot = (v.visitorIds||[]).length + 1;
+    return diff <= 3 && totSigned < tot;
+  }).length;
+  // إحصاء التقارير
+  const totalVisitors = active.reduce((s,v)=>s+(v.visitorIds||[]).length,0);
+  const completedReports = active.reduce((s,v)=>s+Object.keys(v.reports||{}).length,0);
+  statsWrap.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
+      <div style="background:var(--surf2);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:22px;font-weight:900;color:#0d7a5f">${total}</div>
+        <div style="font-size:10px;color:var(--tx3)">إجمالي الجداول</div>
+      </div>
+      <div style="background:var(--surf2);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:22px;font-weight:900;color:#2563eb">${sent}</div>
+        <div style="font-size:10px;color:var(--tx3)">أُرسلت للمعلمين</div>
+      </div>
+      <div style="background:${allSignedCount===sent&&sent>0?'#f0fdf4':'var(--surf2)'};border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:22px;font-weight:900;color:#0d7a5f">${allSignedCount}</div>
+        <div style="font-size:10px;color:var(--tx3)">مكتملة التوقيع</div>
+      </div>
+      <div style="background:${unsigned>0?'#fffbeb':'var(--surf2)'};border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:22px;font-weight:900;color:${unsigned>0?'#d97706':'var(--tx1)'}">${unsigned}</div>
+        <div style="font-size:10px;color:var(--tx3)">بانتظار التوقيع</div>
+      </div>
+      ${warning>0?`<div style="background:#fef2f2;border-radius:10px;padding:12px;text-align:center;border:1px solid #fca5a5">
+        <div style="font-size:22px;font-weight:900;color:#dc2626">${warning}</div>
+        <div style="font-size:10px;color:#dc2626">موعد قريب ⚠</div>
+      </div>`:''}
+      <div style="background:var(--surf2);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:22px;font-weight:900;color:#7c3aed">${completedReports}<span style="font-size:12px;color:var(--tx3)">/${totalVisitors}</span></div>
+        <div style="font-size:10px;color:var(--tx3)">التقارير المكتملة</div>
+      </div>
+    </div>`;
+}
+
 function pvRenderTeacherView() {
   const wrap = document.getElementById('pv-teacher-list');
   if (!wrap) return;
   const tid = currentTeacherId;
-  const myVisits = (DB.peerVisits||[]).filter(v => v.sent && (
+
+  // ── بطاقة زملاء التخصص ──
+  const teamCard = document.getElementById('pv-team-card');
+  if (teamCard) {
+    const me = (DB.teachers||[]).find(t => t.id == tid || t.id === tid);
+    if (me && me.subject) {
+      const grpSubjects = pvGetGroupedSubjects(me.subject);
+      const teammates = (DB.teachers||[]).filter(t =>
+        grpSubjects.includes(t.subject) && t.id != tid && !PV_EXCLUDED_ROLES.includes(t.subject)
+      );
+      if (teammates.length) {
+        teamCard.innerHTML = `
+          <div class="card" style="border:1.5px solid #bbf7d0;background:#f0fdf4">
+            <div class="ch">
+              <span class="ct"><span class="ct-dot" style="background:#0d7a5f"></span>زملاؤك في التخصص — ${grpSubjects.filter(s=>(DB.teachers||[]).some(t=>t.subject===s)).join(' / ')}</span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              ${teammates.map(t=>`<div style="background:#dcfce7;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:700;color:#14532d">
+                👤 ${t.name}<span style="font-size:9px;color:#16a34a;display:block;font-weight:500">${t.subject}</span>
+              </div>`).join('')}
+            </div>
+          </div>`;
+      } else {
+        teamCard.innerHTML = '';
+      }
+    }
+  }
+
+  const myVisits = (DB.peerVisits||[]).filter(v => v.sent && !v.archived && (
     v.hostTeacherId == tid || (v.visitorIds||[]).includes(tid) || (v.visitorIds||[]).map(Number).includes(Number(tid))
   ));
   const unsignedCount = myVisits.filter(v => !(v.acknowledgments||{})[tid]).length;
@@ -17345,6 +18146,20 @@ function pvRenderTeacherView() {
         <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">📜 يرجى التوقيع بالعلم على جدول الزيارة</div>
         <button onclick="pvSignAck(${v.id})" style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;width:100%">✍ أوافق وأُقرّ بالاطلاع على جدول الزيارة التبادلية</button>
       </div>`}
+      ${!isVisitor && v.visitorIds && v.visitorIds.length ? `
+      <div style="background:var(--surf3);border-radius:8px;padding:8px;margin-bottom:10px">
+        <div style="font-size:9px;color:var(--tx3);margin-bottom:5px">حالة الزائرين</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">
+          ${(v.visitorIds).map((vid,i) => {
+            const vname = (v.visitorNames||[])[i]||'معلم';
+            const vsigned = (v.acknowledgments||{})[vid]?.signed;
+            const vrep = !!(v.reports||{})[vid];
+            return `<span style="font-size:10px;background:${vsigned?'#dcfce7':'#fef3c7'};border-radius:6px;padding:3px 8px;color:${vsigned?'#14532d':'#92400e'}">
+              ${vname} ${vsigned?'✅':'⏳'} ${vsigned?(vrep?'📊 أكمل التقرير':'📝 لم يُكمل التقرير'):''}
+            </span>`;
+          }).join('')}
+        </div>
+      </div>` : ''}
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button onclick="pvOpenFormModal(${v.id})" class="btn b-gh bsm">📋 الاستمارة</button>
         ${isVisitor && isSigned ? `<button onclick="pvOpenReportModal(${v.id})" class="btn bsm" style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff">${hasReport ? '📊 عرض التقرير' : '📝 تعبئة التقرير'}</button>` : ''}
@@ -17747,8 +18562,71 @@ function pvScrollToUnsigned() {
   }
 }
 
+// ── أرشفة ──────────────────────────────────
+function pvArchiveOne(id) {
+  const v = (DB.peerVisits||[]).find(x=>x.id==id);
+  if (!v) return;
+  v.archived = true;
+  saveAllData(); pvRenderAdminList();
+  toast('تم أرشفة الجدول ✓', true);
+}
+function pvUnarchiveOne(id) {
+  const v = (DB.peerVisits||[]).find(x=>x.id==id);
+  if (!v) return;
+  delete v.archived;
+  saveAllData(); pvRenderAdminList();
+  toast('تم استعادة الجدول ✓', true);
+}
+function pvArchiveSubject(subj) {
+  if (!confirm(`أرشفة جميع جداول تخصص "${subj}"؟`)) return;
+  (DB.peerVisits||[]).filter(v=>v.subject===subj&&!v.archived).forEach(v=>{ v.archived=true; });
+  saveAllData(); pvRenderAdminList();
+  toast('تم أرشفة جداول التخصص ✓', true);
+}
+function pvToggleArchive() {
+  const cb = document.getElementById('pv-show-archived');
+  if (cb) { cb.checked = !cb.checked; pvRenderAdminList(); }
+}
+
+// ── تصدير كشف الزيارات ──────────────────
+function pvExportSchedule() {
+  const filterSem = (document.getElementById('pv-filter-semester')||{}).value || '';
+  const visits = (DB.peerVisits||[]).filter(v => !v.archived && (!filterSem || v.semester===filterSem) && v.sent);
+  if (!visits.length) { toast('لا توجد جداول مرسلة للتصدير', false); return; }
+  const semLabel = filterSem ? `الفصل الدراسي ${filterSem}` : 'جميع الفصول';
+  const rows = visits.map((v,i) => `
+    <tr>
+      <td style="text-align:center">${i+1}</td>
+      <td>${v.subject}</td>
+      <td>${v.hostTeacherName}</td>
+      <td>${(v.visitorNames||[]).join(' / ')}</td>
+      <td style="text-align:center">${v.day}</td>
+      <td style="text-align:center">${v.date}</td>
+      <td style="text-align:center">${v.period}</td>
+      <td style="text-align:center">${v.classRoom}</td>
+      <td>${v.lessonTitle}</td>
+      <td style="text-align:center">${v.semester}</td>
+      <td style="text-align:center">${Object.values(v.acknowledgments||{}).filter(a=>a.signed).length}/${(v.visitorIds||[]).length+1}</td>
+    </tr>`).join('');
+  const body = `
+    <h3 style="text-align:center;margin-bottom:10px;font-size:13px">كشف الزيارات التبادلية — ${semLabel}</h3>
+    <table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:10px;direction:rtl">
+      <thead style="background:#0d7a5f;color:#fff">
+        <tr>
+          <th>#</th><th>التخصص</th><th>المعلم المضيف</th><th>الزائرون</th>
+          <th>اليوم</th><th>التاريخ</th><th>الحصة</th><th>الصف</th>
+          <th>الدرس</th><th>الفصل</th><th>التوقيعات</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  _directorExport(showStamp => {
+    _openDoc(_officialDoc('كشف الزيارات التبادلية', body, {showStamp, subject:'الزيارات التبادلية بين معلمي التخصص'}));
+  });
+}
+
 function pvPrintList() {
-  window.print();
+  pvExportSchedule();
 }
 
 // ══════════════════════════════════════════
