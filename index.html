@@ -3143,7 +3143,9 @@ body{background:#fff!important}
   <div class="ph-r no-print" id="pv-admin-btns">
     <button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button>
     <button class="btn bsm" style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff" onclick="pvShowForm()">+ جدول زيارة جديد</button>
+    <button class="btn b-gh bsm" onclick="pvExportSchedule()">📄 تصدير الكشف</button>
     <button class="btn b-gh bsm" onclick="pvPrintList()">🖨 طباعة</button>
+    <button class="btn bsm" style="background:linear-gradient(135deg,#64748b,#475569);color:#fff" onclick="pvToggleArchive()">🗂 الأرشيف</button>
   </div>
   <div class="ph-r no-print" id="pv-teacher-btns" style="display:none">
     <button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button>
@@ -3234,6 +3236,23 @@ body{background:#fff!important}
   </div>
 </div>
 
+<!-- ── لوحة إحصائيات المدير ── -->
+<div id="pv-stats-wrap" style="margin-bottom:14px"></div>
+
+<!-- ── فلتر الفصل / الأرشيف (للمدير) ── -->
+<div id="pv-filter-bar" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+  <label style="font-size:11px;font-weight:700;color:var(--tx2)">الفصل الدراسي:</label>
+  <select class="fc fc-sm" id="pv-filter-semester" onchange="pvRenderAdminList()" style="width:auto;min-width:120px">
+    <option value="">الكل</option>
+    <option value="الأول">الأول</option>
+    <option value="الثاني">الثاني</option>
+  </select>
+  <label style="font-size:11px;font-weight:700;color:var(--tx2);margin-right:8px">
+    <input type="checkbox" id="pv-show-archived" onchange="pvRenderAdminList()" style="margin-left:4px">
+    عرض المؤرشفة
+  </label>
+</div>
+
 <!-- ── قائمة جداول الزيارات (للمدير) ── -->
 <div id="pv-admin-list-wrap">
   <div id="pv-admin-list"></div>
@@ -3241,6 +3260,8 @@ body{background:#fff!important}
 
 <!-- ── صفحة المعلم ── -->
 <div id="pv-teacher-wrap" style="display:none">
+  <!-- بطاقة زملاء التخصص -->
+  <div id="pv-team-card" style="margin-bottom:14px"></div>
   <div id="pv-teacher-list"></div>
 </div>
 
@@ -17279,11 +17300,22 @@ function pvDelete(id) {
 function pvRenderAdminList() {
   const wrap = document.getElementById('pv-admin-list');
   if (!wrap) return;
-  const visits = DB.peerVisits || [];
+  const filterSem = (document.getElementById('pv-filter-semester')||{}).value || '';
+  const showArchived = (document.getElementById('pv-show-archived')||{}).checked;
+  let visits = (DB.peerVisits || []).filter(v => {
+    if (!showArchived && v.archived) return false;
+    if (showArchived && !v.archived) return false;
+    if (filterSem && v.semester !== filterSem) return false;
+    return true;
+  });
+
+  pvRenderStats();
+
   if (!visits.length) {
-    wrap.innerHTML = '<div class="card" style="text-align:center;padding:30px;color:var(--tx3)"><div style="font-size:32px;margin-bottom:8px">📋</div><div style="font-size:12px">لا توجد جداول زيارات تبادلية بعد</div><div style="font-size:11px;margin-top:4px">اضغط "+ جدول زيارة جديد" للبدء</div></div>';
+    wrap.innerHTML = `<div class="card" style="text-align:center;padding:30px;color:var(--tx3)"><div style="font-size:32px;margin-bottom:8px">${showArchived?'🗂':'📋'}</div><div style="font-size:12px">${showArchived?'لا توجد زيارات مؤرشفة':'لا توجد جداول زيارات تبادلية بعد'}</div>${!showArchived?'<div style="font-size:11px;margin-top:4px">اضغط "+ جدول زيارة جديد" للبدء</div>':''}</div>`;
     return;
   }
+  const today = new Date(); today.setHours(0,0,0,0);
   const bySubject = {};
   visits.forEach(v => {
     if (!bySubject[v.subject]) bySubject[v.subject] = [];
@@ -17293,15 +17325,41 @@ function pvRenderAdminList() {
     <div class="card" style="margin-bottom:12px">
       <div class="ch">
         <span class="ct"><span class="ct-dot" style="background:#0d7a5f"></span>تخصص: ${subj}</span>
-        <span class="badge" style="background:rgba(13,122,95,.1);color:#0d7a5f">${svs.length} جدول</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="badge" style="background:rgba(13,122,95,.1);color:#0d7a5f">${svs.length} جدول</span>
+          ${!showArchived ? `<button class="btn bsm" style="background:#f1f5f9;color:#475569;font-size:10px" onclick="pvArchiveSubject('${subj}')">🗂 أرشفة التخصص</button>` : ''}
+        </div>
       </div>
       ${svs.map(v => {
         const ackCount = Object.values(v.acknowledgments||{}).filter(a=>a.signed).length;
         const totalTeachers = (v.visitorIds||[]).length + 1;
         const allSigned = ackCount === totalTeachers;
+        // حالة التقارير
+        const visitorIds = v.visitorIds||[];
+        const reports = v.reports||{};
+        const reportsCount = visitorIds.filter(id=>reports[id]).length;
+        const allReports = visitorIds.length > 0 && reportsCount === visitorIds.length;
+        // تحذير اقتراب الموعد
+        let warningBadge = '';
+        if (v.sent && !allSigned && v.date) {
+          const vDate = new Date(v.date); vDate.setHours(0,0,0,0);
+          const diffDays = Math.ceil((vDate - today) / 86400000);
+          if (diffDays >= 0 && diffDays <= 3) {
+            warningBadge = `<span class="badge" style="background:rgba(220,38,38,.12);color:#dc2626;animation:pulse 1.5s infinite">⚠ موعد قريب (${diffDays===0?'اليوم':diffDays+' أيام'})</span>`;
+          } else if (diffDays < 0) {
+            warningBadge = `<span class="badge" style="background:rgba(220,38,38,.12);color:#dc2626">⚠ تأخر التوقيع</span>`;
+          }
+        }
         const sentLabel = v.sent
           ? `<span class="badge" style="background:rgba(13,122,95,.1);color:#0d7a5f">✅ أُرسل</span>`
           : `<span class="badge" style="background:rgba(217,119,6,.1);color:var(--a2)">⏳ لم يُرسل</span>`;
+        // تفصيل حالة كل زائر
+        const visitorsDetail = visitorIds.map(id => {
+          const name = (v.visitorNames||[])[visitorIds.indexOf(id)] || 'معلم';
+          const signed = (v.acknowledgments||{})[id]?.signed;
+          const hasRep = !!reports[id];
+          return `<span style="font-size:10px;background:${signed?'#dcfce7':'#fef3c7'};border-radius:6px;padding:2px 6px;white-space:nowrap">${name} ${signed?'✅':'⏳'}${signed?' '+(hasRep?'📊':'📝'):''}`;
+        }).join('</span> ');
         return `<div style="border:1px solid var(--brd);border-radius:10px;padding:12px;margin-bottom:8px;background:var(--surf2)">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap">
             <div style="flex:1;min-width:0">
@@ -17311,19 +17369,18 @@ function pvRenderAdminList() {
               <div style="font-size:11px;color:var(--tx2);margin-bottom:2px">
                 📅 ${v.day} — ${v.date} | الحصة: ${v.period} | ${v.classRoom} | الفصل ${v.semester}
               </div>
-              <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">📖 ${v.lessonTitle}</div>
-              <div style="font-size:10px;color:var(--tx3)">
-                👥 الزائرون: ${(v.visitorNames||[]).join(' · ')}
-              </div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:6px">📖 ${v.lessonTitle}</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">${visitorsDetail}</span></div>
               <div style="font-size:10px;color:var(--tx3);margin-top:3px">
-                ✍ التوقيعات: ${ackCount} / ${totalTeachers}
-                ${allSigned ? '<span style="color:#0d7a5f;font-weight:800"> — مكتمل</span>' : ''}
+                ✍ التوقيعات: <b>${ackCount}/${totalTeachers}</b>${allSigned?' <span style="color:#0d7a5f;font-weight:800">— مكتمل</span>':''}
+                &nbsp;|&nbsp; 📊 التقارير: <b>${reportsCount}/${visitorIds.length}</b>${allReports&&visitorIds.length?' <span style="color:#0d7a5f;font-weight:800">— مكتملة</span>':''}
               </div>
             </div>
             <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:flex-start">
-              ${sentLabel}
+              ${sentLabel}${warningBadge}
               ${!v.sent ? `<button class="btn bsm" style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff;font-size:10px" onclick="pvSend(${v.id})">📨 إرسال</button>` : ''}
               <button class="btn b-gh bsm" onclick="pvOpenFormModal(${v.id})">📋 الاستمارة</button>
+              ${!v.archived?`<button class="btn bsm" style="background:#f1f5f9;color:#475569;font-size:10px" onclick="pvArchiveOne(${v.id})">🗂</button>`:`<button class="btn bsm" style="background:#dcfce7;color:#0d7a5f;font-size:10px" onclick="pvUnarchiveOne(${v.id})">↩</button>`}
               <button class="btn b-r bsm" onclick="pvDelete(${v.id})">🗑</button>
             </div>
           </div>
@@ -17332,11 +17389,91 @@ function pvRenderAdminList() {
     </div>`).join('');
 }
 
+function pvRenderStats() {
+  const statsWrap = document.getElementById('pv-stats-wrap');
+  if (!statsWrap) return;
+  const active = (DB.peerVisits||[]).filter(v=>!v.archived);
+  const total = active.length;
+  const sent = active.filter(v=>v.sent).length;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const allSignedCount = active.filter(v => {
+    const tot = (v.visitorIds||[]).length + 1;
+    return Object.values(v.acknowledgments||{}).filter(a=>a.signed).length === tot;
+  }).length;
+  const unsigned = sent - allSignedCount;
+  const warning = active.filter(v => {
+    if (!v.sent || !v.date) return false;
+    const vDate = new Date(v.date); vDate.setHours(0,0,0,0);
+    const diff = Math.ceil((vDate-today)/86400000);
+    const totSigned = Object.values(v.acknowledgments||{}).filter(a=>a.signed).length;
+    const tot = (v.visitorIds||[]).length + 1;
+    return diff <= 3 && totSigned < tot;
+  }).length;
+  // إحصاء التقارير
+  const totalVisitors = active.reduce((s,v)=>s+(v.visitorIds||[]).length,0);
+  const completedReports = active.reduce((s,v)=>s+Object.keys(v.reports||{}).length,0);
+  statsWrap.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
+      <div style="background:var(--surf2);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:22px;font-weight:900;color:#0d7a5f">${total}</div>
+        <div style="font-size:10px;color:var(--tx3)">إجمالي الجداول</div>
+      </div>
+      <div style="background:var(--surf2);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:22px;font-weight:900;color:#2563eb">${sent}</div>
+        <div style="font-size:10px;color:var(--tx3)">أُرسلت للمعلمين</div>
+      </div>
+      <div style="background:${allSignedCount===sent&&sent>0?'#f0fdf4':'var(--surf2)'};border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:22px;font-weight:900;color:#0d7a5f">${allSignedCount}</div>
+        <div style="font-size:10px;color:var(--tx3)">مكتملة التوقيع</div>
+      </div>
+      <div style="background:${unsigned>0?'#fffbeb':'var(--surf2)'};border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:22px;font-weight:900;color:${unsigned>0?'#d97706':'var(--tx1)'}">${unsigned}</div>
+        <div style="font-size:10px;color:var(--tx3)">بانتظار التوقيع</div>
+      </div>
+      ${warning>0?`<div style="background:#fef2f2;border-radius:10px;padding:12px;text-align:center;border:1px solid #fca5a5">
+        <div style="font-size:22px;font-weight:900;color:#dc2626">${warning}</div>
+        <div style="font-size:10px;color:#dc2626">موعد قريب ⚠</div>
+      </div>`:''}
+      <div style="background:var(--surf2);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--brd)">
+        <div style="font-size:22px;font-weight:900;color:#7c3aed">${completedReports}<span style="font-size:12px;color:var(--tx3)">/${totalVisitors}</span></div>
+        <div style="font-size:10px;color:var(--tx3)">التقارير المكتملة</div>
+      </div>
+    </div>`;
+}
+
 function pvRenderTeacherView() {
   const wrap = document.getElementById('pv-teacher-list');
   if (!wrap) return;
   const tid = currentTeacherId;
-  const myVisits = (DB.peerVisits||[]).filter(v => v.sent && (
+
+  // ── بطاقة زملاء التخصص ──
+  const teamCard = document.getElementById('pv-team-card');
+  if (teamCard) {
+    const me = (DB.teachers||[]).find(t => t.id == tid || t.id === tid);
+    if (me && me.subject) {
+      const grpSubjects = pvGetGroupedSubjects(me.subject);
+      const teammates = (DB.teachers||[]).filter(t =>
+        grpSubjects.includes(t.subject) && t.id != tid && !PV_EXCLUDED_ROLES.includes(t.subject)
+      );
+      if (teammates.length) {
+        teamCard.innerHTML = `
+          <div class="card" style="border:1.5px solid #bbf7d0;background:#f0fdf4">
+            <div class="ch">
+              <span class="ct"><span class="ct-dot" style="background:#0d7a5f"></span>زملاؤك في التخصص — ${grpSubjects.filter(s=>(DB.teachers||[]).some(t=>t.subject===s)).join(' / ')}</span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              ${teammates.map(t=>`<div style="background:#dcfce7;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:700;color:#14532d">
+                👤 ${t.name}<span style="font-size:9px;color:#16a34a;display:block;font-weight:500">${t.subject}</span>
+              </div>`).join('')}
+            </div>
+          </div>`;
+      } else {
+        teamCard.innerHTML = '';
+      }
+    }
+  }
+
+  const myVisits = (DB.peerVisits||[]).filter(v => v.sent && !v.archived && (
     v.hostTeacherId == tid || (v.visitorIds||[]).includes(tid) || (v.visitorIds||[]).map(Number).includes(Number(tid))
   ));
   const unsignedCount = myVisits.filter(v => !(v.acknowledgments||{})[tid]).length;
@@ -17391,6 +17528,20 @@ function pvRenderTeacherView() {
         <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">📜 يرجى التوقيع بالعلم على جدول الزيارة</div>
         <button onclick="pvSignAck(${v.id})" style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;width:100%">✍ أوافق وأُقرّ بالاطلاع على جدول الزيارة التبادلية</button>
       </div>`}
+      ${!isVisitor && v.visitorIds && v.visitorIds.length ? `
+      <div style="background:var(--surf3);border-radius:8px;padding:8px;margin-bottom:10px">
+        <div style="font-size:9px;color:var(--tx3);margin-bottom:5px">حالة الزائرين</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">
+          ${(v.visitorIds).map((vid,i) => {
+            const vname = (v.visitorNames||[])[i]||'معلم';
+            const vsigned = (v.acknowledgments||{})[vid]?.signed;
+            const vrep = !!(v.reports||{})[vid];
+            return `<span style="font-size:10px;background:${vsigned?'#dcfce7':'#fef3c7'};border-radius:6px;padding:3px 8px;color:${vsigned?'#14532d':'#92400e'}">
+              ${vname} ${vsigned?'✅':'⏳'} ${vsigned?(vrep?'📊 أكمل التقرير':'📝 لم يُكمل التقرير'):''}
+            </span>`;
+          }).join('')}
+        </div>
+      </div>` : ''}
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button onclick="pvOpenFormModal(${v.id})" class="btn b-gh bsm">📋 الاستمارة</button>
         ${isVisitor && isSigned ? `<button onclick="pvOpenReportModal(${v.id})" class="btn bsm" style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff">${hasReport ? '📊 عرض التقرير' : '📝 تعبئة التقرير'}</button>` : ''}
@@ -17793,8 +17944,71 @@ function pvScrollToUnsigned() {
   }
 }
 
+// ── أرشفة ──────────────────────────────────
+function pvArchiveOne(id) {
+  const v = (DB.peerVisits||[]).find(x=>x.id==id);
+  if (!v) return;
+  v.archived = true;
+  saveAllData(); pvRenderAdminList();
+  toast('تم أرشفة الجدول ✓', true);
+}
+function pvUnarchiveOne(id) {
+  const v = (DB.peerVisits||[]).find(x=>x.id==id);
+  if (!v) return;
+  delete v.archived;
+  saveAllData(); pvRenderAdminList();
+  toast('تم استعادة الجدول ✓', true);
+}
+function pvArchiveSubject(subj) {
+  if (!confirm(`أرشفة جميع جداول تخصص "${subj}"؟`)) return;
+  (DB.peerVisits||[]).filter(v=>v.subject===subj&&!v.archived).forEach(v=>{ v.archived=true; });
+  saveAllData(); pvRenderAdminList();
+  toast('تم أرشفة جداول التخصص ✓', true);
+}
+function pvToggleArchive() {
+  const cb = document.getElementById('pv-show-archived');
+  if (cb) { cb.checked = !cb.checked; pvRenderAdminList(); }
+}
+
+// ── تصدير كشف الزيارات ──────────────────
+function pvExportSchedule() {
+  const filterSem = (document.getElementById('pv-filter-semester')||{}).value || '';
+  const visits = (DB.peerVisits||[]).filter(v => !v.archived && (!filterSem || v.semester===filterSem) && v.sent);
+  if (!visits.length) { toast('لا توجد جداول مرسلة للتصدير', false); return; }
+  const semLabel = filterSem ? `الفصل الدراسي ${filterSem}` : 'جميع الفصول';
+  const rows = visits.map((v,i) => `
+    <tr>
+      <td style="text-align:center">${i+1}</td>
+      <td>${v.subject}</td>
+      <td>${v.hostTeacherName}</td>
+      <td>${(v.visitorNames||[]).join(' / ')}</td>
+      <td style="text-align:center">${v.day}</td>
+      <td style="text-align:center">${v.date}</td>
+      <td style="text-align:center">${v.period}</td>
+      <td style="text-align:center">${v.classRoom}</td>
+      <td>${v.lessonTitle}</td>
+      <td style="text-align:center">${v.semester}</td>
+      <td style="text-align:center">${Object.values(v.acknowledgments||{}).filter(a=>a.signed).length}/${(v.visitorIds||[]).length+1}</td>
+    </tr>`).join('');
+  const body = `
+    <h3 style="text-align:center;margin-bottom:10px;font-size:13px">كشف الزيارات التبادلية — ${semLabel}</h3>
+    <table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:10px;direction:rtl">
+      <thead style="background:#0d7a5f;color:#fff">
+        <tr>
+          <th>#</th><th>التخصص</th><th>المعلم المضيف</th><th>الزائرون</th>
+          <th>اليوم</th><th>التاريخ</th><th>الحصة</th><th>الصف</th>
+          <th>الدرس</th><th>الفصل</th><th>التوقيعات</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  _directorExport(showStamp => {
+    _openDoc(_officialDoc('كشف الزيارات التبادلية', body, {showStamp, subject:'الزيارات التبادلية بين معلمي التخصص'}));
+  });
+}
+
 function pvPrintList() {
-  window.print();
+  pvExportSchedule();
 }
 
 // ══════════════════════════════════════════
