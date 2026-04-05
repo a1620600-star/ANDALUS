@@ -624,6 +624,10 @@ body{background:#fff!important}
       <div class="ni" id="n-visits" onclick="gp('visits')">
         <span class="ni-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>الزيارات الصفية
       </div>
+      <div class="ni" id="n-peer-visits" onclick="gp('peer-visits')">
+        <span class="ni-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/><polyline points="9 11 11 13 15 9"/></svg></span>الزيارات التبادلية
+        <span id="nb-peer-visits" style="display:none;background:var(--r2);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:800;align-items:center;justify-content:center;margin-right:auto">!</span>
+      </div>
       <div class="ni" id="n-perf" onclick="gp('perf')">
         <span class="ni-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>الأداء الوظيفي
       </div>
@@ -3112,6 +3116,148 @@ body{background:#fff!important}
 
 </div><!-- end page-visits -->
 
+<!-- PEER VISITS PAGE -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="page" id="page-peer-visits">
+<div class="ph">
+  <div class="ph-l"><h2><span class="phi" style="background:linear-gradient(135deg,#0d7a5f,#16a34a)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span>الزيارات التبادلية</h2><p>توزيع جدول الزيارات التبادلية بين معلمي التخصص الواحد</p></div>
+  <div class="ph-r no-print" id="pv-admin-btns">
+    <button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button>
+    <button class="btn bsm" style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff" onclick="pvShowForm()">+ جدول زيارة جديد</button>
+    <button class="btn b-gh bsm" onclick="pvPrintList()">🖨 طباعة</button>
+  </div>
+  <div class="ph-r no-print" id="pv-teacher-btns" style="display:none">
+    <button class="back-btn" onclick="gp('dash')">&#8592; الرئيسية</button>
+  </div>
+</div>
+
+<!-- ── بانر الزيارات المعلقة (للمعلم) ── -->
+<div id="pv-teacher-banner" style="display:none;background:#f0fdf4;border:1.5px solid #16a34a;border-radius:12px;padding:14px 16px;margin-bottom:14px;display:none">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span style="font-size:22px">🔔</span>
+    <div style="flex:1">
+      <div style="font-size:12px;font-weight:900;color:#0d7a5f" id="pv-banner-text">لديك زيارة تبادلية بانتظار التوقيع</div>
+      <div style="font-size:10px;color:#16a34a;margin-top:2px">يرجى الاطلاع على جدول الزيارات والتوقيع بالعلم</div>
+    </div>
+    <button onclick="pvScrollToUnsigned()" style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:11px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">✍ التوقيع الآن</button>
+  </div>
+</div>
+
+<!-- ── نموذج إضافة جدول زيارة (للمدير) ── -->
+<div class="card" id="pv-form" style="display:none;margin-bottom:14px">
+  <div class="ch">
+    <span class="ct"><span class="ct-dot"></span>جدول زيارة تبادلية جديد</span>
+    <button class="btn b-gh bsm" onclick="pvHideForm()">✕ إغلاق</button>
+  </div>
+
+  <!-- التخصص -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px">
+    <div class="fg">
+      <label class="fl">التخصص / المادة *</label>
+      <select class="fc fc-sm" id="pv-subject" onchange="pvOnSubjectChange()">
+        <option value="">-- اختر التخصص --</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">الفصل الدراسي *</label>
+      <select class="fc fc-sm" id="pv-semester">
+        <option value="الأول">الأول</option>
+        <option value="الثاني">الثاني</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">اليوم *</label>
+      <select class="fc fc-sm" id="pv-day">
+        <option>الأحد</option><option>الاثنين</option><option>الثلاثاء</option><option>الأربعاء</option><option>الخميس</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">التاريخ *</label>
+      <input type="date" class="fc fc-sm" id="pv-date">
+    </div>
+    <div class="fg">
+      <label class="fl">الحصة *</label>
+      <select class="fc fc-sm" id="pv-period">
+        <option value="الأولى">الأولى</option><option value="الثانية">الثانية</option><option value="الثالثة">الثالثة</option>
+        <option value="الرابعة">الرابعة</option><option value="الخامسة">الخامسة</option><option value="السادسة">السادسة</option><option value="السابعة">السابعة</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">الصف / الفصل *</label>
+      <input type="text" class="fc fc-sm" id="pv-class" placeholder="مثال: 1/1">
+    </div>
+  </div>
+
+  <div class="fg" style="margin-bottom:12px">
+    <label class="fl">الوحدة / عنوان الدرس *</label>
+    <input type="text" class="fc" id="pv-lesson" placeholder="اكتب عنوان الدرس أو الوحدة...">
+  </div>
+
+  <!-- المعلم المضيف -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+    <div>
+      <label class="fl">المعلم المضيف (المزور) *</label>
+      <select class="fc" id="pv-host" onchange="pvOnHostChange()">
+        <option value="">-- اختر المعلم المضيف --</option>
+      </select>
+    </div>
+    <div>
+      <label class="fl">المعلمون الزائرون * <span style="font-size:9px;color:var(--tx3)">(اضغط Ctrl للتعدد)</span></label>
+      <select class="fc" id="pv-visitors" multiple style="height:100px">
+      </select>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn b-g" onclick="pvSave()">💾 حفظ الجدول</button>
+    <button class="btn bsm" style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff" onclick="pvSaveAndSend()">📨 حفظ وإرسال للمعلمين</button>
+    <button class="btn b-gh bsm" onclick="pvHideForm()">إلغاء</button>
+  </div>
+</div>
+
+<!-- ── قائمة جداول الزيارات (للمدير) ── -->
+<div id="pv-admin-list-wrap">
+  <div id="pv-admin-list"></div>
+</div>
+
+<!-- ── صفحة المعلم ── -->
+<div id="pv-teacher-wrap" style="display:none">
+  <div id="pv-teacher-list"></div>
+</div>
+
+</div><!-- end page-peer-visits -->
+
+<!-- ── مودال استمارة الزيارة التبادلية ── -->
+<div id="pv-form-modal" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,22,40,.6);z-index:2000;overflow-y:auto;padding:20px">
+  <div style="max-width:700px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)">
+    <div style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:14px;font-weight:900">📋 استمارة الزيارة التبادلية</span>
+      <button onclick="pvCloseModal('pv-form-modal')" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif">✕</button>
+    </div>
+    <div id="pv-form-modal-body" style="padding:20px"></div>
+    <div style="padding:12px 20px;border-top:1px solid var(--brd);display:flex;gap:8px;background:var(--surf2)">
+      <button onclick="pvPrintFormModal()" class="btn b-gh bsm">🖨 طباعة</button>
+      <button onclick="pvCloseModal('pv-form-modal')" class="btn b-gh bsm">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── مودال تقرير الزيارة التبادلية ── -->
+<div id="pv-report-modal" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,22,40,.6);z-index:2000;overflow-y:auto;padding:20px">
+  <div style="max-width:700px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)">
+    <div style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:14px;font-weight:900">📊 تقرير الزيارة التبادلية</span>
+      <button onclick="pvCloseModal('pv-report-modal')" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;font-family:Cairo,sans-serif">✕</button>
+    </div>
+    <div id="pv-report-modal-body" style="padding:20px"></div>
+    <div style="padding:12px 20px;border-top:1px solid var(--brd);display:flex;gap:8px;flex-wrap:wrap;background:var(--surf2)">
+      <button onclick="pvSaveReport()" class="btn b-g bsm" id="pv-save-report-btn">💾 حفظ التقرير</button>
+      <button onclick="pvPrintReportModal()" class="btn b-gh bsm">🖨 طباعة</button>
+      <button onclick="pvCloseModal('pv-report-modal')" class="btn b-gh bsm">إغلاق</button>
+    </div>
+  </div>
+</div>
+
 <div class="page" id="page-teachers">
 <!-- TEACHERS -->
 <div class="ph">
@@ -4675,7 +4821,8 @@ const DEFAULT_DB = {
     deductPerUnexcused: 2, // نقاط خصم لكل غياب بدون عذر (legacy)
     deductPerLate: 0.5     // نقاط خصم لكل تأخر (legacy)
   },
-  waSettings: { apiToken: '', phoneNumberId: '', enabled: false }
+  waSettings: { apiToken: '', phoneNumberId: '', enabled: false },
+  peerVisits: []
 };
 
 let DB = JSON.parse(JSON.stringify(DEFAULT_DB));
@@ -4921,8 +5068,8 @@ let loginMode = 'admin'; // 'admin' | 'teacher' | 'guidance' | 'activity' | 'lib
 let currentRole = null;  // 'admin' | 'teacher' | 'guidance' | 'activity' | 'library' | 'lab'
 let currentTeacherId = null;
 
-const TEACHER_ALLOWED_PAGES  = ['plan-term','plan-week','profdev','plc','perf','charter','super','remedial'];
-const TEACHER_ALLOWED_NAV    = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-charter','n-super','n-remedial','n-tasks'];
+const TEACHER_ALLOWED_PAGES  = ['plan-term','plan-week','profdev','plc','perf','charter','super','remedial','peer-visits'];
+const TEACHER_ALLOWED_NAV    = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-charter','n-super','n-remedial','n-tasks','n-peer-visits'];
 const GUIDANCE_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf','guidance','plan-imp','attendance','charter','remedial'];
 const GUIDANCE_ALLOWED_NAV   = ['n-plan-term','n-plan-week','n-profdev','n-plc','n-perf','n-guidance','n-plan-imp','n-attendance','n-charter','n-remedial'];
 const ACTIVITY_ALLOWED_PAGES = ['plan-term','plan-week','profdev','plc','perf','activity','plan-imp','attendance','charter'];
@@ -5598,7 +5745,7 @@ const _NI_GROUP_MAP = {
   'n-plan-op':'grp-plans','n-plan-imp':'grp-plans','n-plan-term':'grp-plans','n-plan-week':'grp-plans',
   'n-wait':'grp-daily','n-super':'grp-daily',
   'n-grades':'grp-perf','n-remedial':'grp-perf','n-profdev':'grp-perf','n-plc':'grp-perf',
-  'n-visits':'grp-perf','n-perf':'grp-perf','n-schedule':'grp-perf','n-attendance':'grp-perf',
+  'n-visits':'grp-perf','n-peer-visits':'grp-perf','n-perf':'grp-perf','n-schedule':'grp-perf','n-attendance':'grp-perf',
   'n-guidance':'grp-activities','n-activity':'grp-activities','n-gifted':'grp-activities','n-health':'grp-activities','n-library':'grp-activities','n-lab':'grp-activities',
   'n-teachers':'grp-admin','n-charter':'grp-perf','n-messages':'grp-admin',
   'n-madrasati':'grp-admin','n-settings':'grp-admin'
@@ -5752,6 +5899,7 @@ function gp(id) {
   if (id === 'profdev') { renderProfDev(); _applyPageRoleUI('profdev'); }
   if (id === 'plc') { renderPLCPage(); _applyPageRoleUI('plc'); }
   if (id === 'visits') renderVisitsPage();
+  if (id === 'peer-visits') renderPeerVisitsPage();
   if (id === 'settings') { _refreshStampPreview(); _refreshWASettingsUI(); _applySchoolLogo(); }
   if (id === 'attendance') renderAttendancePage();
 }
@@ -6047,6 +6195,32 @@ function renderNotifs() {
     } else if (newReplies.length > 1) {
       notifs.push({icon:'📨', msg:`${newReplies.length} ردود جديدة على استعلامات التحصيل من المعلمين — انقر للاطلاع`, color:'#0d7a5f',
         action: `document.getElementById('NP').classList.remove('show');gp('remedial');setTimeout(()=>{const tabs=document.querySelectorAll('#page-remedial .tbtn');if(tabs[3])tabs[3].click();},200);(DB.remedialInqNotifs||[]).forEach(n=>n.read=true);saveAllData(true)`});
+    }
+  }
+  // إشعارات الزيارات التبادلية للمعلم
+  if (currentRole === 'teacher' && currentTeacherId) {
+    const myUnsignedPV = (DB.peerVisits||[]).filter(v => v.sent && (
+      v.visitorIds.includes(currentTeacherId) || v.hostTeacherId == currentTeacherId
+    ) && !(v.acknowledgments||{})[currentTeacherId]);
+    if (myUnsignedPV.length) {
+      notifs.push({ icon:'🔔', msg:`لديك ${myUnsignedPV.length === 1 ? 'جدول زيارة تبادلية' : myUnsignedPV.length + ' جداول زيارات تبادلية'} بانتظار التوقيع — انقر للاطلاع`, color:'#0d7a5f',
+        action: `document.getElementById('NP').classList.remove('show');gp('peer-visits')`});
+      const nbPV = document.getElementById('nb-peer-visits');
+      if (nbPV) { nbPV.style.display='flex'; nbPV.textContent=myUnsignedPV.length; }
+    } else {
+      const nbPV = document.getElementById('nb-peer-visits');
+      if (nbPV) nbPV.style.display='none';
+    }
+  }
+  // إشعار المدير بتوقيعات الزيارات التبادلية الجديدة
+  if (currentRole === 'admin') {
+    const newPVSigns = (DB.peerVisits||[]).reduce((acc,v) => {
+      const newSigns = Object.values(v.acknowledgments||{}).filter(a => a.signed && !a.adminRead);
+      return acc + newSigns.length;
+    }, 0);
+    if (newPVSigns) {
+      notifs.push({ icon:'✍', msg:`${newPVSigns} معلم وقّع على جدول زيارته التبادلية — انقر للاطلاع`, color:'#0d7a5f',
+        action:`document.getElementById('NP').classList.remove('show');gp('peer-visits');(DB.peerVisits||[]).forEach(v=>Object.values(v.acknowledgments||{}).forEach(a=>{if(a.signed)a.adminRead=true;}));saveAllData(true)`});
     }
   }
   if (!notifs.length) {
@@ -16764,6 +16938,537 @@ function _refreshWASettingsUI() {
       ? '<b>✅ الإرسال المباشر مفعّل:</b> ستُرسَل الرسائل مباشرةً عبر WhatsApp Cloud API بضغطة واحدة.'
       : '<b>📱 الوضع الحالي: wa.me</b><br>سيفتح النظام تطبيق واتساب لكل معلم تباعاً — مناسب لتطبيق واتساب بيزنس.<br>لتفعيل الإرسال المباشر: أضف بيانات API وفعّل الخيار أعلاه.';
   }
+}
+// ══════════════════════════════════════════
+// الزيارات التبادلية — PEER VISITS
+// ══════════════════════════════════════════
+const PV_CRITERIA = [
+  { section:'التخطيط للحصة', items:['الأهداف واضحة ومحددة ومعلنة للطلاب','المحتوى مناسب للمرحلة ومرتبط بخبرات الطلاب'] },
+  { section:'أساليب التدريس', items:['تنوع الاستراتيجيات المستخدمة','إشراك جميع الطلاب وتوزيع الفرص'] },
+  { section:'إدارة الصف', items:['الانضباط الصفي والتحفيز الإيجابي','استخدام الوسائل التعليمية بفعالية'] },
+  { section:'التقويم', items:['وجود تقويم قبلي / بنائي / ختامي','توظيف نتائج التقويم الفوري خلال الدرس'] },
+  { section:'أثر التعلم', items:['تقبل المعلم لمشاركات الطلاب','وضوح أثر التعلم على الطلاب'] }
+];
+const PV_PRINCIPAL = 'عبدالعزيز عبده حديش الألمعي';
+
+function pvGetHijri(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('ar-SA-u-ca-islamic', {year:'numeric',month:'long',day:'numeric'}) + ' هـ';
+  } catch(e) { return dateStr; }
+}
+
+function pvDayFromDate(dateStr) {
+  if (!dateStr) return '';
+  try {
+    return new Date(dateStr).toLocaleDateString('ar-SA',{weekday:'long'});
+  } catch(e) { return ''; }
+}
+
+function renderPeerVisitsPage() {
+  const isAdmin = currentRole === 'admin';
+  document.getElementById('pv-admin-btns').style.display = isAdmin ? '' : 'none';
+  document.getElementById('pv-teacher-btns').style.display = isAdmin ? 'none' : '';
+  document.getElementById('pv-admin-list-wrap').style.display = isAdmin ? '' : 'none';
+  document.getElementById('pv-teacher-wrap').style.display = isAdmin ? 'none' : '';
+  document.getElementById('pv-form').style.display = 'none';
+  if (isAdmin) {
+    pvPopulateSubjects();
+    pvRenderAdminList();
+  } else {
+    pvRenderTeacherView();
+  }
+}
+
+function pvPopulateSubjects() {
+  const sel = document.getElementById('pv-subject');
+  if (!sel) return;
+  const subjects = [...new Set((DB.teachers||[]).map(t=>t.subject).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">-- اختر التخصص --</option>' + subjects.map(s=>`<option>${s}</option>`).join('');
+}
+
+function pvShowForm() {
+  document.getElementById('pv-form').style.display = '';
+  pvPopulateSubjects();
+  document.getElementById('pv-subject').value = '';
+  document.getElementById('pv-host').innerHTML = '<option value="">-- اختر التخصص أولاً --</option>';
+  document.getElementById('pv-visitors').innerHTML = '';
+  document.getElementById('pv-lesson').value = '';
+  document.getElementById('pv-class').value = '';
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('pv-date').value = today;
+  document.getElementById('pv-form').scrollIntoView({behavior:'smooth'});
+}
+
+function pvHideForm() {
+  document.getElementById('pv-form').style.display = 'none';
+}
+
+function pvOnSubjectChange() {
+  const subj = document.getElementById('pv-subject').value;
+  const teachers = (DB.teachers||[]).filter(t => t.subject === subj);
+  const hostSel = document.getElementById('pv-host');
+  const visitorsSel = document.getElementById('pv-visitors');
+  hostSel.innerHTML = '<option value="">-- اختر المعلم المضيف --</option>' +
+    teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  visitorsSel.innerHTML = teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+}
+
+function pvOnHostChange() {
+  const hostId = document.getElementById('pv-host').value;
+  const visitorsSel = document.getElementById('pv-visitors');
+  Array.from(visitorsSel.options).forEach(o => {
+    o.disabled = (o.value == hostId);
+    if (o.selected && o.value == hostId) o.selected = false;
+  });
+}
+
+function pvGetFormData() {
+  const subj = document.getElementById('pv-subject').value.trim();
+  const hostId = parseInt(document.getElementById('pv-host').value);
+  const visitorOpts = Array.from(document.getElementById('pv-visitors').selectedOptions);
+  const visitorIds = visitorOpts.map(o=>parseInt(o.value));
+  const day = document.getElementById('pv-day').value;
+  const date = document.getElementById('pv-date').value;
+  const period = document.getElementById('pv-period').value;
+  const semester = document.getElementById('pv-semester').value;
+  const classRoom = document.getElementById('pv-class').value.trim();
+  const lessonTitle = document.getElementById('pv-lesson').value.trim();
+  if (!subj) { toast('اختر التخصص', false); return null; }
+  if (!hostId) { toast('اختر المعلم المضيف', false); return null; }
+  if (!visitorIds.length) { toast('اختر معلماً زائراً واحداً على الأقل', false); return null; }
+  if (!date) { toast('اختر التاريخ', false); return null; }
+  if (!lessonTitle) { toast('أدخل عنوان الدرس', false); return null; }
+  const hostTeacher = (DB.teachers||[]).find(t=>t.id===hostId);
+  const visitorNames = visitorIds.map(id=>(DB.teachers||[]).find(t=>t.id===id)?.name||'').filter(Boolean);
+  return { id:Date.now(), subject:subj, hostTeacherId:hostId, hostTeacherName:hostTeacher?.name||'',
+    visitorIds, visitorNames, day, date, period, semester, classRoom, lessonTitle,
+    sent:false, sentAt:null, acknowledgments:{}, reports:{} };
+}
+
+function pvSave() {
+  const data = pvGetFormData();
+  if (!data) return;
+  DB.peerVisits = DB.peerVisits || [];
+  DB.peerVisits.push(data);
+  saveAllData();
+  toast('تم حفظ جدول الزيارة ✓', true);
+  pvHideForm();
+  pvRenderAdminList();
+}
+
+function pvSaveAndSend() {
+  const data = pvGetFormData();
+  if (!data) return;
+  data.sent = true;
+  data.sentAt = new Date().toISOString();
+  DB.peerVisits = DB.peerVisits || [];
+  DB.peerVisits.push(data);
+  saveAllData();
+  toast('تم حفظ الجدول وإرساله للمعلمين ✓', true);
+  pvHideForm();
+  pvRenderAdminList();
+}
+
+function pvSend(id) {
+  const v = (DB.peerVisits||[]).find(x=>x.id==id);
+  if (!v) return;
+  v.sent = true;
+  v.sentAt = new Date().toISOString();
+  saveAllData();
+  toast('تم إرسال الجدول للمعلمين ✓', true);
+  pvRenderAdminList();
+}
+
+function pvDelete(id) {
+  if (!confirm('هل تريد حذف هذا الجدول؟')) return;
+  DB.peerVisits = (DB.peerVisits||[]).filter(x=>x.id!=id);
+  saveAllData();
+  toast('تم الحذف', true);
+  pvRenderAdminList();
+}
+function pvRenderAdminList() {
+  const wrap = document.getElementById('pv-admin-list');
+  if (!wrap) return;
+  const visits = DB.peerVisits || [];
+  if (!visits.length) {
+    wrap.innerHTML = '<div class="card" style="text-align:center;padding:30px;color:var(--tx3)"><div style="font-size:32px;margin-bottom:8px">📋</div><div style="font-size:12px">لا توجد جداول زيارات تبادلية بعد</div><div style="font-size:11px;margin-top:4px">اضغط "+ جدول زيارة جديد" للبدء</div></div>';
+    return;
+  }
+  const bySubject = {};
+  visits.forEach(v => {
+    if (!bySubject[v.subject]) bySubject[v.subject] = [];
+    bySubject[v.subject].push(v);
+  });
+  wrap.innerHTML = Object.entries(bySubject).map(([subj, svs]) => `
+    <div class="card" style="margin-bottom:12px">
+      <div class="ch">
+        <span class="ct"><span class="ct-dot" style="background:#0d7a5f"></span>تخصص: ${subj}</span>
+        <span class="badge" style="background:rgba(13,122,95,.1);color:#0d7a5f">${svs.length} جدول</span>
+      </div>
+      ${svs.map(v => {
+        const ackCount = Object.values(v.acknowledgments||{}).filter(a=>a.signed).length;
+        const totalTeachers = (v.visitorIds||[]).length + 1;
+        const allSigned = ackCount === totalTeachers;
+        const sentLabel = v.sent
+          ? `<span class="badge" style="background:rgba(13,122,95,.1);color:#0d7a5f">✅ أُرسل</span>`
+          : `<span class="badge" style="background:rgba(217,119,6,.1);color:var(--a2)">⏳ لم يُرسل</span>`;
+        return `<div style="border:1px solid var(--brd);border-radius:10px;padding:12px;margin-bottom:8px;background:var(--surf2)">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:900;color:var(--d1);margin-bottom:4px">
+                🏫 المضيف: ${v.hostTeacherName}
+              </div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:2px">
+                📅 ${v.day} — ${v.date} | الحصة: ${v.period} | ${v.classRoom} | الفصل ${v.semester}
+              </div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">📖 ${v.lessonTitle}</div>
+              <div style="font-size:10px;color:var(--tx3)">
+                👥 الزائرون: ${(v.visitorNames||[]).join(' · ')}
+              </div>
+              <div style="font-size:10px;color:var(--tx3);margin-top:3px">
+                ✍ التوقيعات: ${ackCount} / ${totalTeachers}
+                ${allSigned ? '<span style="color:#0d7a5f;font-weight:800"> — مكتمل</span>' : ''}
+              </div>
+            </div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:flex-start">
+              ${sentLabel}
+              ${!v.sent ? `<button class="btn bsm" style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff;font-size:10px" onclick="pvSend(${v.id})">📨 إرسال</button>` : ''}
+              <button class="btn b-gh bsm" onclick="pvOpenFormModal(${v.id})">📋 الاستمارة</button>
+              <button class="btn b-r bsm" onclick="pvDelete(${v.id})">🗑</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+function pvRenderTeacherView() {
+  const wrap = document.getElementById('pv-teacher-list');
+  if (!wrap) return;
+  const tid = currentTeacherId;
+  const myVisits = (DB.peerVisits||[]).filter(v => v.sent && (
+    v.hostTeacherId == tid || (v.visitorIds||[]).includes(tid) || (v.visitorIds||[]).map(Number).includes(Number(tid))
+  ));
+  const unsignedCount = myVisits.filter(v => !(v.acknowledgments||{})[tid]).length;
+  const banner = document.getElementById('pv-teacher-banner');
+  if (banner) {
+    if (unsignedCount > 0) {
+      document.getElementById('pv-banner-text').textContent =
+        unsignedCount === 1 ? 'لديك جدول زيارة تبادلية بانتظار التوقيع' : `لديك ${unsignedCount} جداول زيارات تبادلية بانتظار التوقيع`;
+      banner.style.display = '';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+  if (!myVisits.length) {
+    wrap.innerHTML = '<div class="card" style="text-align:center;padding:30px;color:var(--tx3)"><div style="font-size:32px;margin-bottom:8px">🔔</div><div style="font-size:12px">لا توجد زيارات تبادلية مرصودة لك حالياً</div></div>';
+    return;
+  }
+  wrap.innerHTML = myVisits.map(v => {
+    const ack = (v.acknowledgments||{})[tid];
+    const isSigned = ack && ack.signed;
+    const isVisitor = (v.visitorIds||[]).map(Number).includes(Number(tid));
+    const hasReport = isVisitor && (v.reports||{})[tid];
+    const myRole = v.hostTeacherId == tid ? '🏫 أنت المضيف' : '👁 أنت زائر';
+    return `<div class="card" style="margin-bottom:12px;border:2px solid ${isSigned ? '#bbf7d0' : '#fde68a'};background:${isSigned ? '#f0fdf4' : '#fffbeb'}">
+      <div class="ch">
+        <span class="ct"><span class="ct-dot" style="background:#0d7a5f"></span>زيارة تبادلية — ${v.subject}</span>
+        <span style="font-size:10px;font-weight:700;color:#0d7a5f">${myRole}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:10px">
+        <div style="background:var(--surf3);border-radius:8px;padding:8px">
+          <div style="font-size:9px;color:var(--tx3)">المعلم المضيف</div>
+          <div style="font-size:11px;font-weight:800">${v.hostTeacherName}</div>
+        </div>
+        <div style="background:var(--surf3);border-radius:8px;padding:8px">
+          <div style="font-size:9px;color:var(--tx3)">اليوم والتاريخ</div>
+          <div style="font-size:11px;font-weight:800">${v.day} — ${v.date}</div>
+        </div>
+        <div style="background:var(--surf3);border-radius:8px;padding:8px">
+          <div style="font-size:9px;color:var(--tx3)">الحصة / الصف</div>
+          <div style="font-size:11px;font-weight:800">${v.period} / ${v.classRoom}</div>
+        </div>
+        <div style="background:var(--surf3);border-radius:8px;padding:8px">
+          <div style="font-size:9px;color:var(--tx3)">الفصل الدراسي</div>
+          <div style="font-size:11px;font-weight:800">${v.semester}</div>
+        </div>
+      </div>
+      <div style="background:var(--surf3);border-radius:8px;padding:8px;margin-bottom:10px">
+        <div style="font-size:9px;color:var(--tx3)">الوحدة / عنوان الدرس</div>
+        <div style="font-size:11px;font-weight:800">${v.lessonTitle}</div>
+      </div>
+      ${isSigned ? `<div style="background:#dcfce7;border-radius:8px;padding:8px;margin-bottom:10px;font-size:11px;color:#14532d;font-weight:700">✅ وقّعت بالعلم في ${ack.signDate}</div>` : `<div id="pv-sign-target-${v.id}" style="background:#fef3c7;border-radius:8px;padding:10px;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">📜 يرجى التوقيع بالعلم على جدول الزيارة</div>
+        <button onclick="pvSignAck(${v.id})" style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:12px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif;width:100%">✍ أوافق وأُقرّ بالاطلاع على جدول الزيارة التبادلية</button>
+      </div>`}
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button onclick="pvOpenFormModal(${v.id})" class="btn b-gh bsm">📋 الاستمارة</button>
+        ${isVisitor && isSigned ? `<button onclick="pvOpenReportModal(${v.id})" class="btn bsm" style="background:linear-gradient(135deg,#0d7a5f,#16a34a);color:#fff">${hasReport ? '📊 عرض التقرير' : '📝 تعبئة التقرير'}</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function pvSignAck(visitId) {
+  const v = (DB.peerVisits||[]).find(x=>x.id==visitId);
+  if (!v) return;
+  v.acknowledgments = v.acknowledgments || {};
+  const signDate = new Date().toLocaleDateString('ar-SA-u-nu-latn');
+  v.acknowledgments[currentTeacherId] = { signed:true, signDate, adminRead:false };
+  saveAllData();
+  toast('تم التوقيع بالعلم ✓', true);
+  renderNotifs();
+  pvRenderTeacherView();
+}
+
+function pvOpenFormModal(visitId) {
+  const v = (DB.peerVisits||[]).find(x=>x.id==visitId);
+  if (!v) return;
+  const hijri = pvGetHijri(v.date);
+  const body = document.getElementById('pv-form-modal-body');
+  body.innerHTML = `
+    <div id="pv-print-form-area" style="font-family:Cairo,sans-serif;direction:rtl">
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:15px;font-weight:900;color:#0d7a5f;margin-bottom:4px">استمارة الزيارة التبادلية</div>
+        <div style="font-size:11px;color:var(--tx3)">ثانوية الأندلس بترقش</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:8px">
+          <div style="font-size:9px;color:#0d7a5f;font-weight:700;margin-bottom:3px">اسم المعلم/ة المَزُور/ة:</div>
+          <div style="font-size:12px;font-weight:800">${v.hostTeacherName}</div>
+        </div>
+        <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:8px">
+          <div style="font-size:9px;color:#0d7a5f;font-weight:700;margin-bottom:3px">اليوم والتاريخ:</div>
+          <div style="font-size:12px;font-weight:800">${v.day} — ${hijri}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+        <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:8px">
+          <div style="font-size:9px;color:#0d7a5f;font-weight:700;margin-bottom:3px">المادة:</div>
+          <div style="font-size:12px;font-weight:800">${v.subject}</div>
+        </div>
+        <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:8px">
+          <div style="font-size:9px;color:#0d7a5f;font-weight:700;margin-bottom:3px">الصف / الفصل:</div>
+          <div style="font-size:12px;font-weight:800">${v.classRoom}</div>
+        </div>
+        <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:8px">
+          <div style="font-size:9px;color:#0d7a5f;font-weight:700;margin-bottom:3px">الفصل الدراسي:</div>
+          <div style="font-size:12px;font-weight:800">${v.semester}</div>
+        </div>
+      </div>
+      <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:10px;margin-bottom:12px">
+        <div style="font-size:9px;color:#0d7a5f;font-weight:700;margin-bottom:4px">الوحدة / عنوان الدرس:</div>
+        <div style="font-size:12px;font-weight:800">${v.lessonTitle}</div>
+      </div>
+      <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="font-size:10px;color:#0d7a5f;font-weight:900;margin-bottom:8px;text-align:center">أهداف الزيارة:</div>
+        <div style="font-size:11px;line-height:2;color:var(--tx1)">
+          ١. تبادل الخبرات التربوية بين المعلمين.<br>
+          ٢. الاطلاع على أساليب واستراتيجيات التدريس المختلفة.<br>
+          ٣. تحسين الأداء التدريسي من خلال الاستفادة من الممارسات الناجحة.<br>
+          ٤. تعزيز التعاون والتواصل بين المعلمين في بيئة العمل.<br>
+          ٥. متابعة طرق تفاعل الطلاب مع الدروس واستراتيجيات التقييم.
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:16px">
+        <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:10px">
+          <div style="font-size:9px;color:#0d7a5f;font-weight:700;margin-bottom:6px">المعلمون الزائرون:</div>
+          ${(v.visitorNames||[]).map((n,i) => {
+            const vid = (v.visitorIds||[])[i];
+            const ack = (v.acknowledgments||{})[vid];
+            return `<div style="font-size:11px;padding:4px 0;border-bottom:1px dashed var(--brd);display:flex;align-items:center;justify-content:space-between">
+              <span>${n}</span>
+              ${ack && ack.signed ? `<span style="font-size:9px;color:#0d7a5f;font-weight:700">وقّع ✓</span>` : '<span style="font-size:9px;color:var(--tx3)">—</span>'}
+            </div>`;
+          }).join('')}
+          <div style="font-size:11px;padding:4px 0;display:flex;align-items:center;justify-content:space-between">
+            <span>${v.hostTeacherName} (المضيف)</span>
+            ${(v.acknowledgments||{})[v.hostTeacherId]?.signed ? `<span style="font-size:9px;color:#0d7a5f;font-weight:700">وقّع ✓</span>` : '<span style="font-size:9px;color:var(--tx3)">—</span>'}
+          </div>
+        </div>
+        <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:10px;min-width:100px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <div style="font-size:9px;color:#0d7a5f;font-weight:700;margin-bottom:30px">التوقيع</div>
+          <div style="border-bottom:1px solid var(--brd);width:80px;margin-bottom:4px"></div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:8px;border-top:1px solid var(--brd);padding-top:10px">
+        <div style="font-size:10px;color:var(--tx3)">مدير المدرسة</div>
+        <div style="font-size:11px;font-weight:800">${PV_PRINCIPAL}</div>
+      </div>
+    </div>`;
+  document.getElementById('pv-form-modal').style.display = '';
+}
+
+function pvOpenReportModal(visitId) {
+  const v = (DB.peerVisits||[]).find(x=>x.id==visitId);
+  if (!v) return;
+  const tid = currentTeacherId;
+  const isAdmin = currentRole === 'admin';
+  const existingReport = (v.reports||{})[tid] || {};
+  const hijri = pvGetHijri(v.date);
+  const myName = isAdmin ? '' : ((DB.teachers||[]).find(t=>t.id==tid)?.name||'');
+  const canEdit = isAdmin ? false : ((v.visitorIds||[]).map(Number).includes(Number(tid)));
+  const saveBtn = document.getElementById('pv-save-report-btn');
+  if (saveBtn) saveBtn.style.display = canEdit ? '' : 'none';
+  window._pvCurrentReportVisitId = visitId;
+  const body = document.getElementById('pv-report-modal-body');
+  body.innerHTML = `
+    <div id="pv-print-report-area" style="font-family:Cairo,sans-serif;direction:rtl">
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:15px;font-weight:900;color:#0d7a5f;margin-bottom:4px">تقرير الزيارة التبادلية</div>
+        <div style="font-size:11px;color:var(--tx3)">ثانوية الأندلس بترقش</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:8px">
+          <div style="font-size:9px;color:#0d7a5f;font-weight:700;margin-bottom:3px">اسم المعلم/ة الزائر/ة:</div>
+          <div style="font-size:12px;font-weight:800">${myName || '—'}</div>
+        </div>
+        <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:8px">
+          <div style="font-size:9px;color:#0d7a5f;font-weight:700;margin-bottom:3px">اسم المعلم/ة المَزُور/ة:</div>
+          <div style="font-size:12px;font-weight:800">${v.hostTeacherName}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:8px">
+          <div style="font-size:9px;color:#0d7a5f;font-weight:700;margin-bottom:3px">اليوم / التاريخ:</div>
+          <div style="font-size:10px;font-weight:800">${v.day} — ${hijri}</div>
+        </div>
+        <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:8px">
+          <div style="font-size:9px;color:#0d7a5f;font-weight:700;margin-bottom:3px">الصف / الفصل:</div>
+          <div style="font-size:10px;font-weight:800">${v.classRoom}</div>
+        </div>
+        <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:8px">
+          <div style="font-size:9px;color:#0d7a5f;font-weight:700;margin-bottom:3px">الفصل الدراسي:</div>
+          <div style="font-size:10px;font-weight:800">${v.semester}</div>
+        </div>
+        <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:8px">
+          <div style="font-size:9px;color:#0d7a5f;font-weight:700;margin-bottom:3px">المادة:</div>
+          <div style="font-size:10px;font-weight:800">${v.subject}</div>
+        </div>
+      </div>
+      <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:10px;margin-bottom:12px">
+        <div style="font-size:9px;color:#0d7a5f;font-weight:700;margin-bottom:4px">الوحدة / عنوان الدرس:</div>
+        <div style="font-size:12px;font-weight:800">${v.lessonTitle}</div>
+      </div>
+      <div style="border:1.5px solid #0d7a5f;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:900;color:#0d7a5f;text-align:center;margin-bottom:10px">عناصر التقويم</div>
+        <div style="display:grid;grid-template-columns:1fr 80px 80px 80px;gap:0;font-size:10px">
+          <div style="font-weight:700;padding:5px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px 0 0 0">البند</div>
+          <div style="font-weight:700;padding:5px;text-align:center;background:#f0fdf4;border:1px solid #bbf7d0;border-top-right-radius:4px">متحقق</div>
+          <div style="font-weight:700;padding:5px;text-align:center;background:#f0fdf4;border:1px solid #bbf7d0;border-left:none">متحقق جزئياً</div>
+          <div style="font-weight:700;padding:5px;text-align:center;background:#f0fdf4;border:1px solid #bbf7d0;border-left:none">غير متحقق</div>
+        </div>
+        ${PV_CRITERIA.map(cat => `
+          <div style="font-weight:900;font-size:10px;color:#0d7a5f;padding:6px 5px;background:#f7fdfb;border:1px solid #bbf7d0;border-top:none;grid-column:1/-1" class="pv-sec-row">${cat.section}:</div>
+          ${cat.items.map((item, idx) => {
+            const key = cat.section + '_' + idx;
+            const val = (existingReport.criteria||{})[key] || '';
+            const opts = ['متحقق','متحقق جزئياً','غير متحقق'];
+            return `<div style="display:grid;grid-template-columns:1fr 80px 80px 80px;gap:0">
+              <div style="font-size:10px;padding:6px 5px;border:1px solid #e5e7eb;border-top:none;line-height:1.5">${item}</div>
+              ${opts.map(opt => `<div style="border:1px solid #e5e7eb;border-top:none;border-right:none;display:flex;align-items:center;justify-content:center">
+                ${canEdit
+                  ? `<input type="radio" name="pvcr_${key}" value="${opt}" ${val===opt?'checked':''} onchange="window._pvCriteria=window._pvCriteria||{};window._pvCriteria['${key}']='${opt}'" style="width:16px;height:16px;cursor:pointer">`
+                  : (val===opt ? '<span style="color:#0d7a5f;font-weight:900;font-size:14px">✓</span>' : '')
+                }
+              </div>`).join('')}
+            </div>`;
+          }).join('')}
+        `).join('')}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div>
+          <div style="font-size:10px;color:#0d7a5f;font-weight:700;margin-bottom:4px">نقاط تميز أداء المعلم/ة المَزُور/ة:</div>
+          ${canEdit
+            ? `<textarea id="pv-report-strengths" class="fc" rows="4" style="font-size:11px">${existingReport.strengths||''}</textarea>`
+            : `<div style="border:1px solid #e5e7eb;border-radius:6px;padding:8px;font-size:11px;min-height:80px;line-height:1.8">${existingReport.strengths||'—'}</div>`
+          }
+        </div>
+        <div>
+          <div style="font-size:10px;color:#0d7a5f;font-weight:700;margin-bottom:4px">التوصيات:</div>
+          ${canEdit
+            ? `<textarea id="pv-report-recs" class="fc" rows="4" style="font-size:11px">${existingReport.recommendations||''}</textarea>`
+            : `<div style="border:1px solid #e5e7eb;border-radius:6px;padding:8px;font-size:11px;min-height:80px;line-height:1.8">${existingReport.recommendations||'—'}</div>`
+          }
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;border-top:1px solid var(--brd);padding-top:12px">
+        <div><div style="font-size:10px;color:var(--tx3)">المعلم/ة المَزُور/ة</div><div style="font-size:11px;font-weight:800;margin-top:20px">${v.hostTeacherName}</div></div>
+        <div><div style="font-size:10px;color:var(--tx3)">المعلم/ة الزائر/ة</div><div style="font-size:11px;font-weight:800;margin-top:20px">${myName||'—'}</div></div>
+        <div><div style="font-size:10px;color:var(--tx3)">مدير المدرسة</div><div style="font-size:11px;font-weight:800;margin-top:20px">${PV_PRINCIPAL}</div></div>
+      </div>
+    </div>`;
+  if (canEdit) window._pvCriteria = Object.assign({}, (existingReport.criteria||{}));
+  document.getElementById('pv-report-modal').style.display = '';
+}
+function pvSaveReport() {
+  const visitId = window._pvCurrentReportVisitId;
+  const v = (DB.peerVisits||[]).find(x=>x.id==visitId);
+  if (!v) return;
+  const tid = currentTeacherId;
+  const strengths = document.getElementById('pv-report-strengths')?.value || '';
+  const recs = document.getElementById('pv-report-recs')?.value || '';
+  const criteria = window._pvCriteria || {};
+  // Also read current radio selections
+  document.querySelectorAll('#pv-report-modal input[type=radio]:checked').forEach(r => {
+    const key = r.name.replace('pvcr_','');
+    criteria[key] = r.value;
+  });
+  v.reports = v.reports || {};
+  v.reports[tid] = {
+    criteria,
+    strengths,
+    recommendations: recs,
+    signDate: new Date().toLocaleDateString('ar-SA-u-nu-latn')
+  };
+  saveAllData();
+  toast('تم حفظ التقرير ✓', true);
+  pvCloseModal('pv-report-modal');
+  pvRenderTeacherView();
+}
+
+function pvCloseModal(id) {
+  const m = document.getElementById(id);
+  if (m) m.style.display = 'none';
+}
+
+function pvPrintFormModal() {
+  const area = document.getElementById('pv-print-form-area');
+  if (!area) return;
+  const w = window.open('','_blank','width=800,height:900');
+  w.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>استمارة الزيارة التبادلية</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Cairo,sans-serif;direction:rtl;padding:30px;color:#111}@media print{body{padding:15px}}</style></head><body>${area.innerHTML}
+  <script>window.onload=function(){window.print();}<\/script></body></html>`);
+  w.document.close();
+}
+
+function pvPrintReportModal() {
+  const area = document.getElementById('pv-print-report-area');
+  if (!area) return;
+  const w = window.open('','_blank','width=800,height:900');
+  w.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>تقرير الزيارة التبادلية</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Cairo,sans-serif;direction:rtl;padding:30px;color:#111}@media print{body{padding:15px}}</style></head><body>${area.innerHTML}
+  <script>window.onload=function(){window.print();}<\/script></body></html>`);
+  w.document.close();
+}
+
+function pvScrollToUnsigned() {
+  const tid = currentTeacherId;
+  const unsigned = (DB.peerVisits||[]).find(v => v.sent &&
+    (v.hostTeacherId==tid || (v.visitorIds||[]).map(Number).includes(Number(tid))) &&
+    !(v.acknowledgments||{})[tid]
+  );
+  if (unsigned) {
+    const el = document.getElementById('pv-sign-target-' + unsigned.id);
+    if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+}
+
+function pvPrintList() {
+  window.print();
 }
 
 // ══════════════════════════════════════════
