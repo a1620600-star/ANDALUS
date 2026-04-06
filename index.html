@@ -10545,7 +10545,7 @@ function renderTT(q) {
   const tb = document.getElementById('TTB');
   if (!tb) return;
   // استثناء الإداريين من جدول المعلمين
-  let data = DB.teachers.filter(t => t.subject !== 'إداري');
+  let data = DB.teachers.filter(t => t.subject !== 'إداري').slice().sort((a,b)=>a.name.localeCompare(b.name,'ar'));
   if (q) { const lq = q.toLowerCase(); data = data.filter(t => t.name.includes(lq) || (t.subject||'').includes(lq)); }
   if (!data.length) {
     tb.innerHTML = `<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--tx3)">${q?'لا توجد نتائج مطابقة':'لا يوجد معلمون مسجلون — اضغط إضافة معلم'}</td></tr>`;
@@ -11017,7 +11017,7 @@ function showTaskForm() {
   // ملء قائمة المعلمين بالـ id كـ value
   const sel = document.getElementById('tk-tch');
   if (sel) sel.innerHTML = '<option value="">-- اختر المعلم --</option>' +
-    DB.teachers.map(t => `<option value="${t.id}">${t.name}${t.subject?' — '+t.subject:''}</option>`).join('');
+    (DB.teachers||[]).slice().sort((a,b)=>a.name.localeCompare(b.name,'ar')).map(t => `<option value="${t.id}">${t.name}</option>`).join('');
   // إخفاء معلومات المكلَّف
   const info = document.getElementById('tk-tch-info');
   if (info) info.style.display = 'none';
@@ -13743,7 +13743,7 @@ function exportTermPlanHTML() {
         <label style="font-size:11px;font-weight:700;display:block;margin-bottom:4px">المعلم</label>
         <select id="_etm_teacher" class="fc fc-sm" style="width:100%">
           <option value="">جميع المعلمين</option>
-          ${(DB.teachers||[]).map(t=>`<option value="${t.id}">${t.name} — ${t.subject||''}</option>`).join('')}
+          ${(DB.teachers||[]).slice().sort((a,b)=>a.name.localeCompare(b.name,'ar')).map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}
         </select>
       </div>
       <div class="fg" style="margin-bottom:16px">
@@ -13765,7 +13765,7 @@ function exportTermPlanHTML() {
   // تحديث قائمة المعلمين
   const sel = document.getElementById('_etm_teacher');
   if (sel) sel.innerHTML = '<option value="">جميع المعلمين</option>' +
-    (DB.teachers||[]).map(t=>`<option value="${t.id}">${t.name} — ${t.subject||''}</option>`).join('');
+    (DB.teachers||[]).slice().sort((a,b)=>a.name.localeCompare(b.name,'ar')).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   modal.style.display = 'flex';
 }
 
@@ -13887,7 +13887,7 @@ function exportWeekPlanHTML() {
         <label style="font-size:11px;font-weight:700;display:block;margin-bottom:4px">المعلم</label>
         <select id="_ewm_teacher" class="fc fc-sm" style="width:100%">
           <option value="">جميع المعلمين</option>
-          ${(DB.teachers||[]).map(t=>`<option value="${t.id}">${t.name} — ${t.subject||''}</option>`).join('')}
+          ${(DB.teachers||[]).slice().sort((a,b)=>a.name.localeCompare(b.name,'ar')).map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}
         </select>
       </div>
       <div class="fg" style="margin-bottom:12px">
@@ -13917,7 +13917,7 @@ function exportWeekPlanHTML() {
   }
   const sel = document.getElementById('_ewm_teacher');
   if (sel) sel.innerHTML = '<option value="">جميع المعلمين</option>' +
-    (DB.teachers||[]).map(t=>`<option value="${t.id}">${t.name} — ${t.subject||''}</option>`).join('');
+    (DB.teachers||[]).slice().sort((a,b)=>a.name.localeCompare(b.name,'ar')).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   modal.style.display = 'flex';
 }
 
@@ -14354,7 +14354,7 @@ function exportRemedialInquiry() {
         <label style="font-size:11px;font-weight:700;margin-bottom:4px;display:block">اختر المعلم</label>
         <select id="_inq_teacher" class="fc fc-sm" style="width:100%">
           <option value="">-- اختر المعلم --</option>
-          ${(DB.teachers||[]).map(t=>`<option value="${t.name}">${t.name} — ${t.subject||''}</option>`).join('')}
+          ${(DB.teachers||[]).slice().sort((a,b)=>a.name.localeCompare(b.name,'ar')).map(t=>`<option value="${t.name}">${t.name}</option>`).join('')}
         </select>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
@@ -15468,7 +15468,8 @@ function saveAttSettings() {
 // تهيئة التطبيق بعد تسجيل الدخول
 // ══════════════════════════════════════════
 function populateTeacherSelects() {
-  const opts='<option value="">-- اختر المعلم --</option>'+DB.teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  const sorted = (DB.teachers||[]).slice().sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+  const opts='<option value="">-- اختر المعلم --</option>'+sorted.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   ['MR','tk-tch','wp-teacher','sch-teacher','mt-single-teacher',
    'guidance-staff-sel-1','guidance-staff-sel-2',
    'activity-staff-sel','library-staff-sel','lab-staff-sel',
@@ -15913,9 +15914,9 @@ function renderVisitsPage() {
     if (teacherWrap) teacherWrap.style.display = 'none';
     adminTabBtns.forEach(btn => btn.style.display='');
     const sel = document.getElementById('vs-teacher');
-    if (sel) sel.innerHTML = '<option value="">-- اختر المعلم --</option>' + teachingTeachers.map(t=>`<option value="${t.id}">${t.name} — ${t.subject}</option>`).join('');
+    if (sel) sel.innerHTML = '<option value="">-- اختر المعلم --</option>' + teachingTeachers.slice().sort((a,b)=>a.name.localeCompare(b.name,'ar')).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
     const svSel = document.getElementById('sv-teacher');
-    if (svSel) svSel.innerHTML = '<option value="">-- اختر --</option>' + teachingTeachers.map(t=>`<option value="${t.id}">${t.name} — ${t.subject}</option>`).join('');
+    if (svSel) svSel.innerHTML = '<option value="">-- اختر --</option>' + teachingTeachers.slice().sort((a,b)=>a.name.localeCompare(b.name,'ar')).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
     const dt = document.getElementById('vs-date');
     if (dt && !dt.value) dt.value = new Date().toISOString().split('T')[0];
     renderVisitEvalItems();
