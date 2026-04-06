@@ -16055,107 +16055,113 @@ function exportSingleVisit(id) {
     const gc = v.total>=90?'#dcfce7':v.total>=80?'#dbeafe':v.total>=70?'#fef9c3':'#fee2e2';
     const tc = v.total>=90?'#166534':v.total>=80?'#1e3a5f':v.total>=70?'#854d0e':'#991b1b';
 
-    // بنود التقييم
-    const itemRows = VISIT_ITEMS.map((item,i) => {
+    // بنود التقييم — عمودان لتوفير المساحة
+    const half = Math.ceil(VISIT_ITEMS.length / 2);
+    const makeItemRow = (item, i) => {
       const score = v.scores?.[i] ?? 0;
       const pct = Math.round((score/item.max)*100);
       const barColor = pct>=80?'#0d7a5f':pct>=60?'#d97706':'#dc2626';
       return `<tr>
-        <td style="font-size:11px;padding:6px 10px;border-right:3px solid #e2e8f0">${item.label}</td>
-        <td style="text-align:center;font-weight:800;color:${barColor};font-size:12px">${score}/${item.max}</td>
-        <td style="width:90px;padding:4px 8px">
-          <div style="background:#e2e8f0;border-radius:4px;height:8px;overflow:hidden">
-            <div style="background:${barColor};height:100%;width:${pct}%;border-radius:4px"></div>
+        <td style="font-size:9px;padding:3px 6px;border-right:2px solid #e2e8f0">${item.label}</td>
+        <td style="text-align:center;font-weight:800;color:${barColor};font-size:9px;white-space:nowrap">${score}/${item.max}</td>
+        <td style="width:50px;padding:2px 5px">
+          <div style="background:#e2e8f0;border-radius:3px;height:5px;overflow:hidden">
+            <div style="background:${barColor};height:100%;width:${pct}%;border-radius:3px"></div>
           </div>
         </td>
       </tr>`;
-    }).join('');
+    };
+    const col1 = VISIT_ITEMS.slice(0, half).map((item,i) => makeItemRow(item, i)).join('');
+    const col2 = VISIT_ITEMS.slice(half).map((item,i) => makeItemRow(item, i+half)).join('');
 
-    // بيانات أساسية
-    const infoGrid = (label, val) =>
-      `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f1f5f9;font-size:11px">
+    // صف بيانات مضغوط
+    const infoRow = (label, val) =>
+      `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f1f5f9;font-size:10px">
         <span style="color:#64748b">${label}</span>
         <span style="font-weight:700;color:#0f172a">${val||'—'}</span>
       </div>`;
 
     const envSection = (v.envOrder||v.envVentilation||v.envBoards||v.envSeating) ? `
-      <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px;margin-bottom:12px">
-        <div style="font-size:12px;font-weight:800;color:#0369a1;margin-bottom:8px">🏫 بيئة التعلم</div>
-        ${infoGrid('ترتيب الصف ونظافته', v.envOrder)}
-        ${infoGrid('التهوية والإضاءة', v.envVentilation)}
-        ${infoGrid('اللوحات التعليمية', v.envBoards)}
-        ${infoGrid('توزيع المقاعد', v.envSeating)}
+      <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:7px 10px;margin-bottom:7px">
+        <div style="font-size:10px;font-weight:800;color:#0369a1;margin-bottom:4px">🏫 بيئة التعلم</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px">
+          ${infoRow('ترتيب الصف', v.envOrder)}${infoRow('التهوية والإضاءة', v.envVentilation)}
+          ${infoRow('اللوحات التعليمية', v.envBoards)}${infoRow('توزيع المقاعد', v.envSeating)}
+        </div>
       </div>` : '';
 
     const stuSection = (v.stuEngagement||v.stuBehavior) ? `
-      <div style="background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:10px;padding:12px;margin-bottom:12px">
-        <div style="font-size:12px;font-weight:800;color:#7c3aed;margin-bottom:8px">👥 مشاركة الطلاب</div>
-        ${infoGrid('مستوى التفاعل', v.stuEngagement)}
-        ${infoGrid('نسبة المشاركة', v.stuParticipationPct)}
-        ${infoGrid('سلوك الطلاب', v.stuBehavior)}
-        ${v.stuScore ? infoGrid('تقييم المشاركة', v.stuScore+'/5') : ''}
-        ${(v.studentsPresent||v.studentsAbsent) ? infoGrid('الحضور/الغياب', (v.studentsPresent||0)+' حاضر / '+(v.studentsAbsent||0)+' غائب') : ''}
+      <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:7px;padding:7px 10px;margin-bottom:7px">
+        <div style="font-size:10px;font-weight:800;color:#7c3aed;margin-bottom:4px">👥 مشاركة الطلاب</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px">
+          ${infoRow('مستوى التفاعل', v.stuEngagement)}${infoRow('نسبة المشاركة', v.stuParticipationPct)}
+          ${infoRow('سلوك الطلاب', v.stuBehavior)}${v.stuScore ? infoRow('تقييم المشاركة', v.stuScore+'/5') : '<div></div>'}
+          ${(v.studentsPresent||v.studentsAbsent) ? infoRow('الحضور/الغياب', (v.studentsPresent||0)+' حاضر / '+(v.studentsAbsent||0)+' غائب') : ''}
+        </div>
       </div>` : '';
 
     const techSection = ((v.techUsed&&v.techUsed.length)||v.techOther) ? `
-      <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:12px;margin-bottom:12px">
-        <div style="font-size:12px;font-weight:800;color:#0d7a5f;margin-bottom:8px">💻 الأدوات والتقنية</div>
-        ${(v.techUsed&&v.techUsed.length) ? `<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">${v.techUsed.map(t=>`<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">${t}</span>`).join('')}</div>` : ''}
-        ${v.techOther ? `<div style="font-size:10px;color:#374151">أخرى: ${v.techOther}</div>` : ''}
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:7px 10px;margin-bottom:7px">
+        <div style="font-size:10px;font-weight:800;color:#0d7a5f;margin-bottom:4px">💻 الأدوات والتقنية</div>
+        ${(v.techUsed&&v.techUsed.length) ? `<div style="display:flex;flex-wrap:wrap;gap:3px">${v.techUsed.map(t=>`<span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700">${t}</span>`).join('')}</div>` : ''}
+        ${v.techOther ? `<div style="font-size:9px;color:#374151;margin-top:3px">أخرى: ${v.techOther}</div>` : ''}
       </div>` : '';
 
     const body = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px">
-        ${infoGrid('اسم المعلم', v.teacherName)}
-        ${infoGrid('المادة', v.subject)}
-        ${infoGrid('الصف', v.cls)}
-        ${infoGrid('التاريخ', v.date)}
-        ${infoGrid('الحصة', v.period)}
-        ${infoGrid('المشرف الزائر', v.visitor)}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px;margin-bottom:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px">
+        ${infoRow('اسم المعلم', v.teacherName)}${infoRow('المادة', v.subject)}
+        ${infoRow('الصف', v.cls)}${infoRow('التاريخ', v.date)}
+        ${infoRow('الحصة', v.period)}${infoRow('الزائر', v.visitor)}
       </div>
 
-      <div style="text-align:center;background:${gc};border:2px solid ${tc};border-radius:12px;padding:14px;margin-bottom:14px">
-        <div style="font-size:32px;font-weight:900;color:${tc}">${v.total}/100</div>
-        <div style="font-size:14px;font-weight:800;color:${tc}">${grade}</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:14px;background:${gc};border:1.5px solid ${tc};border-radius:8px;padding:6px 14px;margin-bottom:8px">
+        <div style="font-size:16px;font-weight:900;color:${tc}">${v.total}/100</div>
+        <div style="font-size:7px;font-weight:800;color:${tc};background:${tc};color:#fff;padding:2px 8px;border-radius:10px">${grade}</div>
       </div>
 
-      <div style="background:#0d7a5f;color:#fff;padding:7px 12px;border-radius:7px;font-size:12px;font-weight:900;margin-bottom:8px">📊 بنود التقييم التفصيلية</div>
-      <table>
-        <thead><tr><th>المعيار</th><th style="width:60px">الدرجة</th><th style="width:100px">المستوى</th></tr></thead>
-        <tbody>${itemRows}</tbody>
-      </table>
+      <div style="background:#0d7a5f;color:#fff;padding:4px 10px;border-radius:6px;font-size:10px;font-weight:900;margin-bottom:5px">📊 بنود التقييم التفصيلية</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 6px;margin-bottom:8px">
+        <table style="border-collapse:collapse;width:100%">
+          <thead><tr style="background:#f1f5f9"><th style="font-size:8px;padding:3px">المعيار</th><th style="font-size:8px;padding:3px;width:40px">الدرجة</th><th style="font-size:8px;padding:3px;width:45px">المستوى</th></tr></thead>
+          <tbody>${col1}</tbody>
+        </table>
+        <table style="border-collapse:collapse;width:100%">
+          <thead><tr style="background:#f1f5f9"><th style="font-size:8px;padding:3px">المعيار</th><th style="font-size:8px;padding:3px;width:40px">الدرجة</th><th style="font-size:8px;padding:3px;width:45px">المستوى</th></tr></thead>
+          <tbody>${col2}</tbody>
+        </table>
+      </div>
 
       ${envSection}${stuSection}${techSection}
 
       ${v.strengths ? `
-        <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px;margin-bottom:12px">
-          <div style="font-size:12px;font-weight:800;color:#166534;margin-bottom:6px">✅ نقاط القوة</div>
-          <div style="font-size:11px;color:#14532d;line-height:1.8">${v.strengths.replace(/\n/g,'<br>')}</div>
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:7px;padding:7px 10px;margin-bottom:7px">
+          <div style="font-size:10px;font-weight:800;color:#166534;margin-bottom:3px">✅ نقاط القوة</div>
+          <div style="font-size:10px;color:#14532d;line-height:1.6">${v.strengths.replace(/\n/g,'<br>')}</div>
         </div>` : ''}
       ${v.improvements ? `
-        <div style="background:#fff7ed;border:1.5px solid #fdba74;border-radius:10px;padding:12px;margin-bottom:12px">
-          <div style="font-size:12px;font-weight:800;color:#c2410c;margin-bottom:6px">📌 مجالات التطوير</div>
-          <div style="font-size:11px;color:#7c2d12;line-height:1.8">${v.improvements.replace(/\n/g,'<br>')}</div>
+        <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:7px;padding:7px 10px;margin-bottom:7px">
+          <div style="font-size:10px;font-weight:800;color:#c2410c;margin-bottom:3px">📌 مجالات التطوير</div>
+          <div style="font-size:10px;color:#7c2d12;line-height:1.6">${v.improvements.replace(/\n/g,'<br>')}</div>
         </div>` : ''}
       ${v.recommendations ? `
-        <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:12px;margin-bottom:12px">
-          <div style="font-size:12px;font-weight:800;color:#1d4ed8;margin-bottom:6px">📋 التوصيات</div>
-          <div style="font-size:11px;color:#1e3a5f;line-height:1.8">${v.recommendations.replace(/\n/g,'<br>')}</div>
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:7px;padding:7px 10px;margin-bottom:7px">
+          <div style="font-size:10px;font-weight:800;color:#1d4ed8;margin-bottom:3px">📋 التوصيات</div>
+          <div style="font-size:10px;color:#1e3a5f;line-height:1.6">${v.recommendations.replace(/\n/g,'<br>')}</div>
         </div>` : ''}
       ${v.appreciation ? `
-        <div style="background:#fdf4ff;border:1.5px solid #e9d5ff;border-radius:10px;padding:12px;margin-bottom:12px">
-          <div style="font-size:12px;font-weight:800;color:#7c3aed;margin-bottom:6px">🌟 كلمة شكر وتقدير</div>
-          <div style="font-size:11px;color:#4c1d95;line-height:1.8">${v.appreciation.replace(/\n/g,'<br>')}</div>
+        <div style="background:#fdf4ff;border:1px solid #e9d5ff;border-radius:7px;padding:7px 10px;margin-bottom:7px">
+          <div style="font-size:10px;font-weight:800;color:#7c3aed;margin-bottom:3px">🌟 كلمة شكر وتقدير</div>
+          <div style="font-size:10px;color:#4c1d95;line-height:1.6">${v.appreciation.replace(/\n/g,'<br>')}</div>
         </div>` : ''}
       ${v.teacherSigned ? `
-        <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:10px;text-align:center;font-size:11px;font-weight:700;color:#166534">
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:7px;padding:6px;text-align:center;font-size:10px;font-weight:700;color:#166534">
           ✅ وقّع المعلم بالاطلاع على هذه الزيارة
         </div>` : `
-        <div style="background:#fef9c3;border:1.5px solid #fde047;border-radius:10px;padding:10px;text-align:center;font-size:11px;font-weight:700;color:#854d0e">
+        <div style="background:#fef9c3;border:1px solid #fde047;border-radius:7px;padding:6px;text-align:center;font-size:10px;font-weight:700;color:#854d0e">
           ⏳ في انتظار توقيع المعلم بالاطلاع
         </div>`}`;
 
-    _openDoc(_officialDoc(`تقرير الزيارة الصفية — ${v.teacherName}`, body, {showStamp, subject:'تقرير الزيارة الصفية'}));
+    _openDoc(_officialDoc(`تقرير الزيارة الصفية للمعلم ${v.teacherName}`, body, {showStamp, subject:'تقرير الزيارة الصفية'}));
   });
 }
 
