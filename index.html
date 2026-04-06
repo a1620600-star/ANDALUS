@@ -17837,7 +17837,6 @@ function pvPopulateSubjects() {
   sel.innerHTML = '<option value="">-- اختر التخصص --</option>' +
     options.map(o => `<option value="${o.subj}" data-group="${o.grp.join('|')}">${o.label}</option>`).join('');
 }
-}
 
 function pvShowForm() {
   document.getElementById('pv-form').style.display = '';
