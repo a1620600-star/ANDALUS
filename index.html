@@ -521,6 +521,22 @@ body{background:#fff!important}
     </div>
   </div>
   <div class="tb-acts">
+    <!-- البحث الموحد -->
+    <div id="global-search-wrap" style="position:relative;display:flex;align-items:center">
+      <input type="text" id="global-search-input" placeholder="🔍 بحث..." autocomplete="off"
+        style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;
+        padding:5px 14px;font-size:11px;color:#fff;font-family:Cairo,sans-serif;width:0;
+        transition:width .3s,opacity .3s;opacity:0;pointer-events:none;direction:rtl"
+        oninput="globalSearch(this.value)" onfocus="this.style.width='180px'" onblur="if(!this.value){this.style.width='0';this.style.opacity='0';this.style.pointerEvents='none'}">
+      <button onclick="toggleGlobalSearch()" class="tb-btn" style="margin-left:0" title="بحث">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <div id="global-search-results" style="display:none;position:absolute;top:36px;left:0;right:0;min-width:260px;background:#fff;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:9999;max-height:320px;overflow-y:auto;direction:rtl;font-family:Cairo,sans-serif"></div>
+    </div>
+    <!-- مؤشر الاتصال -->
+    <div id="offline-indicator" style="display:none;background:#dc2626;color:#fff;border-radius:12px;padding:3px 10px;font-size:10px;font-weight:700;font-family:Cairo,sans-serif">
+      ✕ لا يوجد اتصال
+    </div>
     <div class="tb-ico" onclick="document.getElementById('NP').classList.toggle('show')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
       <span class="nb" id="NBC">0</span>
@@ -786,6 +802,12 @@ body{background:#fff!important}
 </div>
 <!-- لوحة التنبيهات الذكية -->
 <div id="dash-alerts-panel" style="margin-bottom:14px"></div>
+<!-- شريط النسخة الاحتياطية والتقرير الشهري -->
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+  <div id="backup-status" style="font-size:10px;color:var(--tx3);flex:1"></div>
+  <button class="btn b-gh bsm" onclick="doManualBackup()">💾 نسخة احتياطية يدوية</button>
+  <button class="btn bsm" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff" onclick="generateMonthlyReport()">📊 التقرير الشهري</button>
+</div>
 </div>
 
 <!-- قسم الرسوم البيانية — يظهر في العرض 2 و 3 -->
@@ -5458,7 +5480,8 @@ function doLogin() {
   const entered = kpStr.split('').map(c => AR_TO_EN[c] || c).join('');
   const le = document.getElementById('LE');
   if (loginMode === 'admin') {
-    const pin = DB.pin || 'A2009';
+    const rawPin = DB._pinEncrypted ? _decodePin(DB.pin) : (DB.pin || 'A2009');
+    const pin = rawPin;
     if (entered === pin) {
       currentRole = 'admin';
       currentTeacherId = null;
@@ -5529,6 +5552,11 @@ function initApp() {
   }
   // فتح إقرار الانتظار إذا جاء المستخدم من رابط واتساب
   _checkWaitAckParam();
+  // النسخة الاحتياطية التلقائية + تشفير PIN
+  if (currentRole === 'admin') {
+    setTimeout(setupAutoBackup, 2000);
+    setTimeout(_migratePin, 1000);
+  }
 }
 
 // ── overlay إلزامي لتوقيع الميثاق ──
@@ -15249,9 +15277,12 @@ function chgPin() {
   const np=document.getElementById('NP2');
   if (!cp||!np) return;
   const cpVal=cp.value.split('').map(c=>AR_TO_EN[c]||c).join('');
-  if (cpVal!==(DB.pin||'A2009')) { toast('الرمز الحالي غير صحيح', false); return; }
+  const currentPin = DB._pinEncrypted ? _decodePin(DB.pin) : (DB.pin||'A2009');
+  if (cpVal!==currentPin) { toast('الرمز الحالي غير صحيح', false); return; }
   if (!np.value) { toast('أدخل الرمز الجديد', false); return; }
-  DB.pin=np.value.split('').map(c=>AR_TO_EN[c]||c).join('');
+  const newPin = np.value.split('').map(c=>AR_TO_EN[c]||c).join('');
+  DB.pin = _encodePin(newPin);
+  DB._pinEncrypted = true;
   cp.value=''; np.value='';
   saveAllData(); toast('✅ تم تغيير رمز الدخول بنجاح', true);
 }
@@ -18622,6 +18653,242 @@ function pvPrintList() {
 }
 
 // ══════════════════════════════════════════
+// إصلاح: populateTeacherSubjects (كانت غير معرّفة)
+// ══════════════════════════════════════════
+function populateTeacherSubjects() {
+  const tSel = document.getElementById('TSel');
+  const subSel = document.getElementById('t-ana-sub');
+  if (!tSel || !subSel) return;
+  const tId = tSel.value;
+  const t = (DB.teachers||[]).find(x=>String(x.id)===String(tId));
+  if (t && t.subject) subSel.value = t.subject;
+}
+
+// ══════════════════════════════════════════
+// مؤشر الاتصال بالإنترنت
+// ══════════════════════════════════════════
+function setupOfflineIndicator() {
+  const el = document.getElementById('offline-indicator');
+  if (!el) return;
+  function update() {
+    el.style.display = navigator.onLine ? 'none' : '';
+  }
+  update();
+  window.addEventListener('online',  update);
+  window.addEventListener('offline', update);
+}
+
+// ══════════════════════════════════════════
+// تشفير بسيط لـ PIN (XOR + base64)
+// ══════════════════════════════════════════
+const _PIN_KEY = 0x5A;
+function _encodePin(pin) {
+  try {
+    return btoa(pin.split('').map(c=>String.fromCharCode(c.charCodeAt(0)^_PIN_KEY)).join(''));
+  } catch(e) { return pin; }
+}
+function _decodePin(enc) {
+  try {
+    if (!enc || enc.length < 4) return enc; // رمز غير مشفر (قديم)
+    const decoded = atob(enc);
+    return decoded.split('').map(c=>String.fromCharCode(c.charCodeAt(0)^_PIN_KEY)).join('');
+  } catch(e) { return enc; }
+}
+// ترقية تلقائية: تشفير PIN القديم إن لم يكن مشفراً
+function _migratePin() {
+  if (!DB.pin) return;
+  // إذا كان الرمز نصاً عادياً (لا يبدأ بـ base64 pattern)
+  if (!DB._pinEncrypted) {
+    DB.pin = _encodePin(DB.pin);
+    DB._pinEncrypted = true;
+    try { localStorage.setItem('ANDALUS_V2', JSON.stringify(DB)); } catch(e) {}
+  }
+}
+
+// ══════════════════════════════════════════
+// النسخة الاحتياطية التلقائية
+// ══════════════════════════════════════════
+function doAutoBackup() {
+  try {
+    const bak = { data: JSON.stringify(DB), ts: new Date().toISOString(), ver: 'auto' };
+    localStorage.setItem('ANDALUS_BACKUP_AUTO', JSON.stringify(bak));
+    updateBackupStatus();
+  } catch(e) {}
+}
+function doManualBackup() {
+  try {
+    const bak = { data: JSON.stringify(DB), ts: new Date().toISOString(), ver: 'manual' };
+    localStorage.setItem('ANDALUS_BACKUP_MANUAL', JSON.stringify(bak));
+    toast('✅ تم حفظ النسخة الاحتياطية', true);
+    updateBackupStatus();
+  } catch(e) { toast('فشل الحفظ', false); }
+}
+function updateBackupStatus() {
+  const el = document.getElementById('backup-status');
+  if (!el) return;
+  const auto   = (() => { try { return JSON.parse(localStorage.getItem('ANDALUS_BACKUP_AUTO')||'{}'); } catch(e) { return {}; } })();
+  const manual = (() => { try { return JSON.parse(localStorage.getItem('ANDALUS_BACKUP_MANUAL')||'{}'); } catch(e) { return {}; } })();
+  const fmt = ts => ts ? new Date(ts).toLocaleString('ar-SA-u-nu-latn') : '—';
+  el.innerHTML = `آخر نسخة تلقائية: <b>${fmt(auto.ts)}</b> | يدوية: <b>${fmt(manual.ts)}</b>`;
+}
+function setupAutoBackup() {
+  doAutoBackup(); // نسخة فورية عند الفتح
+  setInterval(doAutoBackup, 60 * 60 * 1000); // كل ساعة
+  updateBackupStatus();
+}
+
+// ══════════════════════════════════════════
+// التقرير الشهري
+// ══════════════════════════════════════════
+function generateMonthlyReport() {
+  const now = new Date();
+  const monthName = now.toLocaleDateString('ar-SA', { month:'long', year:'numeric' });
+  const teachers = DB.teachers||[];
+  const visits = DB.classVisits||[];
+  const peerVisits = (DB.peerVisits||[]).filter(v=>!v.archived);
+  const supervision = DB.supervision||[];
+
+  // إحصائيات الزيارات الصفية
+  const visitAvg = visits.length ? (visits.reduce((s,v)=>s+(v.total||0),0)/visits.length).toFixed(1) : '—';
+  const visitGradeLabel = s => s>=90?'ممتاز':s>=80?'جيد جداً':s>=70?'جيد':s>=60?'مقبول':'يحتاج تطوير';
+
+  // المعلمون غير المزارين
+  const visitedIds = new Set(visits.map(v=>String(v.teacherId)));
+  const unvisited = teachers.filter(t=>t.subject&&!visitedIds.has(String(t.id))&&!(typeof PV_EXCLUDED_ROLES!=='undefined'&&PV_EXCLUDED_ROLES.includes(t.subject)));
+
+  // إحصائيات الزيارات التبادلية
+  const pvSigned = peerVisits.filter(v=>v.sent&&Object.values(v.acknowledgments||{}).filter(a=>a.signed).length===(v.visitorIds||[]).length+1).length;
+
+  // إحصائيات الأداء الوظيفي
+  const perfTeachers = teachers.filter(t=>t.perf);
+  const perfAvg = perfTeachers.length ? (perfTeachers.reduce((s,t)=>s+(t.perf||0),0)/perfTeachers.length).toFixed(0) : '—';
+
+  const visitRows = visits.slice(-10).map((v,i)=>`
+    <tr>
+      <td>${i+1}</td><td>${v.teacherName||'—'}</td><td>${v.subject||'—'}</td>
+      <td style="text-align:center">${v.date||'—'}</td>
+      <td style="text-align:center;font-weight:800;color:${v.total>=80?'#0d7a5f':'#dc2626'}">${v.total}/100</td>
+      <td style="text-align:center">${visitGradeLabel(v.total)}</td>
+    </tr>`).join('');
+
+  const body = `
+    <h3 style="text-align:center;font-size:14px;margin-bottom:4px">التقرير الشهري للأداء المدرسي</h3>
+    <p style="text-align:center;font-size:11px;color:#555;margin-bottom:16px">${monthName}</p>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:900;color:#0d7a5f">${visits.length}</div>
+        <div style="font-size:10px;color:#166534">زيارة صفية</div>
+        <div style="font-size:11px;font-weight:700;color:#0d7a5f">متوسط: ${visitAvg}</div>
+      </div>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:900;color:#1d4ed8">${peerVisits.length}</div>
+        <div style="font-size:10px;color:#1e40af">زيارة تبادلية</div>
+        <div style="font-size:11px;font-weight:700;color:#1d4ed8">مكتملة: ${pvSigned}</div>
+      </div>
+      <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:900;color:#7c3aed">${perfAvg}%</div>
+        <div style="font-size:10px;color:#6d28d9">متوسط الأداء</div>
+        <div style="font-size:11px;font-weight:700;color:#7c3aed">${teachers.length} معلم</div>
+      </div>
+    </div>
+
+    ${unvisited.length ? `<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:800;color:#dc2626;margin-bottom:6px">⚠ معلمون لم تُجرَ لهم زيارات صفية بعد (${unvisited.length})</div>
+      <div style="font-size:10px;color:#991b1b">${unvisited.map(t=>t.name).join(' — ')}</div>
+    </div>` : '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;margin-bottom:14px;font-size:11px;font-weight:700;color:#0d7a5f">✅ جميع المعلمين أُجريت لهم زيارات صفية</div>'}
+
+    <div style="background:#0d7a5f;color:#fff;padding:7px 12px;border-radius:7px;font-size:12px;font-weight:900;margin-bottom:8px">📋 آخر 10 زيارات صفية</div>
+    <table border="1" cellpadding="5" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:14px">
+      <thead style="background:#0d7a5f;color:#fff">
+        <tr><th>#</th><th>المعلم</th><th>المادة</th><th>التاريخ</th><th>الدرجة</th><th>التقدير</th></tr>
+      </thead>
+      <tbody>${visitRows||'<tr><td colspan="6" style="text-align:center;color:#999;padding:10px">لا توجد زيارات</td></tr>'}</tbody>
+    </table>`;
+
+  _directorExport(showStamp => {
+    _openDoc(_officialDoc(`التقرير الشهري — ${monthName}`, body, {showStamp, subject:'التقرير الشهري للأداء المدرسي'}));
+  });
+}
+
+// ══════════════════════════════════════════
+// البحث الموحد
+// ══════════════════════════════════════════
+function toggleGlobalSearch() {
+  const input = document.getElementById('global-search-input');
+  if (!input) return;
+  const isOpen = input.style.width === '180px';
+  if (isOpen) {
+    input.style.width = '0';
+    input.style.opacity = '0';
+    input.style.pointerEvents = 'none';
+    input.value = '';
+    const res = document.getElementById('global-search-results');
+    if (res) res.style.display = 'none';
+  } else {
+    input.style.width = '180px';
+    input.style.opacity = '1';
+    input.style.pointerEvents = '';
+    input.focus();
+  }
+}
+function globalSearch(q) {
+  const res = document.getElementById('global-search-results');
+  if (!res) return;
+  q = (q||'').trim();
+  if (q.length < 2) { res.style.display = 'none'; return; }
+  const results = [];
+
+  // البحث في المعلمين
+  (DB.teachers||[]).forEach(t => {
+    if ((t.name||'').includes(q) || (t.subject||'').includes(q) || (t.idNum||'').includes(q)) {
+      results.push({ type:'معلم', icon:'👤', label:t.name, sub:t.subject||'', action:`gp('teachers')` });
+    }
+  });
+  // البحث في الزيارات الصفية
+  (DB.classVisits||[]).forEach(v => {
+    if ((v.teacherName||'').includes(q) || (v.subject||'').includes(q)) {
+      results.push({ type:'زيارة صفية', icon:'👁', label:v.teacherName, sub:`${v.date} — ${v.subject}`, action:`gp('visits')` });
+    }
+  });
+  // البحث في الزيارات التبادلية
+  (DB.peerVisits||[]).forEach(v => {
+    if ((v.hostTeacherName||'').includes(q) || (v.subject||'').includes(q) || (v.visitorNames||[]).some(n=>n.includes(q))) {
+      results.push({ type:'زيارة تبادلية', icon:'🔄', label:v.hostTeacherName, sub:`${v.date} — ${v.subject}`, action:`gp('peer-visits')` });
+    }
+  });
+  // البحث في التكليفات
+  (DB.tasks||[]).forEach(t => {
+    if ((t.title||'').includes(q) || (t.teacher||'').includes(q)) {
+      results.push({ type:'تكليف', icon:'📋', label:t.title, sub:t.teacher||'', action:`gp('tasks')` });
+    }
+  });
+  // البحث في اللجان
+  (DB.committees||[]).forEach(c => {
+    if ((c.name||'').includes(q)) {
+      results.push({ type:'لجنة', icon:'🏛', label:c.name, sub:'', action:`gp('committees')` });
+    }
+  });
+
+  if (!results.length) {
+    res.style.display = '';
+    res.innerHTML = `<div style="padding:12px;text-align:center;color:#999;font-size:11px">لا توجد نتائج لـ "${q}"</div>`;
+    return;
+  }
+  res.style.display = '';
+  res.innerHTML = results.slice(0,10).map(r=>`
+    <div onclick="${r.action};document.getElementById('global-search-input').value='';document.getElementById('global-search-results').style.display='none'"
+      style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px"
+      onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+      <span style="font-size:16px">${r.icon}</span>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#0f172a">${r.label}</div>
+        <div style="font-size:10px;color:#64748b">${r.type}${r.sub?' — '+r.sub:''}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════
 // إعداد لوحة المفاتيح — Event Delegation
 // يعمل على كل المتصفحات بما فيها iOS Safari
 // ══════════════════════════════════════════
@@ -18655,6 +18922,7 @@ function setupKeypad() {
 // ══════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', function() {
   setupKeypad();
+  setupOfflineIndicator();
   try { _applySchoolLogo(); } catch(e) { console.error('_applySchoolLogo error:', e); }
 });
 </script>
