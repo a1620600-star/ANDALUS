@@ -513,20 +513,23 @@ body{background:#fff!important}
 
 <!-- ══ سكريبت مستقل: لوحة المفاتيح + تحديث تلقائي للنسخة ══ -->
 <script>
-// ── تحديث تلقائي: إذا كانت النسخة قديمة أعد التحميل بدون كاش ──
+// ── تحديث تلقائي: إعادة تحميل عند أي نسخة مختلفة أو أول زيارة ──
 (function(){
-  var VER = '8';
+  var VER = '9';
+  var redirected = window.location.search.indexOf('r=') !== -1;
+  if (redirected) return; // منع الحلقة اللانهائية
   try {
     var saved = localStorage.getItem('_av');
-    if (saved && saved !== VER) {
-      localStorage.setItem('_av', VER);
+    if (saved !== VER) {
       // مسح كاشات SW القديمة
       if (window.caches) caches.keys().then(function(k){ k.forEach(function(c){ caches.delete(c); }); });
-      // إعادة تحميل قسري بدون كاش
-      window.location.href = window.location.pathname + '?r=' + Date.now();
+      localStorage.setItem('_av', VER);
+      // تأخير 300ms لإتاحة الوقت لإلغاء تسجيل SW قبل إعادة التحميل
+      setTimeout(function(){
+        window.location.href = window.location.pathname + '?r=' + Date.now();
+      }, 300);
       return;
     }
-    localStorage.setItem('_av', VER);
   } catch(e) {}
 })();
 
@@ -552,11 +555,23 @@ function kpClear() {
   if (le) le.textContent = '';
 }
 
+// ── setLoginMode مبسّط — يعمل حتى لو فشل السكريبت الرئيسي ──
+var loginMode = 'admin';
+function setLoginMode(mode) {
+  if (typeof window._setLoginModeFull === 'function') { window._setLoginModeFull(mode); return; }
+  loginMode = mode;
+  kpStr = ''; updateDisp();
+  var hint = document.getElementById('login-hint');
+  var labels = { admin:'أدخل رمز دخول المدير', teacher:'أدخل رقم الهوية الوطنية', guidance:'أدخل رقم هوية الموجه', activity:'أدخل رقم هوية رائد النشاط', library:'أدخل رقم هوية أمين المصادر', lab:'أدخل رقم هوية محضر المختبر', gifted:'أدخل رقم هوية منسق الموهوبين', health:'أدخل رقم هوية الموجه الصحي' };
+  if (hint) hint.textContent = labels[mode] || 'أدخل رقم الهوية الوطنية';
+  ['admin','teacher','guidance','activity','library','lab','gifted','health'].forEach(function(m){
+    var btn = document.getElementById('mode-'+m); if (btn) btn.classList.toggle('active', m === mode);
+  });
+}
+
 // ── doLogin مبسّط — يعمل حتى لو فشل السكريبت الرئيسي ──
 function doLogin() {
-  // إذا تم تحميل النسخة الكاملة من السكريبت الرئيسي استخدمها
   if (typeof window._doLoginMain === 'function') { window._doLoginMain(); return; }
-  // وضع طوارئ: دخول المدير فقط من localStorage
   var AR = {'١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9','٠':'0'};
   var entered = kpStr.split('').map(function(c){ return AR[c]||c; }).join('');
   var le = document.getElementById('LE');
@@ -571,6 +586,11 @@ function doLogin() {
     if (le) { le.textContent = 'رمز الدخول غير صحيح'; le.style.color = '#dc2626'; }
     kpStr = ''; updateDisp();
   }
+}
+
+// ── دالة QR آمنة ──
+function showQRModal() {
+  if (typeof window._showQRModalFull === 'function') { window._showQRModalFull(); return; }
 }
 </script>
 
@@ -5453,8 +5473,8 @@ function importBackup(e) {
   e.target.value = '';
 }
 
-// ── لوحة مفاتيح الدخول ── (kpStr معرّف في سكريبت مستقل)
-let loginMode = 'admin'; // 'admin' | 'teacher' | 'guidance' | 'activity' | 'library' | 'lab'
+// ── لوحة مفاتيح الدخول ── (kpStr و loginMode معرّفان في سكريبت مستقل أعلاه)
+// loginMode معرّف في السكريبت المستقل — لا نُعيد تعريفه هنا
 let currentRole = null;  // 'admin' | 'teacher' | 'guidance' | 'activity' | 'library' | 'lab'
 let currentTeacherId = null;
 
@@ -5476,7 +5496,7 @@ const ROLE_ALLOWED_PAGES = { teacher: TEACHER_ALLOWED_PAGES, guidance: GUIDANCE_
 const ROLE_ALLOWED_NAV   = { teacher: TEACHER_ALLOWED_NAV,   guidance: GUIDANCE_ALLOWED_NAV,   activity: ACTIVITY_ALLOWED_NAV,   library: LIBRARY_ALLOWED_NAV,   lab: LAB_ALLOWED_NAV,   gifted: GIFTED_ALLOWED_NAV,   health: HEALTH_ALLOWED_NAV };
 
 const LOGIN_MODE_LABELS = { admin:'أدخل رمز دخول المدير', teacher:'أدخل رقم الهوية الوطنية (10 أرقام)', guidance:'أدخل رقم هوية الموجه الطلابي', activity:'أدخل رقم هوية رائد النشاط', library:'أدخل رقم هوية أمين المصادر', lab:'أدخل رقم هوية محضر المختبر', gifted:'أدخل رقم هوية منسق الموهوبين', health:'أدخل رقم هوية الموجه الصحي' };
-function setLoginMode(mode) {
+window._setLoginModeFull = function(mode) {
   loginMode = mode;
   kpStr = '';
   updateDisp();
@@ -5493,7 +5513,7 @@ function setLoginMode(mode) {
   if (kpArea) kpArea.style.display = '';
   if (dispArea) dispArea.style.display = '';
   if (clrBtn) clrBtn.style.display = '';
-}
+};
 
 function initKP() {
   // لا حاجة لإنشاء الأزرار ديناميكياً — الأزرار ثابتة في HTML
@@ -19355,7 +19375,7 @@ function showUpdateBanner() {
 // ══════════════════════════════════════════
 // رمز الاستجابة السريعة QR
 // ══════════════════════════════════════════
-function showQRModal() {
+window._showQRModalFull = function() {
   const modal = document.getElementById('qr-modal');
   const wrap  = document.getElementById('qr-canvas-wrap');
   const urlEl = document.getElementById('qr-url-text');
