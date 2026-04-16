@@ -5514,6 +5514,7 @@ function showQRModal() {
           var localTime = (localRaw && localRaw._lastSaved) || 0;
           if (!localRaw || fbTime >= localTime) {
             DB = Object.assign({}, DEFAULT_DB, fbData);
+            try { var _ds0 = localStorage.getItem('ANDALUS_DIRECTOR_SIG'); DB._directorSig = _ds0 || _DEFAULT_DIRECTOR_SIG; } catch(e) { DB._directorSig = _DEFAULT_DIRECTOR_SIG; }
             try {
               var toStore = JSON.parse(JSON.stringify(DB));
               delete toStore._customStamp; delete toStore._schoolLogo; delete toStore._ownerPhoto;
@@ -5596,6 +5597,8 @@ function _fbLoad(callback) {
       } else {
         DB = Object.assign({}, DEFAULT_DB, fbData);
       }
+      // إعادة تطبيق التوقيع — لا يُحفظ في Firestore ولا localStorage
+      try { var _ds1 = localStorage.getItem('ANDALUS_DIRECTOR_SIG'); DB._directorSig = _ds1 || _DEFAULT_DIRECTOR_SIG; } catch(e) { DB._directorSig = _DEFAULT_DIRECTOR_SIG; }
       // تحميل صورة المالك من localStorage
       try { var _op = localStorage.getItem('ANDALUS_OWNER_PHOTO'); if (_op) DB._ownerPhoto = _op; } catch(e) {}
       // تحميل الختم من Firestore مع fallback إلى localStorage
@@ -6001,6 +6004,8 @@ function loadAllData() {
         if (stamp) DB._customStamp = stamp;
         else delete DB._customStamp;
       } catch(e2) {}
+      // إعادة تطبيق التوقيع — مدمج في الكود
+      try { const _ds = localStorage.getItem('ANDALUS_DIRECTOR_SIG'); DB._directorSig = _ds || _DEFAULT_DIRECTOR_SIG; } catch(e2) { DB._directorSig = _DEFAULT_DIRECTOR_SIG; }
       _refreshStampPreview();
       toast('تم التحميل', true);
     } else toast('لا توجد بيانات محفوظة', false);
@@ -6049,6 +6054,7 @@ function importBackup(e) {
     try {
       const imported = JSON.parse(ev.target.result);
       DB = Object.assign({}, DEFAULT_DB, imported);
+      try { const _ds = localStorage.getItem('ANDALUS_DIRECTOR_SIG'); DB._directorSig = _ds || _DEFAULT_DIRECTOR_SIG; } catch(e2) { DB._directorSig = _DEFAULT_DIRECTOR_SIG; }
       saveAllData();
       toast('تم استيراد البيانات بنجاح', true);
     } catch(err) { toast('ملف غير صالح — تأكد من اختيار ملف النسخة الاحتياطية', false); }
