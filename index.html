@@ -5517,6 +5517,7 @@ function showQRModal() {
             try {
               var toStore = JSON.parse(JSON.stringify(DB));
               delete toStore._customStamp; delete toStore._schoolLogo; delete toStore._ownerPhoto;
+              delete toStore._directorSig; // مدمج في الكود — لا يُحفظ في localStorage
               localStorage.setItem('ANDALUS_V2', JSON.stringify(toStore));
             } catch(e) {}
           }
@@ -5553,6 +5554,7 @@ function _fbSave() {
     delete toSave._customStamp;
     delete toSave._schoolLogo;
     delete toSave._ownerPhoto;
+    delete toSave._directorSig; // مدمج في الكود — لا يُحفظ في Firestore (يتجاوز 1MB)
     toSave._lastSaved = Date.now(); // طابع زمني للمقارنة
     // تنظيف القيم undefined
     toSave = JSON.parse(JSON.stringify(toSave, function(k,v){ return v===undefined?null:v; }));
@@ -5866,6 +5868,7 @@ function saveAllData(silent) {
     delete toSave._customStamp; // لا نحفظه داخل DB الرئيسي
     delete toSave._schoolLogo;  // محفوظ في ANDALUS_LOGO
     delete toSave._ownerPhoto;  // محفوظ في ANDALUS_OWNER_PHOTO
+    delete toSave._directorSig; // مدمج في الكود — لا حاجة لحفظه
     toSave._lastSaved = Date.now(); // طابع زمني لمقارنة الإصدارات
     localStorage.setItem('ANDALUS_V2', JSON.stringify(toSave));
     if (!silent) toast('تم الحفظ بنجاح ☁️', true);
