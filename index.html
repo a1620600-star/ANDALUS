@@ -5530,15 +5530,15 @@ function showQRModal() {
           var localTime = (localRaw && localRaw._lastSaved) || 0;
           if (!localRaw || fbTime >= localTime) {
             DB = Object.assign({}, DEFAULT_DB, fbData);
-            // ترحيل: فك تشفير رمز الدخول بغض النظر عن علامة _pinEncrypted
-            if (DB.pin && DB.pin.length > 10) {
+            // ترحيل: فك تشفير رمز الدخول — الرمز المشفّر 5 أحرف = 8 base64، لذا لا حد أدنى للطول
+            if (DB.pin) {
               try {
                 var _KEY = 0x5A;
                 var _dec = atob(DB.pin).split('').map(function(c){ return String.fromCharCode(c.charCodeAt(0)^_KEY); }).join('');
-                if (_dec && _dec.length >= 2 && _dec.length <= 20 && /^[A-Za-z0-9]+$/.test(_dec)) DB.pin = _dec;
-                else DB.pin = 'A2009';
-              } catch(e2) { /* ليس base64 */ }
-              DB._pinEncrypted = false;
+                if (_dec && _dec.length >= 2 && _dec.length <= 20 && /^[A-Za-z0-9]+$/.test(_dec)) {
+                  DB.pin = _dec; DB._pinEncrypted = false;
+                }
+              } catch(e2) { /* ليس base64 — يبقى كما هو */ }
             }
             if ((DB.pin || '').trim() === '1234') DB.pin = 'A2009';
             // دمج المعلمين الافتراضيين المفقودين من Firebase
@@ -5628,16 +5628,15 @@ function _fbLoad(callback) {
         _fbSave();
       } else {
         DB = Object.assign({}, DEFAULT_DB, fbData);
-        // ترحيل: فك تشفير رمز الدخول بغض النظر عن علامة _pinEncrypted
-        if (DB.pin && DB.pin.length > 10) {
+        // ترحيل: فك تشفير رمز الدخول — الرمز المشفّر 5 أحرف = 8 base64، لذا لا حد أدنى للطول
+        if (DB.pin) {
           try {
             var _KEY2 = 0x5A;
             var _dec2 = atob(DB.pin).split('').map(function(c){ return String.fromCharCode(c.charCodeAt(0)^_KEY2); }).join('');
-            if (_dec2 && _dec2.length >= 2 && _dec2.length <= 20 && /^[A-Za-z0-9]+$/.test(_dec2)) DB.pin = _dec2;
-            else DB.pin = 'A2009';
-          } catch(e2) { /* ليس base64 */ }
-          DB._pinEncrypted = false;
-          _fbSave();
+            if (_dec2 && _dec2.length >= 2 && _dec2.length <= 20 && /^[A-Za-z0-9]+$/.test(_dec2)) {
+              DB.pin = _dec2; DB._pinEncrypted = false; _fbSave();
+            }
+          } catch(e2) { /* ليس base64 — يبقى كما هو */ }
         }
         if ((DB.pin || '').trim() === '1234') { DB.pin = 'A2009'; _fbSave(); }
         // دمج المعلمين الافتراضيين المفقودين من Firebase
@@ -6227,7 +6226,8 @@ window._doLoginMain = function() {
     let pinDecrypted = pin;
     try {
       const _rawPin = DB.pin || '';
-      if (_rawPin.length > 10) { // الرمز الطبيعي أقصر من 10 أحرف
+      // لا حد أدنى للطول — رمز 5 أحرف مشفّر = 8 أحرف base64 فقط
+      if (_rawPin) {
         const _d = atob(_rawPin).split('').map(c=>String.fromCharCode(c.charCodeAt(0)^0x5A)).join('').trim().toUpperCase();
         if (_d && _d.length >= 2 && _d.length <= 20 && /^[A-Z0-9]+$/.test(_d)) {
           pinDecrypted = _d;
