@@ -584,7 +584,7 @@ body{background:#fff!important}
 <script>
 // ── تحديث تلقائي: إعادة تحميل عند أي نسخة مختلفة أو أول زيارة ──
 (function(){
-  var VER = '19';
+  var VER = '20';
   var redirected = window.location.search.indexOf('r=') !== -1;
   if (redirected) return; // منع الحلقة اللانهائية
   try {
@@ -5515,6 +5515,8 @@ function showQRModal() {
                 } catch(e) {}
               }
               if (!DB.pin || DB.pin.trim() === '1234') DB.pin = 'A2009';
+              // تحقق نهائي: إذا لم يكن الرمز نصاً أبجدياً رقمياً صالحاً — أعد الضبط
+              if (!/^[A-Za-z0-9]{2,20}$/.test(DB.pin)) DB.pin = 'A2009';
             })();
             // دمج المعلمين الافتراضيين المفقودين من Firebase
             if (DB.teachers && DB.teachers.length > 0) {
@@ -5621,6 +5623,7 @@ function _fbLoad(callback) {
             } catch(e) {}
           }
           if (!DB.pin || DB.pin.trim() === '1234') { DB.pin = 'A2009'; _fbSave(); }
+          if (!/^[A-Za-z0-9]{2,20}$/.test(DB.pin)) { DB.pin = 'A2009'; _fbSave(); }
         })();
         // دمج المعلمين الافتراضيين المفقودين من Firebase
         if (DB.teachers && DB.teachers.length > 0) {
@@ -5846,8 +5849,8 @@ try {
     if (DB._pinEncrypted && DB.pin) {
       try {
         const _KEY = 0x5A;
-        const _dec = atob(DB.pin).split('').map(c=>String.fromCharCode(c.charCodeAt(0)^_KEY)).join('');
-        if (_dec && _dec.length >= 2) { DB.pin = _dec; }
+        const _dec = atob(DB.pin).split('').map(c=>String.fromCharCode(c.charCodeAt(0)^_KEY)).join('').trim().toUpperCase();
+        if (_dec && _dec.length >= 2 && /^[A-Z0-9]+$/.test(_dec)) { DB.pin = _dec; } else { DB.pin = 'A2009'; }
       } catch(e2) { DB.pin = 'A2009'; }
       DB._pinEncrypted = false;
       try { localStorage.setItem('ANDALUS_V2', JSON.stringify(DB)); } catch(e2) {}
@@ -6218,16 +6221,19 @@ window._doLoginMain = function() {
 
   // ── المدير ──
   if (loginMode === 'admin') {
-    let pin = (DB.pin || '').trim().toUpperCase();
+    const rawPin = (DB.pin || '').trim(); // القيمة الأصلية — لا تُعدَّل قبل atob
+    let pin = rawPin.toUpperCase();
     if (!pin || pin === '1234') pin = 'A2009';
 
-    // فك تشفير الرمز إذا كان base64 (يحتوي + أو / أو =)
-    if (pin.indexOf('+') !== -1 || pin.indexOf('/') !== -1 || pin.indexOf('=') !== -1) {
+    // فك تشفير base64 باستخدام rawPin (قبل toUpperCase) لأن base64 حساس لحالة الأحرف
+    if (rawPin.indexOf('+') !== -1 || rawPin.indexOf('/') !== -1 || rawPin.indexOf('=') !== -1) {
       try {
-        const dec = atob(pin).split('').map(c => String.fromCharCode(c.charCodeAt(0) ^ 0x5A)).join('').trim().toUpperCase();
+        const dec = atob(rawPin).split('').map(c => String.fromCharCode(c.charCodeAt(0) ^ 0x5A)).join('').trim().toUpperCase();
         if (dec && dec.length >= 2 && dec.length <= 20 && /^[A-Z0-9]+$/.test(dec)) {
           pin = dec;
           DB.pin = dec; DB._pinEncrypted = false; _fbSave();
+        } else {
+          pin = 'A2009';
         }
       } catch(e) { pin = 'A2009'; }
     }
@@ -6237,14 +6243,13 @@ window._doLoginMain = function() {
       kpStr = ''; updateDisp();
       _launchApp();
     } else {
-      if (le) { le.textContent = 'خطأ — DB.pin=[' + (DB.pin||'فارغ') + '] pin=[' + pin + '] entered=[' + entered + ']'; le.style.color = 'var(--r2)'; }
+      if (le) { le.textContent = 'رمز الدخول غير صحيح'; le.style.color = 'var(--r2)'; }
       kpStr = ''; updateDisp();
     }
     return;
   }
 
   // ── المعلمون والموظفون المتخصصون (رقم الهوية) ──
-  // دمج المعلمين الافتراضيين المفقودين
   if (!DB.teachers || DB.teachers.length === 0) {
     DB.teachers = JSON.parse(JSON.stringify(DEFAULT_DB.teachers));
   } else {
@@ -6259,7 +6264,6 @@ window._doLoginMain = function() {
     return;
   }
 
-  // تحقق من التعيين في الدور المحدد (لغير المعلم)
   if (loginMode !== 'teacher') {
     const keys = STAFF_ROLE_KEYS[loginMode] || [];
     const assigned = keys.some(k => String((DB.staff && DB.staff[k]) || '').trim() === String(teacher.id).trim());
