@@ -6173,57 +6173,37 @@ const AR_TO_EN = { '١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7
 // تحميل البيانات من Firestore ثم فتح التطبيق
 function _launchApp() {
   const le = document.getElementById('LE');
-  const fbUser = window._fbAuth && window._fbAuth.currentUser;
-  if (fbUser) {
-    if (_dbLoadedFromFirebase) {
-      // البيانات محملة مسبقاً — افتح فوراً بدون تحميل ثانٍ
-      if (le) le.textContent = '';
-      document.getElementById('LS').style.display = 'none';
-      document.getElementById('APP').style.display = 'block';
-      initApp();
-    } else {
-      if (le) { le.textContent = '⏳ جارٍ تحميل البيانات...'; le.style.color = 'var(--d2)'; }
+  if (le) le.textContent = '';
+  document.getElementById('LS').style.display = 'none';
+  document.getElementById('APP').style.display = 'block';
+  try { initApp(); } catch(e) {
+    // فتح لوحة التحكم مباشرة حتى لو فشل initApp جزئياً
+    try {
+      applyRoleNav();
+      document.querySelectorAll('.page').forEach(function(p){ p.style.display = 'none'; });
+      var dp = document.getElementById('page-dash');
+      if (dp) dp.style.display = 'block';
+    } catch(e2) {}
+  }
+  // تحديث البيانات من Firebase في الخلفية إن لم تكن محملة بعد
+  if (!_dbLoadedFromFirebase) {
+    var fbUser = window._fbAuth && window._fbAuth.currentUser;
+    if (fbUser) {
       _fbLoad(function() {
         _dbLoadedFromFirebase = true;
-        if (le) le.textContent = '';
-        document.getElementById('LS').style.display = 'none';
-        document.getElementById('APP').style.display = 'block';
-        initApp();
+        try { populateTeacherSelects(); } catch(e) {}
+        if (currentRole === 'admin') { try { renderDash(); } catch(e) {} try { renderNotifs(); } catch(e) {} }
+      });
+    } else if (window._fbAuth) {
+      window._fbAuth.onAuthStateChanged(function(user) {
+        if (!user) return;
+        _fbLoad(function() {
+          _dbLoadedFromFirebase = true;
+          try { populateTeacherSelects(); } catch(e) {}
+          if (currentRole === 'admin') { try { renderDash(); } catch(e) {} try { renderNotifs(); } catch(e) {} }
+        });
       });
     }
-  } else if (window._fbAuth) {
-    // Firebase جاهز لكن تسجيل الدخول لم يكتمل بعد — انتظر ثم أعد المحاولة
-    if (le) { le.textContent = '⏳ جارٍ الاتصال بالسحابة...'; le.style.color = 'var(--d2)'; }
-    var _authTimeout = setTimeout(function() {
-      // انتهى الانتظار بدون اتصال — افتح بالبيانات المحلية
-      if (le) le.textContent = '';
-      document.getElementById('LS').style.display = 'none';
-      document.getElementById('APP').style.display = 'block';
-      initApp();
-    }, 5000);
-    var _unsubAuth = window._fbAuth.onAuthStateChanged(function(user) {
-      _unsubAuth(); // إلغاء الاشتراك
-      clearTimeout(_authTimeout);
-      if (user) {
-        _fbLoad(function(loaded) {
-          if (le) le.textContent = '';
-          document.getElementById('LS').style.display = 'none';
-          document.getElementById('APP').style.display = 'block';
-          initApp();
-          if (loaded) toast('☁️ تم تحميل البيانات من السحابة', true);
-        });
-      } else {
-        if (le) le.textContent = '';
-        document.getElementById('LS').style.display = 'none';
-        document.getElementById('APP').style.display = 'block';
-        initApp();
-      }
-    });
-  } else {
-    // Firebase غير متاح — استخدم البيانات المحلية
-    document.getElementById('LS').style.display = 'none';
-    document.getElementById('APP').style.display = 'block';
-    initApp();
   }
 }
 
@@ -7937,7 +7917,7 @@ function renderAJA() {
 let _ajaSubjectChart = null;
 function renderAJASubjectChart() {
   const ctx = document.getElementById('SC-AJA');
-  if (!ctx) return;
+  if (!ctx || typeof Chart === 'undefined') return;
   if (_ajaSubjectChart) { try{_ajaSubjectChart.destroy();}catch(e){} _ajaSubjectChart=null; }
   const grades = DB.grades || [];
   let labels=[], data=[];
@@ -7979,7 +7959,7 @@ function renderPerfBars() {
 
 function renderDashSubjectChart() {
   const ctx = document.getElementById('SC');
-  if (!ctx) return;
+  if (!ctx || typeof Chart === 'undefined') return;
   // إذا توفرت درجات — رسم مخطط حسب المادة
   if (DB.grades && DB.grades.length) {
     const subMap = {};
@@ -9437,7 +9417,7 @@ function selectChartType(t) {
 }
 function _buildChart(canvasId, type, labels, data, colors) {
   const ctx = document.getElementById(canvasId);
-  if (!ctx) return;
+  if (!ctx || typeof Chart === 'undefined') return;
   const existing = Chart.getChart(ctx);
   if (existing) existing.destroy();
   new Chart(ctx, {
