@@ -584,7 +584,7 @@ body{background:#fff!important}
 <script>
 // ── تحديث تلقائي: إعادة تحميل عند أي نسخة مختلفة أو أول زيارة ──
 (function(){
-  var VER = '21';
+  var VER = '22';
   var redirected = window.location.search.indexOf('r=') !== -1;
   if (redirected) return; // منع الحلقة اللانهائية
   try {
@@ -6161,7 +6161,11 @@ function _launchApp() {
     if (le) le.textContent = '';
     document.getElementById('LS').style.display = 'none';
     document.getElementById('APP').style.display = 'block';
-    initApp();
+    try { initApp(); } catch(err) {
+      document.getElementById('LS').style.display = 'flex';
+      document.getElementById('APP').style.display = 'none';
+      if (le) { le.textContent = '⛔ خطأ: ' + err.message; le.style.color = 'red'; }
+    }
     return;
   }
   const fbUser = window._fbAuth && window._fbAuth.currentUser;
