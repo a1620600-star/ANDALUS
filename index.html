@@ -19576,19 +19576,19 @@ function showInitReport(id) {
       color = color || '#0d7a5f';
       var lines = val.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
       var body = lines.length > 1
-        ? '<ul style="margin:4px 0 0 0;padding-right:20px;line-height:2.1">'+lines.map(function(l){ return '<li>'+l+'</li>'; }).join('')+'</ul>'
-        : '<div style="margin-top:4px;line-height:1.9">'+lines[0]+'</div>';
-      return '<div style="margin-bottom:14px">'
-        +'<div style="font-size:12px;font-weight:900;color:'+color+';border-right:3px solid '+color+';padding-right:8px;margin-bottom:5px">'+title+'</div>'
-        +'<div style="font-size:12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;color:#1e293b">'+body+'</div>'
+        ? '<ul style="margin:4px 0 0 0;padding-right:20px;line-height:2.2;font-size:14px;font-weight:600">'+lines.map(function(l){ return '<li>'+l+'</li>'; }).join('')+'</ul>'
+        : '<div style="margin-top:4px;line-height:2;font-size:14px;font-weight:600">'+lines[0]+'</div>';
+      return '<div style="margin-bottom:16px">'
+        +'<div style="font-size:12px;font-weight:900;color:'+color+';border-right:3px solid '+color+';padding-right:8px;margin-bottom:6px">'+title+'</div>'
+        +'<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;color:#1e293b">'+body+'</div>'
         +'</div>';
     };
 
     var infoGrid = ''
-      +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;font-size:12px">'
-      +'<div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:8px;padding:9px 12px"><span style="color:#0d7a5f;font-weight:800">صاحب المبادرة:</span><br><span style="font-weight:700">'+ini.owner+'</span></div>'
-      +'<div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:8px;padding:9px 12px"><span style="color:#0d7a5f;font-weight:800">تاريخ المبادرة:</span><br><span style="font-weight:700">'+(ini.date||'—')+'</span></div>'
-      +'<div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:8px;padding:9px 12px"><span style="color:#0d7a5f;font-weight:800">مدة التنفيذ:</span><br><span style="font-weight:700">'+(ini.duration||'—')+'</span></div>'
+      +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px">'
+      +'<div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:8px;padding:9px 12px"><span style="color:#0d7a5f;font-weight:800;font-size:11px">صاحب المبادرة:</span><br><span style="font-weight:700;font-size:14px">'+ini.owner+'</span></div>'
+      +'<div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:8px;padding:9px 12px"><span style="color:#0d7a5f;font-weight:800;font-size:11px">تاريخ المبادرة:</span><br><span style="font-weight:700;font-size:14px">'+(ini.date||'—')+'</span></div>'
+      +'<div style="background:#f0fdf9;border:1px solid #0d7a5f33;border-radius:8px;padding:9px 12px"><span style="color:#0d7a5f;font-weight:800;font-size:11px">مدة التنفيذ:</span><br><span style="font-weight:700;font-size:14px">'+(ini.duration||'—')+'</span></div>'
       +'</div>';
 
     // جمع الشواهد: يدعم المصفوفة الجديدة والملف القديم
@@ -19607,8 +19607,8 @@ function showInitReport(id) {
             +'<img src="'+f.data+'" style="max-width:100%;max-height:240px;object-fit:contain;border-radius:6px;border:1px solid #e5e7eb">'
             +'</div>';
         } else {
-          return '<div style="padding:8px 12px;background:#f1f5f9;border-radius:6px;border:1px solid #e5e7eb;font-size:12px">'
-            +'📎 <span style="font-weight:700">شاهد '+(i+1)+':</span> '+(f.name||'ملف مرفق')+'</div>';
+          return '<div style="padding:8px 12px;background:#f1f5f9;border-radius:6px;border:1px solid #e5e7eb;font-size:14px;font-weight:600">'
+            +'📎 <span style="font-weight:800">شاهد '+(i+1)+':</span> '+(f.name||'ملف مرفق')+'</div>';
         }
       });
       evidenceHtml = '<div style="margin-bottom:14px">'
