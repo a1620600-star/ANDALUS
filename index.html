@@ -11067,6 +11067,18 @@ function _renderPerfElementsAdmin(t) {
               </div>
             </div>`;
           }).join('') + `</div>` : ''}
+        ${isDone && (ind.files||[]).length ? `<div style="padding-right:28px;margin-top:6px">
+          <div style="font-size:10px;color:var(--tx3);font-weight:700;margin-bottom:5px">📎 ملفات المعلم المرفوعة (${(ind.files||[]).length}):</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${(ind.files||[]).map((f,fi)=>`
+              <div style="display:inline-flex;flex-direction:column;align-items:center;background:var(--surf2);border:1px solid var(--brd);border-radius:8px;padding:6px;text-align:center;min-width:68px;max-width:80px">
+                ${f.type&&f.type.startsWith('image/')
+                  ?`<img src="${f.data}" style="width:58px;height:48px;object-fit:cover;border-radius:5px;display:block;margin-bottom:3px;cursor:pointer" onclick="window.open('${f.data}','_blank')">`
+                  :`<div style="width:58px;height:48px;background:var(--surf3);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:3px;cursor:pointer" onclick="window.open('${f.data}','_blank')">📄</div>`}
+                <span style="font-size:9px;color:var(--tx3);word-break:break-all;max-width:64px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3">${f.name}</span>
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
       </div>`;
     }).join('');
 
