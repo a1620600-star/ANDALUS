@@ -10942,6 +10942,7 @@ function _renderPerfElementsTeacher(t) {
       const isDone   = ind.status === 'مكتمل';
       const isNotDone= ind.status === 'غير مكتمل';
       const wCount   = (ind.witnesses||[]).length;
+      const fCount   = (ind.files||[]).length;
       const wAreaId  = `piw-${t.id}-${e.id}-${idx}`;
       return `<div style="border-bottom:1px solid var(--brd);padding:9px 0">
         <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
@@ -10958,7 +10959,12 @@ function _renderPerfElementsTeacher(t) {
           <button onclick="toggleIndWitnesses('${wAreaId}')"
             style="padding:4px 12px;border-radius:6px;border:none;font-size:11px;font-weight:800;cursor:pointer;${isDone?'background:var(--g1);color:#fff':'background:var(--r2);color:#fff;opacity:.55;pointer-events:none'}"
             ${isDone?'':'disabled'} title="${isDone?'اضغط لإضافة شواهد':'حدد المؤشر كمكتمل أولاً'}">
-            شاهد${wCount>0?' ('+wCount+')':''}</button>`}
+            شاهد${wCount>0?' ('+wCount+')':''}</button>
+          <button onclick="perfIndUploadFile(${t.id},${e.id},${idx})"
+            style="padding:4px 12px;border-radius:6px;border:none;font-size:11px;font-weight:800;cursor:pointer;${isDone?'background:var(--s2);color:#fff':'background:var(--surf3);color:var(--tx3);opacity:.45;pointer-events:none'}"
+            ${isDone?'':'disabled'} title="${isDone?'رفع ملف كدليل إثبات':'حدد المؤشر كمكتمل أولاً'}">
+            📎${fCount>0?' ('+fCount+')':''}</button>
+          <input type="file" id="pinp-${t.id}-${e.id}-${idx}" style="display:none" accept="image/*,application/pdf,.doc,.docx,.xlsx,.ppt,.pptx" multiple onchange="handlePerfIndFile(this,${t.id},${e.id},${idx})">`}
         </div>
         <div id="${wAreaId}" style="display:none;margin-top:7px;padding:8px 10px;background:var(--surf2);border-radius:8px;border:1px solid var(--brd)">
           ${(ind.witnesses||[]).map((w,wi)=>`
@@ -10968,6 +10974,19 @@ function _renderPerfElementsTeacher(t) {
               ${!locked?`<button onclick="removePerfIndWitness(${t.id},${e.id},${idx},${wi})"
                 style="background:none;border:none;cursor:pointer;color:var(--r2);font-size:13px;padding:0 3px">✕</button>`:''}
             </div>`).join('')}
+          ${(ind.files||[]).length ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--brd)">
+            <div style="font-size:10px;color:var(--tx3);font-weight:700;margin-bottom:6px">📎 الملفات المرفوعة:</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              ${(ind.files||[]).map((f,fi)=>`
+                <div style="position:relative;display:inline-flex;flex-direction:column;align-items:center;background:var(--surf1);border:1px solid var(--brd);border-radius:8px;padding:6px;text-align:center;min-width:68px;max-width:80px">
+                  ${f.type&&f.type.startsWith('image/')
+                    ?`<img src="${f.data}" style="width:58px;height:48px;object-fit:cover;border-radius:5px;display:block;margin-bottom:3px;cursor:pointer" onclick="window.open('${f.data}','_blank')">`
+                    :`<div style="width:58px;height:48px;background:var(--surf3);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:3px;cursor:pointer" onclick="window.open('${f.data}','_blank')">📄</div>`}
+                  <span style="font-size:9px;color:var(--tx3);word-break:break-all;max-width:64px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3">${f.name}</span>
+                  ${!locked?`<button onclick="removePerfIndFile(${t.id},${e.id},${idx},${fi})" style="position:absolute;top:-6px;left:-6px;width:17px;height:17px;border-radius:50%;background:#ef4444;color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>`:''}
+                </div>`).join('')}
+            </div>
+          </div>` : ''}
           ${!locked ? `<div style="display:flex;gap:6px;margin-top:7px">
             <input id="inpw-${t.id}-${e.id}-${idx}" type="text" placeholder="أدخل نص الشاهد..."
               style="flex:1;padding:6px 10px;border:1px solid var(--brd);border-radius:7px;font-size:11px;background:var(--surf1);color:var(--tx1);font-family:inherit"
@@ -11240,6 +11259,57 @@ function removePerfIndWitness(tid, elId, indIdx, wIdx) {
   _renderPerfScore(t);
   _renderPerfActions(t);
   const area = document.getElementById(areaId);
+  if (area) area.style.display = 'block';
+}
+
+function perfIndUploadFile(tid, elId, indIdx) {
+  const inp = document.getElementById(`pinp-${tid}-${elId}-${indIdx}`);
+  if (inp) inp.click();
+}
+
+function handlePerfIndFile(input, tid, elId, indIdx) {
+  if (!input.files || !input.files.length) return;
+  const t = DB.teachers.find(x => x.id == tid);
+  if (!t) return;
+  const pi = _perfIndDataOf(t);
+  if (!pi[elId]) pi[elId] = { indData:{}, elAdminStatus:'', elAdminNote:'' };
+  if (!pi[elId].indData[indIdx]) pi[elId].indData[indIdx] = { status:'مكتمل', witnesses:[], files:[] };
+  if (!pi[elId].indData[indIdx].files) pi[elId].indData[indIdx].files = [];
+  const files = Array.from(input.files);
+  let remaining = files.length;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      pi[elId].indData[indIdx].files.push({ data: e.target.result, name: file.name, type: file.type });
+      remaining--;
+      if (remaining === 0) {
+        if (!t.perfStatus || t.perfStatus === '') t.perfStatus = 'draft';
+        saveAllData();
+        _renderPerfElementsTeacher(t);
+        _renderPerfScore(t);
+        _renderPerfActions(t);
+        const area = document.getElementById(`piw-${tid}-${elId}-${indIdx}`);
+        if (area) area.style.display = 'block';
+        toast('تم رفع الملف ✓', true);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function removePerfIndFile(tid, elId, indIdx, fIdx) {
+  const t = DB.teachers.find(x => x.id == tid);
+  if (!t) return;
+  const pi = _perfIndDataOf(t);
+  const files = pi[elId]?.indData?.[indIdx]?.files;
+  if (!files) return;
+  files.splice(fIdx, 1);
+  saveAllData();
+  _renderPerfElementsTeacher(t);
+  _renderPerfScore(t);
+  _renderPerfActions(t);
+  const area = document.getElementById(`piw-${tid}-${elId}-${indIdx}`);
   if (area) area.style.display = 'block';
 }
 
